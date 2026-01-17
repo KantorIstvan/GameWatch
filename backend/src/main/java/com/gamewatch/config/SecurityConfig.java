@@ -55,15 +55,30 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
+        // Use lazy initialization to avoid DNS issues at startup
+        // The decoder will be initialized on first use
+        return new JwtDecoder() {
+            private volatile JwtDecoder delegate;
 
-        OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
-        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
-        OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
+            @Override
+            public Jwt decode(String token) throws JwtException {
+                if (delegate == null) {
+                    synchronized (this) {
+                        if (delegate == null) {
+                            NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
 
-        jwtDecoder.setJwtValidator(withAudience);
+                            OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(audience);
+                            OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+                            OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
 
-        return jwtDecoder;
+                            jwtDecoder.setJwtValidator(withAudience);
+                            delegate = jwtDecoder;
+                        }
+                    }
+                }
+                return delegate.decode(token);
+            }
+        };
     }
 
     @Bean
