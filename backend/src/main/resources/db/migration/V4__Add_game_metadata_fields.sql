@@ -1,0 +1,8 @@
+ALTER TABLE games ADD COLUMN external_id INTEGER;
+ALTER TABLE games ADD COLUMN release_date VARCHAR(50);
+ALTER TABLE games ADD COLUMN rating DOUBLE PRECISION;
+ALTER TABLE games ADD COLUMN genres VARCHAR(500);
+ALTER TABLE games ADD COLUMN platforms VARCHAR(500);
+ALTER TABLE games ADD COLUMN developers VARCHAR(500);
+
+CREATE INDEX idx_games_external_id ON games(external_id);

@@ -1,0 +1,1 @@
+ALTER TABLE playthroughs ADD COLUMN title VARCHAR(255);

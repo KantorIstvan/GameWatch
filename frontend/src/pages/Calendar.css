@@ -1,0 +1,180 @@
+/* FullCalendar custom styles */
+.fc-event-main {
+  padding: 3px 6px;
+  color: #ffffff !important;
+}
+
+.fc-daygrid-event {
+  margin: 2px 3px;
+}
+
+.fc-h-event {
+  border-radius: 6px;
+}
+
+.fc-event-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.fc .fc-daygrid-day {
+  transition: all 0.2s ease;
+}
+
+.fc .fc-daygrid-day-frame {
+  min-height: 80px;
+}
+
+/* Mobile responsive day cells */
+@media (max-width: 600px) {
+  .fc .fc-daygrid-day-frame {
+    min-height: 60px;
+  }
+  
+  .fc-event-main {
+    padding: 2px 4px;
+  }
+  
+  .fc-daygrid-event {
+    margin: 1px 2px;
+  }
+  
+  .fc-h-event {
+    border-radius: 4px;
+  }
+}
+
+.fc-daygrid-event-harness {
+  margin-bottom: 2px;
+}
+
+/* Smooth scrolling for calendar */
+.fc-scroller {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better spacing for month view */
+.fc-daygrid-body {
+  border-top: none !important;
+}
+
+/* Modern scrollbar */
+.fc-scroller::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+/* Mobile: Hide scrollbar but keep functionality */
+@media (max-width: 600px) {
+  .fc-scroller::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* Fade in animation for events */
+@keyframes fadeInEvent {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fc-event {
+  animation: fadeInEvent 0.3s ease-out;
+}
+
+/* Better more link styling */
+.fc-daygrid-more-link {
+  font-weight: 600;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 600px) {
+  .fc-daygrid-more-link {
+    font-size: 0.65rem;
+  }
+}
+
+/* Popover styling */
+.fc-popover {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2) !important;
+  border: 1px solid rgba(102, 126, 234, 0.15) !important;
+  max-width: 90vw !important;
+}
+
+.fc-popover-header {
+  border-radius: 12px 12px 0 0 !important;
+  font-weight: 600 !important;
+}
+
+/* Mobile specific popover improvements */
+@media (max-width: 600px) {
+  .fc-popover {
+    border-radius: 8px !important;
+    max-width: 95vw !important;
+  }
+  
+  .fc-popover-header {
+    border-radius: 8px 8px 0 0 !important;
+    padding: 8px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .fc-popover-body {
+    padding: 8px !important;
+  }
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 600px) {
+  .fc-event {
+    min-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .fc-daygrid-day-top {
+    padding: 4px !important;
+  }
+}
+
+/* Improve button group spacing on mobile */
+@media (max-width: 600px) {
+  .fc-button-group {
+    display: flex !important;
+    gap: 4px !important;
+  }
+  
+  .fc-button-group > .fc-button {
+    flex: 1 !important;
+  }
+}
+
+/* Better "more" link visibility on mobile */
+@media (max-width: 600px) {
+  .fc-daygrid-day-bottom {
+    margin-top: 2px !important;
+  }
+}

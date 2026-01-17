@@ -1,0 +1,64 @@
+<config xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns='http://www.ehcache.org/v3'
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
+
+    <!-- Default cache configuration -->
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="minutes">10</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">1000</heap>
+        </resources>
+    </cache-template>
+
+    <!-- Cache for User entities - frequently accessed -->
+    <cache alias="com.gamewatch.entity.User" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">500</heap>
+        </resources>
+    </cache>
+
+    <!-- Cache for Game entities - relatively static -->
+    <cache alias="com.gamewatch.entity.Game" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">2000</heap>
+        </resources>
+    </cache>
+
+    <!-- Cache for Playthrough entities - frequently queried -->
+    <cache alias="com.gamewatch.entity.Playthrough" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">5000</heap>
+        </resources>
+    </cache>
+
+    <!-- Query results cache -->
+    <cache alias="default-query-results-region" uses-template="default">
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">1000</heap>
+        </resources>
+    </cache>
+
+    <!-- Update timestamps cache -->
+    <cache alias="default-update-timestamps-region">
+        <expiry>
+            <none/>
+        </expiry>
+        <resources>
+            <heap unit="entries">5000</heap>
+        </resources>
+    </cache>
+</config>

@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: gamewatch-postgres
+    environment:
+      POSTGRES_DB: gamewatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gamewatch-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gamewatch-backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/gamewatch
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      AUTH0_ISSUER_URI: ${AUTH0_ISSUER_URI}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      RAWG_API_KEY: ${RAWG_API_KEY}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      TZ: Europe/Budapest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - gamewatch-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
+        VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
+        VITE_AUTH0_AUDIENCE: ${VITE_AUTH0_AUDIENCE}
+        VITE_API_BASE_URL: /api
+    container_name: gamewatch-frontend
+    ports:
+      - "3000:80"
+      - "3443:443"
+    depends_on:
+      - backend
+    networks:
+      - gamewatch-network
+
+volumes:
+  postgres_data:
+
+networks:
+  gamewatch-network:
+    driver: bridge

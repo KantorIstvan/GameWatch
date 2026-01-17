@@ -1,0 +1,1 @@
+ALTER TABLE playthroughs ADD COLUMN pause_count INTEGER NOT NULL DEFAULT 0;

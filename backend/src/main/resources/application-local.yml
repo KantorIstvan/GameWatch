@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gamewatch
+    username: postgres
+    password: postgres
+  
+  jpa:
+    show-sql: true
+    
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH0_ISSUER_URI}
+          audience: ${AUTH0_AUDIENCE}
+
+logging:
+  level:
+    com.gamewatch: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

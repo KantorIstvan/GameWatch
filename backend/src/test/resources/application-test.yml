@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        cache:
+          use_second_level_cache: false
+          use_query_cache: false
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    com.gamewatch: DEBUG
+    org.hibernate.SQL: DEBUG
