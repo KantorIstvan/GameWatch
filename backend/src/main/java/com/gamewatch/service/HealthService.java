@@ -27,11 +27,12 @@ public class HealthService {
     private final UserRepository userRepository;
 
     // Health score weights
-    private static final double WEIGHT_HOURS = 0.35;
-    private static final double WEIGHT_SESSIONS = 0.25;
-    private static final double WEIGHT_BREAKS = 0.15;
-    private static final double WEIGHT_MOOD = 0.15;
-    private static final double WEIGHT_LATE_NIGHT = 0.10;
+    // Reduce hours weight, increase mood/breaks (what actually matters for health)
+    private static final double WEIGHT_HOURS = 0.20;      // same
+    private static final double WEIGHT_SESSIONS = 0.15;   // same
+    private static final double WEIGHT_BREAKS = 0.15;     // reduced from 0.25
+    private static final double WEIGHT_MOOD = 0.25;       // same
+    private static final double WEIGHT_LATE_NIGHT = 0.25; // increased from 0.15
 
     @Transactional
     public HealthSettingsDto getHealthSettings(User user) {
@@ -283,11 +284,12 @@ public class HealthService {
             .mapToDouble(m -> m.getTotalHours() != null ? m.getTotalHours() : 0.0)
             .sum() + totalHours;
 
-        // Normalize hours (0 = ideal, 1 = at/above cap)
-        double normHours = Math.min(1.0, totalHours / limits.maxHoursPerDay);
-        
-        // Normalize sessions (0 = ideal, 1 = at/above cap)
-        double normSessions = Math.min(1.0, (double) sessionCount / limits.maxSessionsPerDay);
+        // Only penalize hours when approaching/exceeding limit (80%+)
+        double normHours = Math.max(0.0, (totalHours - 0.8 * limits.maxHoursPerDay) / (0.2 * limits.maxHoursPerDay));
+        normHours = Math.min(1.0, normHours);
+
+        // Only penalize sessions if too many (3+ for adults is fragmented)
+        double normSessions = sessionCount <= 2 ? 0.0 : Math.min(1.0, (sessionCount - 2.0) / 3.0);
         
         // Break penalty (0 = perfect breaks, 1 = no breaks)
         double breakPenalty = 1.0 - breakComplianceRatio;
