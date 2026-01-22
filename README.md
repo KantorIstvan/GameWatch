@@ -23,7 +23,6 @@ GameWatch helps gamers log their playthroughs, track time spent on each session,
 - [Configuration & Deployment](#configuration--deployment)
 - [Testing](#testing)
 - [Contributing](#contributing)
-- [License](#license)
 - [Contact](#contact)
 
 ## About
@@ -41,6 +40,7 @@ GameWatch is a full-stack web app for tracking video game playthroughs. Users au
 - **Calendar view** shows your gaming activity at a glance
 - **Statistics dashboard** displays charts for playtime by game, platform, and month
 - **Detailed analytics** including genre breakdown, completion rates, and time patterns
+- **Health dashboard** with mood logging, break/hydration/stand reminders, and wellbeing score trends
 - **Data export** to CSV for external analysis
 - **User authentication** via Auth0 ensures secure, personal gaming logs
 - **Multi-language support** with i18n for 11+ languages including English, Spanish, German, Japanese, Arabic, and more
@@ -142,6 +142,20 @@ http://localhost:3000
 
 ![Game Statistics](docs/img/gameStatistic.png)
 
+**Health & Wellbeing**
+
+<p align="center">
+  <img src="docs/img/healthPage1.png" alt="Health Dashboard Overview">
+</p>
+
+<p align="center">
+  <img src="docs/img/healthPage2.png" alt="Daily Health Metrics">
+</p>
+
+<p align="center">
+  <img src="docs/img/healthSettings.png" alt="Health Settings">
+</p>
+
 **Settings**
 
 ![Settings](docs/img/settings.png)
@@ -187,6 +201,15 @@ http://localhost:3000
 |--------|-----------------------------------|----------------------------------|---------------|
 | GET    | `/statistics?interval={interval}` | Get user statistics              | Yes           |
 | GET    | `/statistics/recommendations`     | Get game recommendations         | Yes           |
+
+### Health Endpoints
+
+| Method | Path                          | Purpose                               | Auth Required |
+|--------|-------------------------------|---------------------------------------|---------------|
+| GET    | `/user-health/dashboard`      | Get health dashboard metrics & trends | Yes           |
+| GET    | `/user-health/settings`       | Fetch current health settings         | Yes           |
+| PUT    | `/user-health/settings`       | Update health reminders & goals       | Yes           |
+| POST   | `/user-health/mood`           | Submit a mood entry (1-5)             | Yes           |
 
 ### User Endpoints
 

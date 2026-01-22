@@ -19,6 +19,10 @@ Complete guide for using GameWatch to track your gaming sessions.
   - [Dropping and Picking Up Games](#dropping-and-picking-up-games)
 - [Calendar View](#calendar-view)
 - [Statistics & Analytics](#statistics--analytics)
+- [Health & Wellbeing](#health--wellbeing)
+  - [Health Dashboard](#health-dashboard)
+  - [Mood Tracking](#mood-tracking)
+  - [Health Settings & Reminders](#health-settings--reminders)
 - [Settings & Preferences](#settings--preferences)
 - [Troubleshooting](#troubleshooting)
 
@@ -317,6 +321,49 @@ Click **Export** to download your playthrough data as CSV for external analysis.
 
 <p align="center">
   <img src="img/exportedCSV.png" alt="Exported CSV">
+</p>
+
+## Health & Wellbeing
+
+The health system helps you balance playtime and wellbeing. It blends your session history, breaks, and mood entries into a daily health score (0-100) and surfaces trends so you can spot fatigue early.
+
+### Health Dashboard
+
+<p align="center">
+  <img src="img/healthPage1.png" alt="Health Dashboard Overview">
+</p>
+
+- **Health score**: today's score plus a 7-day trend and yearly heatmap
+- **Daily metrics**: hours played, session count, average mood, break compliance, and late-night minutes (10pm-6am)
+- **Weekly metrics**: totals for the past 7 days, including hours, sessions, average mood, break compliance, and late-night minutes
+- **Recent sessions with mood**: last sessions paired with their mood ratings and durations
+- **Goal progress**: shows how close you are to daily/weekly hour and session limits
+
+<p align="center">
+  <img src="img/healthPage2.png" alt="Daily Health Metrics">
+</p>
+
+### Mood Tracking
+
+Log how you feel after playing to understand how session length and time of day affect you.
+
+- Rate mood from **1-5** and optionally add a note
+- Link a mood entry to the session you just finished or create one manually
+- Enable **mood prompts** to remind you after sessions; they can be optional or required before ending a session
+- Recent mood entries feed the dashboard's averages and charts
+
+### Health Settings & Reminders
+
+Configure reminders and limits from the Health settings panel.
+
+- **Hydration, stand, and break reminders** with custom intervals plus break duration
+- **Notification and sound toggles** to keep reminders unobtrusive
+- **Goals**: set max hours per day, sessions per day, and hours per week, with optional goal notifications
+- **Mood prompts**: enable/disable prompts and choose whether mood logging is required
+- Settings are per-user; defaults are created automatically
+
+<p align="center">
+  <img src="img/healthSettings.png" alt="Health Settings">
 </p>
 
 ## Settings & Preferences
