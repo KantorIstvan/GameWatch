@@ -28,9 +28,10 @@ function AppContent() {
   useHealthGoals(isAuthenticated, isAuthReady)
 
   useEffect(() => {
-    const direction = i18n.language === 'ar' ? 'rtl' : 'ltr'
-    document.documentElement.setAttribute('dir', direction)
-    document.documentElement.setAttribute('lang', i18n.language)
+    const rtlLanguages = ['ar', 'fa', 'ur'];
+    const direction = rtlLanguages.includes(i18n.language) ? 'rtl' : 'ltr';
+    document.documentElement.setAttribute('dir', direction);
+    document.documentElement.setAttribute('lang', i18n.language);
   }, [i18n.language])
 
   return (
@@ -54,7 +55,7 @@ function AppContent() {
         hideProgressBar={false}
         newestOnTop
         closeOnClick
-        rtl={i18n.language === 'ar'}
+        rtl={['ar', 'fa', 'ur'].includes(i18n.language)}
         pauseOnFocusLoss
         draggable
         pauseOnHover
