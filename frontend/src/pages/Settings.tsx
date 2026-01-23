@@ -218,18 +218,47 @@ function Settings() {
                   },
                 }}
               >
+                <MenuItem value="af">🇿🇦 {t('settings.afrikaans')}</MenuItem>
+                <MenuItem value="ar">🇸🇦 {t('settings.arabic')}</MenuItem>
+                <MenuItem value="bn">🇧🇩 {t('settings.bengali')}</MenuItem>
+                <MenuItem value="bg">🇧🇬 {t('settings.bulgarian')}</MenuItem>
+                <MenuItem value="zh">🇨🇳 {t('settings.chinese')}</MenuItem>
+                <MenuItem value="hr">🇭🇷 {t('settings.croatian')}</MenuItem>
+                <MenuItem value="cs">🇨🇿 {t('settings.czech')}</MenuItem>
+                <MenuItem value="da">🇩🇰 {t('settings.danish')}</MenuItem>
+                <MenuItem value="nl">🇳🇱 {t('settings.dutch')}</MenuItem>
                 <MenuItem value="en">🇬🇧 {t('settings.english')}</MenuItem>
-                <MenuItem value="hu">🇭🇺 {t('settings.hungarian')}</MenuItem>
-                <MenuItem value="es">🇪🇸 {t('settings.spanish')}</MenuItem>
+                <MenuItem value="et">🇪🇪 {t('settings.estonian')}</MenuItem>
+                <MenuItem value="fi">🇫🇮 {t('settings.finnish')}</MenuItem>
                 <MenuItem value="fr">🇫🇷 {t('settings.french')}</MenuItem>
                 <MenuItem value="de">🇩🇪 {t('settings.german')}</MenuItem>
+                <MenuItem value="el">🇬🇷 {t('settings.greek')}</MenuItem>
+                <MenuItem value="hu">🇭🇺 {t('settings.hungarian')}</MenuItem>
+                <MenuItem value="hi">🇮🇳 {t('settings.hindi')}</MenuItem>
+                <MenuItem value="is">🇮🇸 {t('settings.icelandic')}</MenuItem>
+                <MenuItem value="id">🇮🇩 {t('settings.indonesian')}</MenuItem>
                 <MenuItem value="it">🇮🇹 {t('settings.italian')}</MenuItem>
-                <MenuItem value="pt">🇵🇹 {t('settings.portuguese')}</MenuItem>
                 <MenuItem value="ja">🇯🇵 {t('settings.japanese')}</MenuItem>
-                <MenuItem value="zh">🇨🇳 {t('settings.chinese')}</MenuItem>
                 <MenuItem value="ko">🇰🇷 {t('settings.korean')}</MenuItem>
+                <MenuItem value="lv">🇱🇻 {t('settings.latvian')}</MenuItem>
+                <MenuItem value="lt">🇱🇹 {t('settings.lithuanian')}</MenuItem>
+                <MenuItem value="ml">🇮🇳 {t('settings.malayalam')}</MenuItem>
+                <MenuItem value="no">🇳🇴 {t('settings.norwegian')}</MenuItem>
+                <MenuItem value="fa">🇮🇷 {t('settings.persian')}</MenuItem>
+                <MenuItem value="pl">🇵🇱 {t('settings.polish')}</MenuItem>
+                <MenuItem value="pt">🇵🇹 {t('settings.portuguese')}</MenuItem>
+                <MenuItem value="ro">🇷🇴 {t('settings.romanian')}</MenuItem>
                 <MenuItem value="ru">🇷🇺 {t('settings.russian')}</MenuItem>
-                <MenuItem value="ar">🇸🇦 {t('settings.arabic')}</MenuItem>
+                <MenuItem value="sr">🇷🇸 {t('settings.serbian')}</MenuItem>
+                <MenuItem value="sk">🇸🇰 {t('settings.slovak')}</MenuItem>
+                <MenuItem value="sl">🇸🇮 {t('settings.slovenian')}</MenuItem>
+                <MenuItem value="es">🇪🇸 {t('settings.spanish')}</MenuItem>
+                <MenuItem value="sv">🇸🇪 {t('settings.swedish')}</MenuItem>
+                <MenuItem value="th">🇹🇭 {t('settings.thai')}</MenuItem>
+                <MenuItem value="tr">🇹🇷 {t('settings.turkish')}</MenuItem>
+                <MenuItem value="uk">🇺🇦 {t('settings.ukrainian')}</MenuItem>
+                <MenuItem value="ur">🇵🇰 {t('settings.urdu')}</MenuItem>
+                <MenuItem value="vi">🇻🇳 {t('settings.vietnamese')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
