@@ -196,6 +196,7 @@ public class PlaythroughService {
 
         playthrough.setIsActive(false);
         playthrough.setIsPaused(true);
+        playthrough.setStartedAt(null);
         playthrough.setLastPlayedAt(pausedAt);
         
         playthrough.setPauseCount(playthrough.getPauseCount() + 1);
