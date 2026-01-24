@@ -76,6 +76,7 @@ public class PlaythroughService {
         if (!playthrough.getIsPaused()) {
             playthrough.setPauseCount(0);
             playthrough.setSessionStartDurationSeconds(playthrough.getDurationSeconds());
+            playthrough.setSessionStartTime(Instant.now());
         }
         
         playthrough.setIsPaused(false);
@@ -216,7 +217,7 @@ public class PlaythroughService {
             throw new RuntimeException("Playthrough is not active or paused");
         }
 
-        Instant sessionStartTime = playthrough.getStartedAt();
+        Instant sessionStartTime = playthrough.getSessionStartTime();
         long sessionStartDuration = playthrough.getSessionStartDurationSeconds();
         
         if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
@@ -257,6 +258,7 @@ public class PlaythroughService {
         playthrough.setIsActive(false);
         playthrough.setIsPaused(false);
         playthrough.setStartedAt(null);
+        playthrough.setSessionStartTime(null);
         playthrough.setLastPlayedAt(endedAt);
         
         playthrough.setPauseCount(0);

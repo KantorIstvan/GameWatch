@@ -104,6 +104,9 @@ public class Playthrough {
     @Builder.Default
     private Long sessionStartDurationSeconds = 0L;
 
+    @Column(name = "session_start_time")
+    private Instant sessionStartTime;
+
     @Column(name = "manual_time_set")
     @Builder.Default
     private Boolean manualTimeSet = false;

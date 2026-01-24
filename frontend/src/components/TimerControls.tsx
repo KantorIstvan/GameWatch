@@ -65,9 +65,9 @@ function TimerControls({
           >
             {(playthrough.durationSeconds ?? 0) === 0 
               ? t('playthrough.start') 
-              : (!playthrough.startedAt && (playthrough.durationSeconds ?? 0) > 0 
-                ? t('playthrough.newSession') 
-                : t('playthrough.continue'))}
+              : (playthrough.isPaused
+                ? t('playthrough.continue')
+                : t('playthrough.newSession'))}
           </Button>
         ) : (
           <Button
