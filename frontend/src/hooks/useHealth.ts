@@ -12,7 +12,7 @@ export function useHealthSettings() {
       const response = await healthApi.getHealthSettings()
       setSettings(response.data)
     } catch (error) {
-      console.error('Failed to load health settings:', error)
+      // Silently fail
     } finally {
       setLoading(false)
     }

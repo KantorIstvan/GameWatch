@@ -13,18 +13,9 @@ const apiClient: AxiosInstance = axios.create({
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    console.log('[Interceptor] Request to:', config.url)
-    console.log('[Interceptor] authToken value:', authToken ? `${authToken.substring(0, 20)}...` : 'null')
-    console.log('[Interceptor] config.headers before:', config.headers)
-    
     if (authToken) {
       // Set authorization header directly on the config.headers object
       config.headers['Authorization'] = `Bearer ${authToken}`
-      console.log('[Interceptor] Set Authorization header')
-      console.log('[Interceptor] config.headers after:', config.headers)
-      console.log('[Interceptor] Authorization header value:', config.headers['Authorization'])
-    } else {
-      console.warn('[Interceptor] No auth token available for request:', config.url)
     }
     return config
   },
@@ -36,20 +27,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      console.error('[401 Error] URL:', error.config.url)
-      console.error('[401 Error] Token was present:', !!authToken)
-      console.error('[401 Error] Token value:', authToken ? `${authToken.substring(0, 30)}...` : 'null')
-      console.error('[401 Error] Request headers:', error.config?.headers)
-      console.error('[401 Error] Authorization header:', error.config?.headers?.Authorization)
-      console.error('[401 Error] Authorization (bracket):', error.config?.headers?.['Authorization'])
-    }
     return Promise.reject(error)
   }
 )
 
 export const setAuthToken = (token: string | null): void => {
-  console.log('setAuthToken called with token:', token ? `${token.substring(0, 20)}...` : 'null')
   authToken = token
   if (token) {
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -59,7 +41,6 @@ export const setAuthToken = (token: string | null): void => {
 }
 
 export const getAuthToken = (): string | null => {
-  console.log('getAuthToken called, token present:', !!authToken)
   return authToken
 }
 

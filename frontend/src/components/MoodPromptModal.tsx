@@ -6,7 +6,6 @@ import {
   DialogActions,
   Button,
   Slider,
-  TextField,
   Box,
   Typography,
   useTheme,
@@ -45,7 +44,6 @@ export default function MoodPromptModal({
 }: MoodPromptModalProps) {
   const theme = useTheme()
   const [moodRating, setMoodRating] = useState<number>(3)
-  const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -54,13 +52,11 @@ export default function MoodPromptModal({
       await healthApi.submitMood({
         sessionHistoryId: sessionHistoryId || null,
         moodRating,
-        note: note.trim() || null,
       })
       onClose()
       setMoodRating(3)
-      setNote('')
     } catch (error) {
-      console.error('Failed to submit mood:', error)
+      // Error handled silently
     } finally {
       setSubmitting(false)
     }
@@ -70,7 +66,6 @@ export default function MoodPromptModal({
     if (!required) {
       onClose()
       setMoodRating(3)
-      setNote('')
     }
   }
 
@@ -152,17 +147,6 @@ export default function MoodPromptModal({
                 borderRadius: '50%',
               },
             }}
-          />
-
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Any thoughts? (optional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            sx={{ mt: 3 }}
-            inputProps={{ maxLength: 500 }}
           />
         </Box>
       </DialogContent>

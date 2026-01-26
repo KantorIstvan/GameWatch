@@ -61,7 +61,6 @@ function Timers() {
       setGames(gamesRes.data)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to fetch data:', err)
       setError(t('errors.failedLoadData'))
     } finally {
       setLoading(false)
@@ -82,7 +81,6 @@ function Timers() {
       setPlaythroughs([response.data, ...playthroughs])
       handleCloseDialog()
     } catch (err: any) {
-      console.error('Failed to create playthrough:', err)
       setError(t('errors.failedCreatePlaythrough'))
     }
   }

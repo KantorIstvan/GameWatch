@@ -50,7 +50,7 @@ function Settings() {
       const response = await healthApi.getHealthSettings()
       setHealthSettings(response.data)
     } catch (error) {
-      console.error('Failed to load health settings:', error)
+      // Silently fail
     } finally {
       setLoadingHealth(false)
     }
@@ -67,7 +67,7 @@ function Settings() {
         setTimezone(userData.timezone)
       }
     } catch (error) {
-      console.error('Failed to load user data:', error)
+      // Silently fail
     }
   }
 
@@ -76,7 +76,6 @@ function Settings() {
       await healthApi.updateUserAge(age === '' ? null : Number(age))
       toast.success('Age updated successfully')
     } catch (error) {
-      console.error('Failed to update age:', error)
       toast.error('Failed to update age')
     }
   }
@@ -87,7 +86,6 @@ function Settings() {
       setTimezoneContext(timezone) // Update context with new timezone
       toast.success('Timezone updated successfully')
     } catch (error) {
-      console.error('Failed to update timezone:', error)
       toast.error('Failed to update timezone')
     }
   }
@@ -100,7 +98,6 @@ function Settings() {
       await healthApi.updateHealthSettings(healthSettings)
       toast.success('Health settings saved successfully')
     } catch (error) {
-      console.error('Failed to save health settings:', error)
       toast.error('Failed to save health settings')
     } finally {
       setSavingHealth(false)
@@ -128,7 +125,6 @@ function Settings() {
       logout()
       navigate('/')
     } catch (err: any) {
-      console.error('Failed to delete account:', err)
       setDeleteError(err.response?.data?.message || 'Failed to delete account. Please try again.')
       setDeleting(false)
     }

@@ -51,7 +51,6 @@ function Games() {
       setGames(response.data)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to fetch games:', err)
       setError('Failed to load games. Please try again.')
     } finally {
       setLoading(false)
@@ -67,7 +66,6 @@ function Games() {
       setSelectedGame(null)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to create game:', err)
       const errorMessage = err.response?.data?.message || err.response?.data || 'Failed to create game. Please try again.'
       setError(errorMessage)
     }
@@ -142,7 +140,6 @@ function Games() {
       setGames(prevGames => prevGames.filter((g: Game) => g.id !== gameToDelete.id))
       setGameToDelete(null)
     } catch (err: any) {
-      console.error('Failed to delete game:', err)
       setError('Failed to delete game. Please try again.')
       setGameToDelete(null)
     }

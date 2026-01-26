@@ -27,7 +27,6 @@ export function useStatistics(interval: 'week' | 'month' | 'year' | 'all', isAut
       const response = await statisticsApi.getUserStatistics(interval)
       setStatistics(response.data)
     } catch (err: any) {
-      console.error('Error fetching statistics:', err)
       setError(err.response?.data?.message || 'Failed to load statistics')
     } finally {
       setLoading(false)
@@ -48,7 +47,7 @@ export function useStatistics(interval: 'week' | 'month' | 'year' | 'all', isAut
       apiCache.set(cacheKey, response.data)
       setRecommendations(response.data)
     } catch (err: any) {
-      console.error('Error fetching recommendations:', err)
+      // Silently fail for recommendations
     }
   }, [])
 

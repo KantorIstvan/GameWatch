@@ -53,7 +53,6 @@ export const TimeFormatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       } catch (error) {
         // Silently fail - will use browser's timezone
-        console.warn('Failed to load user timezone:', error)
       }
     }
     loadUserTimezone()

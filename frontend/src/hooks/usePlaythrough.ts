@@ -43,7 +43,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setIsRunning(ptResponse.data.isActive === true)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to fetch playthrough:', err)
       setError('Failed to load playthrough. Please try again.')
     } finally {
       setLoading(false)
@@ -136,7 +135,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Start health notifications
       healthNotificationService.startSession()
     } catch (err: any) {
-      console.error('Failed to start playthrough:', err)
       setError('Failed to start timer.')
     }
   }, [id, playthrough, currentSessionTime])
@@ -153,7 +151,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Stop notifications while paused
       healthNotificationService.stopAllReminders()
     } catch (err: any) {
-      console.error('Failed to pause:', err)
       setError('Failed to pause.')
       setIsRunning(playthrough.isActive)
     }
@@ -178,7 +175,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Return the lastSessionHistoryId for mood prompt
       return response.data.lastSessionHistoryId
     } catch (err: any) {
-      console.error('Failed to end session:', err)
       setError('Failed to end session.')
       if (playthrough) {
         setIsRunning(playthrough.isActive)
@@ -194,7 +190,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      console.error('Failed to finish playthrough:', err)
       setError('Failed to finish playthrough.')
     }
   }, [id])
@@ -205,7 +200,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      console.error('Failed to drop playthrough:', err)
       setError('Failed to drop playthrough.')
     }
   }, [id])
@@ -216,7 +210,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      console.error('Failed to pickup playthrough:', err)
       setError('Failed to pickup playthrough.')
     }
   }, [id])
@@ -226,7 +219,6 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       await playthroughsApi.delete(id)
       navigate('/')
     } catch (err: any) {
-      console.error('Failed to delete playthrough:', err)
       setError('Failed to delete playthrough.')
     }
   }, [id, navigate])

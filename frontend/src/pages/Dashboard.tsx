@@ -47,7 +47,6 @@ function Dashboard() {
       setGames(gamesRes.data)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to fetch data:', err)
       setError('Failed to load data. Please try again.')
     } finally {
       setLoading(false)
@@ -67,7 +66,6 @@ function Dashboard() {
       setPlaythroughType('story')
       setStartDate(new Date().toISOString().split('T')[0])
     } catch (err: any) {
-      console.error('Failed to create playthrough:', err)
       setError('Failed to create playthrough. Please try again.')
     }
   }, [selectedGameId, playthroughType, startDate, playthroughs])

@@ -93,7 +93,6 @@ function PlaythroughDetail() {
       // Trigger mood prompt after successful session end with the session ID
       promptForMood(sessionHistoryId)
     } catch (error) {
-      console.error('Failed to end session:', error)
       showSnackbar('Failed to end session', 'error')
     }
   }, [handlers, promptForMood, showSnackbar])
@@ -121,7 +120,6 @@ function PlaythroughDetail() {
       setEditDialogOpen(false)
       showSnackbar(t('common.success'), 'success')
     } catch (err: any) {
-      console.error('Failed to update time:', err)
       showSnackbar('Failed to update time.', 'error')
     }
   }, [editHours, editMinutes, editSeconds, elapsedTime, handlers, showSnackbar, t])
@@ -134,7 +132,6 @@ function PlaythroughDetail() {
       setPlatformDialogOpen(false)
       showSnackbar(t('common.success'), 'success')
     } catch (err: any) {
-      console.error('Failed to update platform:', err)
       showSnackbar('Failed to update platform.', 'error')
     }
   }, [selectedPlatform, handlers, showSnackbar, t])
@@ -150,7 +147,6 @@ function PlaythroughDetail() {
       setTitleDialogOpen(false)
       showSnackbar(t('common.success'), 'success')
     } catch (err: any) {
-      console.error('Failed to update title:', err)
       showSnackbar('Failed to update title.', 'error')
     }
   }, [editedTitle, handlers, showSnackbar, t])
@@ -161,7 +157,6 @@ function PlaythroughDetail() {
       setManualSessionDialogOpen(false)
       showSnackbar('Session logged successfully!', 'success')
     } catch (err: any) {
-      console.error('Failed to log manual session:', err)
       showSnackbar(err.response?.data?.message || 'Failed to log manual session.', 'error')
     }
   }, [handlers, showSnackbar])
@@ -180,7 +175,6 @@ function PlaythroughDetail() {
       setAvailablePlaythroughs(filteredPlaythroughs)
       setImportDialogOpen(true)
     } catch (err: any) {
-      console.error('Failed to fetch playthroughs:', err)
       showSnackbar('Failed to load available playthroughs.', 'error')
     }
   }, [playthrough, game, showSnackbar])
@@ -197,7 +191,6 @@ function PlaythroughDetail() {
       setSelectedImportPlaythrough('')
       showSnackbar('Sessions imported successfully!', 'success')
     } catch (err: any) {
-      console.error('Failed to import sessions:', err)
       showSnackbar(err.response?.data?.message || 'Failed to import sessions.', 'error')
     }
   }, [selectedImportPlaythrough, handlers, showSnackbar])

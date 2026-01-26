@@ -174,7 +174,7 @@ export default function Health() {
       const response = await healthApi.getHealthDashboard()
       setDashboard(response.data)
     } catch (error) {
-      console.error('Failed to load health dashboard:', error)
+      // Silently fail
     } finally {
       setLoading(false)
     }

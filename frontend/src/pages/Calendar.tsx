@@ -97,7 +97,6 @@ function Calendar() {
       setEvents(calendarEvents)
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching playthroughs:', err)
       setError(t('calendar.errorLoading'))
     } finally {
       setLoading(false)

@@ -65,13 +65,9 @@ function GameStatisticsPage() {
     try {
       setLoading(true)
       const response = await gamesApi.getStatistics(Number(id))
-      console.log('Game statistics response:', response.data)
-      console.log('Total play time seconds:', response.data.totalPlayTimeSeconds)
-      console.log('Sessions:', response.data.sessions)
       setStatistics(response.data)
       setError(null)
     } catch (err: any) {
-      console.error('Error fetching game statistics:', err)
       setError(err.response?.data?.message || 'Failed to load game statistics')
     } finally {
       setLoading(false)
@@ -86,7 +82,6 @@ function GameStatisticsPage() {
       await fetchStatistics() 
       setSessionToDelete(null)
     } catch (err: any) {
-      console.error('Error deleting session:', err)
       setError(err.response?.data?.message || 'Failed to delete session')
     }
   }

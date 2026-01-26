@@ -44,7 +44,6 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
       const response = await gamesApi.search(searchQuery)
       setOptions(response.data || [])
     } catch (err) {
-      console.error('Failed to search games:', err)
       setOptions([])
     } finally {
       setLoading(false)
@@ -78,7 +77,6 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
         const response = await gamesApi.getDetails(newValue.id)
         onGameSelect(response.data)
       } catch (err) {
-        console.error('Failed to fetch game details:', err)
         onGameSelect(newValue)
       } finally {
         setLoading(false)

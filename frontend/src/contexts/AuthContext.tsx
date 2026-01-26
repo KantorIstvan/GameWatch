@@ -30,12 +30,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let mounted = true
 
     const initAuth = async () => {
-      console.log('[AuthContext] initAuth called, isAuthenticated:', isAuthenticated, 'isLoading:', isLoading)
-      
       if (isAuthenticated) {
         try {
           const audience = import.meta.env.VITE_AUTH0_AUDIENCE as string
-          console.log('[AuthContext] Requesting token with audience:', audience)
           
           const token = await getAccessTokenSilently({
             authorizationParams: {
@@ -46,27 +43,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           if (!mounted) return
           
-          console.log('[AuthContext] Token received, length:', token?.length)
-          console.log('[AuthContext] Token preview:', token?.substring(0, 50) + '...')
-          
           setAuthToken(token)
-          console.log('[AuthContext] Token set in API client')
           
           // Only set auth ready after token is successfully set
           if (mounted) {
             setIsAuthReady(true)
-            console.log('[AuthContext] Auth initialization complete')
           }
         } catch (error: any) {
-          console.error('[AuthContext] Error getting access token:', error)
-          console.error('[AuthContext] Error details:', error.error, error.error_description)
+          // Error handled silently
           // Don't set isAuthReady to true on error
           if (mounted) {
             setIsAuthReady(false)
           }
         }
       } else {
-        console.log('[AuthContext] User not authenticated')
         // Set auth ready even when not authenticated (for public pages)
         if (mounted) {
           setIsAuthReady(true)
@@ -82,8 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false
     }
   }, [isLoading, isAuthenticated, getAccessTokenSilently])
-
-  console.log('[AuthContext] Rendering, isAuthReady:', isAuthReady, 'isAuthenticated:', isAuthenticated)
 
   return (
     <AuthContext.Provider value={{ isAuthReady, isAuthenticated, logout }}>
