@@ -27,19 +27,25 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
   const theme = useTheme()
   const [localPlaythrough, setLocalPlaythrough] = useState<Playthrough>(playthrough)
   const [elapsedTime, setElapsedTime] = useState<number>(0)
+  const [currentSessionTime, setCurrentSessionTime] = useState<number>(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     setLocalPlaythrough(playthrough)
     
-    if (playthrough.isActive && playthrough.startedAt) {
+    if ((playthrough.isActive || playthrough.isPaused) && playthrough.startedAt) {
+      // Calculate current session elapsed time (for both active and paused)
       const now = Date.now()
       const startTime = new Date(playthrough.startedAt).getTime()
       const currentSessionElapsed = Math.floor((now - startTime) / 1000)
-      const baseDuration = playthrough.durationSeconds || 0
-      setElapsedTime(baseDuration + currentSessionElapsed)
-    } else {
+      setCurrentSessionTime(currentSessionElapsed)
+      
+      // Set overall time to base duration (frozen during active/paused session)
       setElapsedTime(playthrough.durationSeconds || 0)
+    } else {
+      // When idle (not active and not paused), show total duration
+      setElapsedTime(playthrough.durationSeconds || 0)
+      setCurrentSessionTime(0)
     }
   }, [playthrough])
 
@@ -50,8 +56,9 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
     }
     
     if (localPlaythrough.isActive) {
+      // Only increment current session time, not overall time
       intervalRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1)
+        setCurrentSessionTime(prev => prev + 1)
       }, 1000)
     }
 
@@ -273,22 +280,108 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
             overflow: 'hidden',
           }}
         >
-          <Typography
-            variant="h4"
-            component="div"
-            sx={{ 
-              fontFamily: 'monospace', 
-              textAlign: 'center',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              color: playthroughColor,
-              textShadow: theme.palette.mode === 'dark' 
-                ? `0 0 20px ${alpha(playthroughColor, 0.3)}`
-                : 'none',
-            }}
-          >
-            {formattedTime}
-          </Typography>
+          {localPlaythrough.isActive || localPlaythrough.isPaused ? (
+            // Active/Paused Session: Show dual timers
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 1,
+              animation: 'cardSlideIn 0.4s ease-out',
+              '@keyframes cardSlideIn': {
+                from: { opacity: 0, transform: 'translateY(15px)' },
+                to: { opacity: 1, transform: 'translateY(0)' }
+              }
+            }}>
+              {/* Primary: Current Session Timer */}
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    display: 'block',
+                    textAlign: 'center',
+                    fontSize: '0.65rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    opacity: 0.7,
+                    mb: 0.5,
+                  }}
+                >
+                  Current Session
+                </Typography>
+                <Typography
+                  variant="h4"
+                  component="div"
+                  sx={{ 
+                    fontFamily: 'monospace', 
+                    textAlign: 'center',
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    color: playthroughColor,
+                    textShadow: theme.palette.mode === 'dark' 
+                      ? `0 0 20px ${alpha(playthroughColor, 0.3)}`
+                      : 'none',
+                  }}
+                >
+                  {formatTimeHMS(currentSessionTime)}
+                </Typography>
+              </Box>
+              
+              {/* Secondary: Overall Timer */}
+              <Box sx={{ 
+                opacity: 0.6,
+                animation: 'cardFadeIn 0.5s ease-out 0.1s both',
+                '@keyframes cardFadeIn': {
+                  from: { opacity: 0, transform: 'scale(0.98)' },
+                  to: { opacity: 0.6, transform: 'scale(1)' }
+                }
+              }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    display: 'block',
+                    textAlign: 'center',
+                    fontSize: '0.6rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25,
+                  }}
+                >
+                  Total
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{ 
+                    fontFamily: 'monospace', 
+                    textAlign: 'center',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {formatTimeHMS(elapsedTime)}
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            // Idle State: Show only overall timer
+            <Typography
+              variant="h4"
+              component="div"
+              sx={{ 
+                fontFamily: 'monospace', 
+                textAlign: 'center',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                color: playthroughColor,
+                textShadow: theme.palette.mode === 'dark' 
+                  ? `0 0 20px ${alpha(playthroughColor, 0.3)}`
+                  : 'none',
+              }}
+            >
+              {formattedTime}
+            </Typography>
+          )}
           
           {localPlaythrough.isActive && (
             <Box

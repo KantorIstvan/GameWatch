@@ -51,6 +51,7 @@ function PlaythroughDetail() {
     loading,
     error,
     elapsedTime,
+    currentSessionTime,
     timerGradient,
     handlers
   } = usePlaythrough(Number(id), isAuthReady)
@@ -269,6 +270,7 @@ function PlaythroughDetail() {
         <TimerDisplay
           playthrough={playthrough}
           elapsedTime={elapsedTime}
+          currentSessionTime={currentSessionTime}
           timerGradient={timerGradient}
           onEdit={handleOpenEditDialog}
           onDelete={() => setDeleteModalOpen(true)}
