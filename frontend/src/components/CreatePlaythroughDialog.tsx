@@ -18,6 +18,8 @@ import React from 'react'
 import { Close, PlaylistAdd } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { Game } from '../types'
+import DatePicker from './DatePicker'
+import dayjs from 'dayjs'
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -259,26 +261,12 @@ function CreatePlaythroughDialog({
             </MenuItem>
           ))}
         </TextField>
-        <TextField
-          fullWidth
+        <DatePicker
           label={t('playthrough.startDate')}
-          type="date"
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          margin="normal"
+          onChange={setStartDate}
           required
-          InputLabelProps={{
-            shrink: true,
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              minHeight: 48,
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-          }}
+          maxDate={dayjs()}
         />
       </DialogContent>
       <DialogActions sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 3, pt: 2, gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>

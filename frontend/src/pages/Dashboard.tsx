@@ -17,6 +17,8 @@ import StyledDialog from '../components/StyledDialog'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Playthrough, Game } from '../types'
+import DatePicker from '../components/DatePicker'
+import dayjs from 'dayjs'
 
 function Dashboard() {
   const { isAuthReady } = useAuthContext()
@@ -206,24 +208,11 @@ function Dashboard() {
           <MenuItem value="speedrun">Speedrun</MenuItem>
           <MenuItem value="casual">Casual</MenuItem>
         </TextField>
-        <TextField
-          fullWidth
+        <DatePicker
           label={t('playthrough.startDate')}
-          type="date"
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          margin="normal"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          inputProps={{
-            max: new Date().toISOString().split('T')[0], // Prevent future dates
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+          onChange={setStartDate}
+          maxDate={dayjs()}
         />
       </StyledDialog>
     </Box>

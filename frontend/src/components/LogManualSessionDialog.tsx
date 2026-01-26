@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   Stack,
   Typography,
   alpha,
@@ -14,6 +13,8 @@ import {
 } from '@mui/material'
 import { TransitionProps } from '@mui/material/transitions'
 import { useTranslation } from 'react-i18next'
+import DateTimePicker from './DateTimePicker'
+import dayjs from 'dayjs'
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -105,15 +106,6 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
     onClose()
   }
 
-  const formatDateTimeLocal = (date: Date): string => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
-
   return (
     <Dialog
       open={open}
@@ -146,48 +138,18 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
         </Typography>
         
         <Stack spacing={3}>
-          <TextField
+          <DateTimePicker
             label="Start Date & Time"
-            type="datetime-local"
             value={startDateTime}
-            onChange={(e) => setStartDateTime(e.target.value)}
-            fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-            inputProps={{
-              max: formatDateTimeLocal(new Date()),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
-            }}
+            onChange={setStartDateTime}
+            maxDateTime={dayjs()}
           />
           
-          <TextField
+          <DateTimePicker
             label="End Date & Time"
-            type="datetime-local"
             value={endDateTime}
-            onChange={(e) => setEndDateTime(e.target.value)}
-            fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-            inputProps={{
-              max: formatDateTimeLocal(new Date()),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
-            }}
+            onChange={setEndDateTime}
+            maxDateTime={dayjs()}
           />
 
           {error && (

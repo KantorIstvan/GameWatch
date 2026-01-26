@@ -188,7 +188,7 @@
       "dateTime": "Date & Time",
       "playthrough": "Playthrough",
       "duration": "Duration",
-      "pauses": "Pauses",
+      "pauses": "Breaks",
       "noSessions": "No sessions recorded yet",
       "noChartData": "No session data available to display chart",
       "playtime": "Playtime",
@@ -326,7 +326,7 @@
     "start": "Start",
     "continue": "Continue",
     "newSession": "New Session",
-    "pause": "Pause",
+    "pause": "Take Break",
     "endSession": "End Session",
     "finish": "Finish",
     "reset": "Reset",
@@ -373,7 +373,8 @@
     "create": "Create",
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
-    "backToTimers": "Back to Timers"
+    "backToTimers": "Back to Timers",
+    "retry": "Try Again"
   },
   "game": {
     "released": "Released",
@@ -412,7 +413,13 @@
   "errors": {
     "failedLoadData": "Failed to load data. Please try again.",
     "failedCreatePlaythrough": "Failed to create playthrough. Please try again.",
-    "noGamesFound": "No games found. Please add games first in the Games page."
+    "noGamesFound": "No games found. Please add games first in the Games page.",
+    "unauthorized": "Unauthorized Access",
+    "unauthorizedMessage": "You don't have permission to access this resource. Please log in or contact support.",
+    "notFound": "Page Not Found",
+    "notFoundMessage": "The page you're looking for doesn't exist or has been moved.",
+    "serverError": "Server Error",
+    "serverErrorMessage": "Something went wrong on our end. Please try again later or contact support."
   },
   "labels": {
     "timer": "timer",
