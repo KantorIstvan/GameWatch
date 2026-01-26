@@ -34,6 +34,7 @@ import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
 import DailyPlaytimeChart from '../components/statistics/DailyPlaytimeChart'
+import DayOfWeekDualAxisChart from '../components/statistics/DayOfWeekDualAxisChart'
 import TopGamesSection from '../components/statistics/TopGamesSection'
 import GameRecommendations from '../components/statistics/GameRecommendations'
 import SpecialGameCards from '../components/statistics/SpecialGameCards'
@@ -393,24 +394,18 @@ function Statistics() {
                 backdropFilter: 'blur(20px)',
                 border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
               }}>
-                <ReusableBarChart
+                <Typography 
+                  variant="h6" 
+                  gutterBottom 
+                  fontWeight="bold"
+                  sx={{
+                    fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                  }}
+                >
+                  {t('statistics.userStats.playtimeByDayOfWeek')}
+                </Typography>
+                <DayOfWeekDualAxisChart
                   data={dayOfWeekData}
-                  title={t('statistics.userStats.playtimeByDayOfWeek')}
-                  xAxisKey="day"
-                  yAxisLabel={t('statistics.userStats.hours')}
-                  bars={[
-                    {
-                      dataKey: 'hours',
-                      fill: theme.palette.primary.main,
-                      name: t('statistics.userStats.totalHours')
-                    },
-                    {
-                      dataKey: 'avgHours',
-                      fill: theme.palette.secondary.main,
-                      name: t('statistics.userStats.avgPerSession')
-                    }
-                  ]}
-                  showLegend
                   noDataMessage={t('statistics.userStats.noData')}
                 />
               </Paper>
