@@ -6,7 +6,7 @@ import { gamesApi } from '../services/api'
 import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
 import GameSearchAutocomplete from '../components/GameSearchAutocomplete'
-import ConfirmModal from '../components/ConfirmModal'
+import TypedConfirmDialog from '../components/TypedConfirmDialog'
 import GameCard from '../components/GameCard'
 import SearchFilterBar from '../components/SearchFilterBar'
 import StyledDialog from '../components/StyledDialog'
@@ -507,14 +507,15 @@ function Games() {
         </Box>
       </StyledDialog>
 
-      <ConfirmModal
+      <TypedConfirmDialog
         open={deleteModalOpen}
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDeleteGame}
         title={t('games.deleteGame')}
         message={t('games.confirmDelete', { gameName: gameToDelete?.name })}
         confirmText={t('games.yesDelete')}
-        confirmColor="error"
+        requiredText="Delete"
+        destructive
       />
     </Box>
   )

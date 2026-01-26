@@ -106,6 +106,21 @@ public class HealthService {
         return mapToMoodEntryDto(moodEntry);
     }
 
+    /**
+     * Save a mood entry directly (used by other services for auto-logging).
+     */
+    @Transactional
+    public MoodEntry saveMoodEntry(MoodEntry moodEntry) {
+        moodEntry = moodEntryRepository.save(moodEntry);
+        log.info("Saved mood entry for user {}: rating={}", moodEntry.getUser().getId(), moodEntry.getMoodRating());
+        
+        // Recalculate today's metrics
+        LocalDate date = LocalDateTime.ofInstant(moodEntry.getRecordedAt(), ZoneId.systemDefault()).toLocalDate();
+        recalculateMetricsForDate(moodEntry.getUser(), date);
+        
+        return moodEntry;
+    }
+
     @Transactional
     public void recalculateMetricsForDate(User user, LocalDate date) {
         log.info("Recalculating health metrics for user {} on {}", user.getId(), date);
@@ -351,8 +366,12 @@ public class HealthService {
     @Transactional
     public HealthDashboardDto getHealthDashboard(User user) {
         LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.minusDays(6);
-        LocalDate yearStart = today.minusDays(364);
+        
+        // Calendar week: Monday of current week (ISO 8601)
+        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+        
+        // Calendar year: January 1st of current year
+        LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
 
         // Backfill missing metrics for recent dates
         backfillMissingMetrics(user, weekStart, today);
@@ -362,11 +381,11 @@ public class HealthService {
             .findByUserIdAndMetricDate(user.getId(), today)
             .orElse(null);
 
-        // Get last 7 days for trend
-        List<DailyHealthMetrics> last7Days = dailyHealthMetricsRepository
+        // Get current week's data (Monday to today)
+        List<DailyHealthMetrics> weekData = dailyHealthMetricsRepository
             .findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(user.getId(), weekStart, today);
 
-        List<Integer> last7DaysScores = last7Days.stream()
+        List<Integer> weekScores = weekData.stream()
             .sorted(Comparator.comparing(DailyHealthMetrics::getMetricDate))
             .map(DailyHealthMetrics::getHealthScore)
             .collect(Collectors.toList());
@@ -384,20 +403,20 @@ public class HealthService {
                 m -> m.getHealthScore() != null ? m.getHealthScore() : 50
             ));
 
-        // Calculate weekly metrics
-        HealthDashboardDto.WeeklyMetricsDto weekMetrics = calculateWeeklyMetrics(last7Days);
+        // Calculate weekly metrics (calendar week)
+        HealthDashboardDto.WeeklyMetricsDto weekMetrics = calculateWeeklyMetrics(weekData);
 
-        // Get recent moods
-        Instant weekAgo = weekStart.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+        // Get recent moods (current week)
+        Instant weekStartInstant = weekStart.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
         List<MoodEntry> recentMoodEntries = moodEntryRepository
-            .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), weekAgo, Instant.now());
+            .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), weekStartInstant, Instant.now());
         List<MoodEntryDto> recentMoods = recentMoodEntries.stream()
             .limit(10)
             .map(this::mapToMoodEntryDto)
             .collect(Collectors.toList());
 
-        // Get recent sessions with mood
-        List<HealthDashboardDto.SessionWithMoodDto> recentSessions = getRecentSessionsWithMood(user, 7);
+        // Get recent sessions with mood (current week)
+        List<HealthDashboardDto.SessionWithMoodDto> recentSessions = getRecentSessionsWithMood(user, weekStart, today);
 
         // Get goal progress
         HealthDashboardDto.GoalProgressDto goalProgress = calculateGoalProgress(user, today);
@@ -406,7 +425,7 @@ public class HealthService {
             .currentHealthScore(todayMetrics != null ? todayMetrics.getHealthScore() : null)
             .currentDate(today)
             .weeklyAverageScore(weeklyAverageScore)
-            .last7DaysScores(last7DaysScores)
+            .last7DaysScores(weekScores)
             .yearlyHeatmap(yearlyHeatmap)
             .todayMetrics(todayMetrics != null ? mapToDailyHealthMetricsDto(todayMetrics) : null)
             .weekMetrics(weekMetrics)
@@ -450,12 +469,12 @@ public class HealthService {
             .build();
     }
 
-    private List<HealthDashboardDto.SessionWithMoodDto> getRecentSessionsWithMood(User user, int days) {
-        LocalDate since = LocalDate.now().minusDays(days);
-        Instant sinceInstant = since.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+    private List<HealthDashboardDto.SessionWithMoodDto> getRecentSessionsWithMood(User user, LocalDate weekStart, LocalDate today) {
+        Instant startInstant = weekStart.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+        Instant endInstant = today.plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
         
         List<SessionHistory> sessions = sessionHistoryRepository
-            .findSessionsByUserAndDateRange(user.getId(), sinceInstant, Instant.now());
+            .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
 
         return sessions.stream()
             .sorted(Comparator.comparing(SessionHistory::getEndedAt).reversed())
@@ -486,7 +505,8 @@ public class HealthService {
             .findByUserIdAndMetricDate(user.getId(), today)
             .orElse(null);
 
-        LocalDate weekStart = today.minusDays(6);
+        // Calendar week: Monday of current week
+        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
         List<DailyHealthMetrics> weekMetrics = dailyHealthMetricsRepository
             .findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(user.getId(), weekStart, today);
 

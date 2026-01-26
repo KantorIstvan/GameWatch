@@ -6,6 +6,7 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.SessionHistory;
 import com.gamewatch.entity.User;
+import com.gamewatch.entity.MoodEntry;
 import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
@@ -34,6 +35,11 @@ public class PlaythroughService {
     public PlaythroughDto createPlaythrough(User user, CreatePlaythroughRequest request) {
         Game game = gameRepository.findById(request.getGameId())
             .orElseThrow(() -> new RuntimeException("Game not found"));
+
+        // Validate start date is not in the future
+        if (request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now())) {
+            throw new RuntimeException("Cannot set a future start date for a playthrough");
+        }
 
         Playthrough playthrough = Playthrough.builder()
             .user(user)
@@ -396,6 +402,15 @@ public class PlaythroughService {
         Playthrough playthrough = playthroughRepository.findByIdAndUserId(playthroughId, user.getId())
             .orElseThrow(() -> new RuntimeException("Playthrough not found or access denied"));
 
+        // Validate times are not in the future
+        Instant now = Instant.now();
+        if (request.getStartedAt().isAfter(now)) {
+            throw new RuntimeException("Start time cannot be in the future");
+        }
+        if (request.getEndedAt().isAfter(now)) {
+            throw new RuntimeException("End time cannot be in the future");
+        }
+
         if (!request.getStartedAt().isBefore(request.getEndedAt())) {
             throw new RuntimeException("Start time must be before end time");
         }
@@ -464,6 +479,21 @@ public class PlaythroughService {
         playthrough = playthroughRepository.save(playthrough);
         log.info("Logged manual session for playthrough {}: session #{}, duration={} sec", 
             playthroughId, insertAtSessionNumber, durationSeconds);
+
+        // Automatically create a mood entry with rating 5/5 for manual sessions
+        try {
+            MoodEntry moodEntry = MoodEntry.builder()
+                .user(user)
+                .sessionHistory(newSession)
+                .moodRating(5) // Default to excellent mood for manual sessions
+                .note("Auto-logged with manual session")
+                .recordedAt(request.getEndedAt())
+                .build();
+            healthService.saveMoodEntry(moodEntry);
+            log.info("Auto-created mood entry (5/5) for manual session {}", newSession.getId());
+        } catch (Exception e) {
+            log.warn("Failed to auto-create mood entry for manual session: {}", e.getMessage());
+        }
 
         return mapToDto(playthrough);
     }

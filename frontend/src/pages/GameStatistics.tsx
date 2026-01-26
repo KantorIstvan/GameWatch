@@ -34,6 +34,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useTranslation } from 'react-i18next'
+import { getStartOfWeek, getStartOfMonth, getStartOfYear } from '../utils/dateUtils'
 import type { GameStatistics } from '../types'
 
 function GameStatisticsPage() {
@@ -147,18 +148,23 @@ function GameStatisticsPage() {
     if (timeInterval === 'all') return data
     
     const now = new Date()
-    const cutoffDate = new Date()
+    let cutoffDate: Date
     
     switch (timeInterval) {
       case 'week':
-        cutoffDate.setDate(now.getDate() - 7)
+        // Current calendar week (Monday to today)
+        cutoffDate = getStartOfWeek(now)
         break
       case 'month':
-        cutoffDate.setMonth(now.getMonth() - 1)
+        // Current calendar month (1st to today)
+        cutoffDate = getStartOfMonth(now)
         break
       case 'year':
-        cutoffDate.setFullYear(now.getFullYear() - 1)
+        // Current calendar year (Jan 1 to today)
+        cutoffDate = getStartOfYear(now)
         break
+      default:
+        return data
     }
     
     return data.filter(item => new Date(item.date) >= cutoffDate)

@@ -25,6 +25,7 @@ import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
+import TypedConfirmDialog from '../components/TypedConfirmDialog'
 import LogManualSessionDialog from '../components/LogManualSessionDialog'
 import TimerControls from '../components/TimerControls'
 import GameDetails from '../components/GameDetails'
@@ -489,30 +490,32 @@ function PlaythroughDetail() {
           </DialogActions>
         </Dialog>
 
-        <ConfirmModal
+        <TypedConfirmDialog
           open={finishModalOpen}
           onClose={() => setFinishModalOpen(false)}
           onConfirm={() => {
             setFinishModalOpen(false)
             handlers.handleFinish()
           }}
-          title={t('playthrough.finishPlaythrough')}
-          message={t('playthrough.finishConfirm')}
-          confirmText={t('playthrough.yesFinish')}
-          confirmColor="success"
+          title="Finish Game"
+          message="Are you sure you want to mark this game as finished? This action will move it to your completed games."
+          confirmText="Finish"
+          requiredText="Finish"
+          destructive={false}
         />
 
-        <ConfirmModal
+        <TypedConfirmDialog
           open={dropModalOpen}
           onClose={() => setDropModalOpen(false)}
           onConfirm={() => {
             setDropModalOpen(false)
             handlers.handleDrop()
           }}
-          title={t('playthrough.dropPlaythrough')}
-          message={t('playthrough.dropConfirm')}
-          confirmText={t('playthrough.yesDrop')}
-          confirmColor="error"
+          title="Drop Game"
+          message="Are you sure you want to drop this game? It will be moved to your dropped games list."
+          confirmText="Drop"
+          requiredText="Drop"
+          destructive
         />
 
         <ConfirmModal
@@ -528,17 +531,18 @@ function PlaythroughDetail() {
           confirmColor="primary"
         />
 
-        <ConfirmModal
+        <TypedConfirmDialog
           open={deleteModalOpen}
           onClose={() => setDeleteModalOpen(false)}
           onConfirm={() => {
             setDeleteModalOpen(false)
             handlers.handleDelete()
           }}
-          title={t('playthrough.delete')}
-          message={t('playthrough.deleteConfirm')}
-          confirmText={t('playthrough.yesDelete')}
-          confirmColor="error"
+          title="Delete Playthrough"
+          message="Are you sure you want to permanently delete this playthrough? This will remove all session data and cannot be undone."
+          confirmText="Delete"
+          requiredText="Delete"
+          destructive
         />
 
         <Snackbar

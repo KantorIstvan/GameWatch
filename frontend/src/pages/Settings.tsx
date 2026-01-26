@@ -1,7 +1,8 @@
-import { Container, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, Divider, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, Switch, FormControlLabel, Collapse, Autocomplete } from '@mui/material'
+import { Container, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, Divider, Button, TextField, Switch, FormControlLabel, Collapse, Autocomplete } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import TypedConfirmDialog from '../components/TypedConfirmDialog'
 import { Language, Schedule, DeleteForever, Favorite, ExpandMore, ExpandLess, Public } from '@mui/icons-material'
 import { useState, useEffect } from 'react'
 import { userApi } from '../services/api'
@@ -757,55 +758,41 @@ function Settings() {
         </Paper>
 
         {/* Delete Confirmation Dialog */}
-        <Dialog
+        <TypedConfirmDialog
           open={deleteDialogOpen}
           onClose={() => !deleting && setDeleteDialogOpen(false)}
-        >
-          <DialogTitle sx={{ color: '#d32f2f' }}>
-            Delete Account
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete your account? This will permanently remove:
-            </DialogContentText>
-            <Box component="ul" sx={{ mt: 2, pl: 2 }}>
-              <Typography component="li" variant="body2" color="text.secondary">
-                All your games
+          onConfirm={handleDeleteAccount}
+          title="Delete Account"
+          message={
+            <>
+              <Typography>
+                Are you sure you want to delete your account? This will permanently remove:
               </Typography>
-              <Typography component="li" variant="body2" color="text.secondary">
-                All playthroughs and session history
+              <Box component="ul" sx={{ mt: 2, pl: 2 }}>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  All your games
+                </Typography>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  All playthroughs and session history
+                </Typography>
+                <Typography component="li" variant="body2" color="text.secondary">
+                  All statistics and progress data
+                </Typography>
+              </Box>
+              <Typography sx={{ mt: 2, fontWeight: 'bold', color: '#d32f2f' }}>
+                This action cannot be undone!
               </Typography>
-              <Typography component="li" variant="body2" color="text.secondary">
-                All statistics and progress data
-              </Typography>
-            </Box>
-            <DialogContentText sx={{ mt: 2, fontWeight: 'bold', color: '#d32f2f' }}>
-              This action cannot be undone!
-            </DialogContentText>
-            {deleteError && (
-              <Typography color="error" sx={{ mt: 2 }}>
-                {deleteError}
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button 
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleDeleteAccount}
-              color="error"
-              variant="contained"
-              disabled={deleting}
-              autoFocus
-            >
-              {deleting ? 'Deleting...' : 'Delete Account'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              {deleteError && (
+                <Typography color="error" sx={{ mt: 2 }}>
+                  {deleteError}
+                </Typography>
+              )}
+            </>
+          }
+          confirmText="Delete Account"
+          requiredText="Delete"
+          destructive
+        />
       </Box>
     </Container>
   )

@@ -218,6 +218,9 @@ function Dashboard() {
           InputLabelProps={{
             shrink: true,
           }}
+          inputProps={{
+            max: new Date().toISOString().split('T')[0], // Prevent future dates
+          }}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,

@@ -83,9 +83,22 @@ public class UserStatisticsService {
         LocalDateTime now = LocalDateTime.now();
         
         return switch (interval.toLowerCase()) {
-            case "week" -> now.minusWeeks(1).atZone(ZoneId.systemDefault()).toInstant();
-            case "month" -> now.minusMonths(1).atZone(ZoneId.systemDefault()).toInstant();
-            case "year" -> now.minusYears(1).atZone(ZoneId.systemDefault()).toInstant();
+            case "week" -> {
+                // Get Monday of current week at 00:00 (ISO 8601 standard)
+                LocalDate today = now.toLocalDate();
+                LocalDate monday = today.with(java.time.DayOfWeek.MONDAY);
+                yield monday.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            }
+            case "month" -> {
+                // Get 1st day of current month at 00:00
+                LocalDate firstOfMonth = now.toLocalDate().withDayOfMonth(1);
+                yield firstOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            }
+            case "year" -> {
+                // Get January 1st of current year at 00:00
+                LocalDate firstOfYear = now.toLocalDate().withDayOfYear(1);
+                yield firstOfYear.atStartOfDay(ZoneId.systemDefault()).toInstant();
+            }
             default -> Instant.EPOCH;
         };
     }
