@@ -2,10 +2,13 @@ import React from 'react'
 import { DateTimePicker as MuiDateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { renderTimeViewClock } from '@mui/x-date-pickers/timeViewRenderers'
 import dayjs, { Dayjs } from 'dayjs'
+import 'dayjs/locale/en'
+import { useTimeFormat } from '../contexts/TimeFormatContext'
 
 interface DateTimePickerProps {
-  label: string
+  label?: string
   value: string
   onChange: (dateTime: string) => void
   disabled?: boolean
@@ -27,6 +30,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   maxDateTime,
   minDateTime,
 }) => {
+  const { timeFormat } = useTimeFormat()
+  
   const handleChange = (newValue: Dayjs | null) => {
     if (newValue) {
       onChange(newValue.format('YYYY-MM-DDTHH:mm'))
@@ -36,7 +41,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const parsedValue = value ? dayjs(value) : null
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
       <MuiDateTimePicker
         label={label}
         value={parsedValue}
@@ -44,6 +49,12 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         disabled={disabled}
         maxDateTime={maxDateTime}
         minDateTime={minDateTime}
+        ampm={timeFormat === '12h'}
+        viewRenderers={{
+          hours: renderTimeViewClock,
+          minutes: renderTimeViewClock,
+          seconds: renderTimeViewClock,
+        }}
         slotProps={{
           textField: {
             required,
@@ -63,6 +74,23 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               '& .MuiPaper-root': {
                 borderRadius: 2,
                 boxShadow: (theme) => theme.shadows[8],
+              },
+              '& .MuiDayCalendar-header': {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                justifyItems: 'center',
+              },
+              '& .MuiDayCalendar-weekContainer': {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                justifyItems: 'center',
+                margin: 0,
+              },
+              '& .MuiPickersDay-root': {
+                margin: 0,
+              },
+              '& .MuiDayCalendar-weekDayLabel': {
+                margin: 0,
               },
             },
           },
