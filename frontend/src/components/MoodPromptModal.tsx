@@ -17,6 +17,7 @@ import {
   SentimentSatisfied,
   SentimentVerySatisfied,
 } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import healthApi from '../services/healthApi'
 
 interface MoodPromptModalProps {
@@ -34,8 +35,6 @@ const moodIcons = [
   <SentimentVerySatisfied key="5" />,
 ]
 
-const moodLabels = ['Very Bad', 'Bad', 'Neutral', 'Good', 'Excellent']
-
 export default function MoodPromptModal({
   open,
   onClose,
@@ -43,8 +42,17 @@ export default function MoodPromptModal({
   required = false,
 }: MoodPromptModalProps) {
   const theme = useTheme()
+  const { t } = useTranslation()
   const [moodRating, setMoodRating] = useState<number>(3)
   const [submitting, setSubmitting] = useState(false)
+
+  const moodLabels = [
+    t('mood.veryBad'),
+    t('mood.bad'),
+    t('mood.neutral'),
+    t('mood.good'),
+    t('mood.excellent'),
+  ]
 
   const handleSubmit = async () => {
     setSubmitting(true)
@@ -93,10 +101,10 @@ export default function MoodPromptModal({
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          How was your session?
+          {t('mood.prompt')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Rate your gaming mood from 1 to 5
+          {t('mood.rateSession')}
         </Typography>
       </DialogTitle>
       <DialogContent>
@@ -157,7 +165,7 @@ export default function MoodPromptModal({
             disabled={submitting}
             sx={{ mr: 1 }}
           >
-            Skip
+            {t('mood.skip')}
           </Button>
         )}
         <Button
@@ -171,7 +179,7 @@ export default function MoodPromptModal({
             fontWeight: 600,
           }}
         >
-          {submitting ? 'Submitting...' : 'Submit'}
+          {submitting ? t('mood.submitting') : t('mood.submit')}
         </Button>
       </DialogActions>
     </Dialog>

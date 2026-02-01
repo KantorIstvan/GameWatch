@@ -80,9 +80,9 @@ function Settings() {
   const handleSaveAge = async () => {
     try {
       await healthApi.updateUserAge(age === '' ? null : Number(age))
-      toast.success('Age updated successfully')
+      toast.success(t('settings.ageUpdated'))
     } catch (error) {
-      toast.error('Failed to update age')
+      toast.error(t('settings.ageUpdateFailed'))
     }
   }
 
@@ -90,9 +90,9 @@ function Settings() {
     try {
       await userApi.updateTimezone(timezone)
       setTimezoneContext(timezone) // Update context with new timezone
-      toast.success('Timezone updated successfully')
+      toast.success(t('settings.timezoneUpdated'))
     } catch (error) {
-      toast.error('Failed to update timezone')
+      toast.error(t('settings.timezoneUpdateFailed'))
     }
   }
 
@@ -102,9 +102,9 @@ function Settings() {
     try {
       setSavingHealth(true)
       await healthApi.updateHealthSettings(healthSettings)
-      toast.success('Health settings saved successfully')
+      toast.success(t('settings.healthSettingsSaved'))
     } catch (error) {
-      toast.error('Failed to save health settings')
+      toast.error(t('settings.healthSettingsFailed'))
     } finally {
       setSavingHealth(false)
     }
@@ -128,9 +128,9 @@ function Settings() {
     try {
       await userApi.updateFirstDayOfWeek(newWeekStart)
       setWeekStartContext(newWeekStart)
-      toast.success('First day of week updated successfully')
+      toast.success(t('settings.firstDayUpdated'))
     } catch (error) {
-      toast.error('Failed to update first day of week')
+      toast.error(t('settings.firstDayUpdateFailed'))
     }
   }
 
@@ -167,10 +167,10 @@ function Settings() {
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success('Backup exported successfully')
+      toast.success(t('settings.backupExported'))
     } catch (error: any) {
       console.error('Export backup error:', error)
-      toast.error('Failed to export backup')
+      toast.error(t('settings.backupExportFailed'))
     } finally {
       setExportingBackup(false)
     }
@@ -195,7 +195,7 @@ function Settings() {
       // Import the backup
       await backupApi.importBackup(backup)
       
-      toast.success('Backup imported successfully! Refreshing page...')
+      toast.success(t('settings.backupImported'))
       
       // Refresh the page after a short delay to show all imported data
       setTimeout(() => {
@@ -204,11 +204,11 @@ function Settings() {
     } catch (error: any) {
       console.error('Import backup error:', error)
       if (error.message === 'Invalid backup file format') {
-        toast.error('Invalid backup file format')
+        toast.error(t('settings.invalidBackupFormat'))
       } else if (error.response?.status === 400) {
-        toast.error('Incompatible backup version or corrupted data')
+        toast.error(t('settings.incompatibleBackup'))
       } else {
-        toast.error('Failed to import backup')
+        toast.error(t('settings.backupImportFailed'))
       }
     } finally {
       setImportingBackup(false)
@@ -512,7 +512,7 @@ function Settings() {
                   <TextField
                     {...params}
                     label={t('settings.timezone')}
-                    placeholder="Select timezone"
+                    placeholder={t('settings.selectTimezone')}
                   />
                 )}
                 sx={{
@@ -547,7 +547,7 @@ function Settings() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                Save
+                {t('settings.save')}
               </Button>
             </Box>
           </Box>
@@ -580,7 +580,7 @@ function Settings() {
                   flexGrow: 1
                 }}
               >
-                Health & Wellness
+                {t('settings.healthWellness')}
               </Typography>
               {healthExpanded ? <ExpandLess /> : <ExpandMore />}
             </Box>
@@ -592,7 +592,7 @@ function Settings() {
                 color: mode === 'light' ? '#6c757d' : '#a0a0a0'
               }}
             >
-              Configure health tracking, goals, and wellness reminders
+              {t('settings.healthDescription')}
             </Typography>
 
             <Collapse in={healthExpanded}>
@@ -600,17 +600,17 @@ function Settings() {
                 {/* Age Setting */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                    Your Age
+                    {t('settings.yourAge')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Used to calculate personalized health recommendations
+                    {t('settings.ageDescription')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
                       type="number"
                       value={age}
                       onChange={(e) => setAge(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder="Enter your age"
+                      placeholder={t('settings.enterAge')}
                       size="small"
                       inputProps={{ min: 0, max: 150 }}
                       sx={{ width: 150 }}
@@ -620,7 +620,7 @@ function Settings() {
                       size="small"
                       onClick={handleSaveAge}
                     >
-                      Save Age
+                      {t('settings.saveAge')}
                     </Button>
                   </Box>
                 </Box>
@@ -632,7 +632,7 @@ function Settings() {
                     {/* Notifications */}
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        Notifications & Reminders
+                        {t('settings.notificationsReminders')}
                       </Typography>
                       
                       <FormControlLabel
@@ -642,7 +642,7 @@ function Settings() {
                             onChange={(e) => handleHealthSettingChange('notificationsEnabled', e.target.checked)}
                           />
                         }
-                        label="Enable notifications"
+                        label={t('settings.enableNotifications')}
                         sx={{ mb: 1, display: 'block' }}
                       />
 
@@ -654,7 +654,7 @@ function Settings() {
                             disabled={!healthSettings.notificationsEnabled}
                           />
                         }
-                        label="Enable notification sounds"
+                        label={t('settings.enableSounds')}
                         sx={{ mb: 1, display: 'block', ml: 3 }}
                       />
 
@@ -668,7 +668,7 @@ function Settings() {
                             disabled={!healthSettings.notificationsEnabled}
                           />
                         }
-                        label={`Break reminder (every ${healthSettings.breakIntervalMinutes} min)`}
+                        label={t('settings.breakReminder', { minutes: healthSettings.breakIntervalMinutes })}
                         sx={{ mb: 1, display: 'block' }}
                       />
 
@@ -680,7 +680,7 @@ function Settings() {
                             disabled={!healthSettings.notificationsEnabled}
                           />
                         }
-                        label={`Hydration reminder (every ${healthSettings.hydrationIntervalMinutes} min)`}
+                        label={t('settings.hydrationReminder', { minutes: healthSettings.hydrationIntervalMinutes })}
                         sx={{ mb: 1, display: 'block' }}
                       />
 
@@ -692,7 +692,7 @@ function Settings() {
                             disabled={!healthSettings.notificationsEnabled}
                           />
                         }
-                        label={`Stand & stretch reminder (every ${healthSettings.standIntervalMinutes} min)`}
+                        label={t('settings.standReminder', { minutes: healthSettings.standIntervalMinutes })}
                         sx={{ display: 'block' }}
                       />
                     </Box>
@@ -702,7 +702,7 @@ function Settings() {
                     {/* Goals */}
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        Gaming Goals
+                        {t('settings.gamingGoals')}
                       </Typography>
 
                       <FormControlLabel
@@ -712,7 +712,7 @@ function Settings() {
                             onChange={(e) => handleHealthSettingChange('goalsEnabled', e.target.checked)}
                           />
                         }
-                        label="Enable gaming goals"
+                        label={t('settings.enableGoals')}
                         sx={{ mb: 2, display: 'block' }}
                       />
 
@@ -726,7 +726,7 @@ function Settings() {
                                   onChange={(e) => handleHealthSettingChange('maxHoursPerDayEnabled', e.target.checked)}
                                 />
                               }
-                              label="Max hours per day"
+                              label={t('settings.maxHoursPerDay')}
                             />
                             {healthSettings.maxHoursPerDayEnabled && (
                               <TextField
@@ -748,7 +748,7 @@ function Settings() {
                                   onChange={(e) => handleHealthSettingChange('maxSessionsPerDayEnabled', e.target.checked)}
                                 />
                               }
-                              label="Max sessions per day"
+                              label={t('settings.maxSessionsPerDay')}
                             />
                             {healthSettings.maxSessionsPerDayEnabled && (
                               <TextField
@@ -770,7 +770,7 @@ function Settings() {
                                   onChange={(e) => handleHealthSettingChange('maxHoursPerWeekEnabled', e.target.checked)}
                                 />
                               }
-                              label="Max hours per week"
+                              label={t('settings.maxHoursPerWeek')}
                             />
                             {healthSettings.maxHoursPerWeekEnabled && (
                               <TextField
@@ -791,7 +791,7 @@ function Settings() {
                                 onChange={(e) => handleHealthSettingChange('goalNotificationsEnabled', e.target.checked)}
                               />
                             }
-                            label="Show notifications when goals are reached"
+                            label={t('settings.showGoalNotifications')}
                           />
                         </Box>
                       )}
@@ -802,7 +802,7 @@ function Settings() {
                     {/* Mood Tracking */}
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        Mood Tracking
+                        {t('settings.moodTracking')}
                       </Typography>
 
                       <FormControlLabel
@@ -812,7 +812,7 @@ function Settings() {
                             onChange={(e) => handleHealthSettingChange('moodPromptEnabled', e.target.checked)}
                           />
                         }
-                        label="Prompt for mood after each session"
+                        label={t('settings.promptMoodAfterSession')}
                         sx={{ mb: 1, display: 'block' }}
                       />
 
@@ -824,7 +824,7 @@ function Settings() {
                               onChange={(e) => handleHealthSettingChange('moodPromptRequired', e.target.checked)}
                             />
                           }
-                          label="Make mood entry required (cannot skip)"
+                          label={t('settings.moodRequired')}
                           sx={{ display: 'block', ml: 3 }}
                         />
                       )}
@@ -843,7 +843,7 @@ function Settings() {
                           fontWeight: 600,
                         }}
                       >
-                        {savingHealth ? 'Saving...' : 'Save Health Settings'}
+                        {savingHealth ? t('settings.savingHealthSettings') : t('settings.saveHealthSettings')}
                       </Button>
                     </Box>
                   </>
@@ -851,7 +851,7 @@ function Settings() {
 
                 {loadingHealth && (
                   <Box sx={{ textAlign: 'center', py: 3 }}>
-                    <Typography color="text.secondary">Loading health settings...</Typography>
+                    <Typography color="text.secondary">{t('settings.loadingHealthSettings')}</Typography>
                   </Box>
                 )}
               </Box>
@@ -876,7 +876,7 @@ function Settings() {
                   color: mode === 'light' ? '#212529' : '#ffffff'
                 }}
               >
-                Data Backup & Import
+                {t('settings.dataBackup')}
               </Typography>
             </Box>
             <Typography 
@@ -886,7 +886,7 @@ function Settings() {
                 color: mode === 'light' ? '#6c757d' : '#a0a0a0'
               }}
             >
-              Export your data to preserve and migrate your games, playthroughs, and sessions across accounts or devices.
+              {t('settings.backupDescription')}
             </Typography>
             
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -906,7 +906,7 @@ function Settings() {
                   },
                 }}
               >
-                {exportingBackup ? 'Exporting...' : 'Save Backup'}
+                {exportingBackup ? t('settings.exportingBackup') : t('settings.saveBackup')}
               </Button>
 
               <input
@@ -935,7 +935,7 @@ function Settings() {
                   },
                 }}
               >
-                {importingBackup ? 'Importing...' : 'Import Backup'}
+                {importingBackup ? t('settings.importingBackup') : t('settings.importBackup')}
               </Button>
             </Box>
 
@@ -948,14 +948,14 @@ function Settings() {
                 : 'rgba(102, 126, 234, 0.15)',
             }}>
               <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                📋 What's included in backups:
+                {t('settings.backupIncludesTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                • All games with metadata and statistics<br />
-                • All playthroughs with configurations and progress<br />
-                • Complete session history with timestamps<br />
-                • Mood entries and health settings<br />
-                • All timers and custom settings
+                {t('settings.backupIncludesGames')}<br />
+                {t('settings.backupIncludesPlaythroughs')}<br />
+                {t('settings.backupIncludesSessions')}<br />
+                {t('settings.backupIncludesMood')}<br />
+                {t('settings.backupIncludesTimers')}
               </Typography>
             </Box>
           </Box>
@@ -978,7 +978,7 @@ function Settings() {
                   color: '#d32f2f'
                 }}
               >
-                Danger Zone
+                {t('settings.dangerZone')}
               </Typography>
             </Box>
             <Typography 
@@ -988,7 +988,7 @@ function Settings() {
                 color: mode === 'light' ? '#6c757d' : '#a0a0a0'
               }}
             >
-              Permanently delete your account and all associated data. This action cannot be undone.
+              {t('settings.dangerZoneDescription')}
             </Typography>
             <Button
               variant="outlined"
@@ -1003,7 +1003,7 @@ function Settings() {
                 },
               }}
             >
-              Delete Account
+              {t('settings.deleteAccount')}
             </Button>
           </Box>
         </Paper>
@@ -1013,32 +1013,31 @@ function Settings() {
           open={deleteDialogOpen}
           onClose={() => !deleting && setDeleteDialogOpen(false)}
           onConfirm={handleDeleteAccount}
-          title="Delete Account"
+          title={t('settings.deleteAccountTitle')}
           message={
             <>
               <Typography sx={{ mb: 2, fontWeight: 600, color: '#667eea' }}>
-                💡 Tip: Save a backup first!
+                {t('settings.deleteAccountTip')}
               </Typography>
               <Typography sx={{ mb: 2 }}>
-                Use the "Save Backup" button above to export your data before deletion. 
-                You can then import it into a new account.
+                {t('settings.deleteAccountBackupTip')}
               </Typography>
               <Typography>
-                Are you sure you want to delete your account? This will permanently remove:
+                {t('settings.deleteAccountConfirm')}
               </Typography>
               <Box component="ul" sx={{ mt: 2, pl: 2 }}>
                 <Typography component="li" variant="body2" color="text.secondary">
-                  All your games
+                  {t('settings.deleteAccountGames')}
                 </Typography>
                 <Typography component="li" variant="body2" color="text.secondary">
-                  All playthroughs and session history
+                  {t('settings.deleteAccountPlaythroughs')}
                 </Typography>
                 <Typography component="li" variant="body2" color="text.secondary">
-                  All statistics and progress data
+                  {t('settings.deleteAccountStats')}
                 </Typography>
               </Box>
               <Typography sx={{ mt: 2, fontWeight: 'bold', color: '#d32f2f' }}>
-                This action cannot be undone!
+                {t('settings.deleteAccountWarning')}
               </Typography>
               {deleteError && (
                 <Typography color="error" sx={{ mt: 2 }}>
@@ -1047,8 +1046,8 @@ function Settings() {
               )}
             </>
           }
-          confirmText="Delete Account"
-          requiredText="Delete"
+          confirmText={t('settings.deleteAccount')}
+          requiredText={t('settings.deleteAccountRequired')}
           destructive
         />
       </Box>

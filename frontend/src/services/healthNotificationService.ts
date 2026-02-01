@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify'
+import i18n from '../i18n/i18n'
 import { HealthSettings } from './healthApi'
 
 class HealthNotificationService {
@@ -93,7 +94,7 @@ class HealthNotificationService {
   private showBreakReminder() {
     const playSound = this.settings?.soundsEnabled
 
-    toast.info('⏸️ Time for a break! Take a few minutes to rest your eyes.', {
+    toast.info(i18n.t('notifications.breakReminder'), {
       autoClose: 10000,
       pauseOnHover: true,
       draggable: true,
@@ -110,7 +111,7 @@ class HealthNotificationService {
   private showHydrationReminder() {
     const playSound = this.settings?.soundsEnabled
 
-    toast.info('💧 Stay hydrated! Grab a glass of water.', {
+    toast.info(i18n.t('notifications.hydrationReminder'), {
       autoClose: 8000,
       pauseOnHover: true,
       draggable: true,
@@ -124,7 +125,7 @@ class HealthNotificationService {
   private showStandReminder() {
     const playSound = this.settings?.soundsEnabled
 
-    toast.info('🧘 Time to stand up and stretch!', {
+    toast.info(i18n.t('notifications.standReminder'), {
       autoClose: 8000,
       pauseOnHover: true,
       draggable: true,
@@ -142,8 +143,8 @@ class HealthNotificationService {
 
     const message =
       type === 'hours'
-        ? `⚠️ Daily goal reached! You've played ${current.toFixed(1)} hours (limit: ${max} hours)`
-        : `⚠️ Daily goal reached! You've had ${current} sessions (limit: ${max} sessions)`
+        ? i18n.t('notifications.goalReachedHours', { current: current.toFixed(1), max })
+        : i18n.t('notifications.goalReachedSessions', { current, max })
 
     toast.warning(message, {
       autoClose: 15000,
@@ -163,8 +164,8 @@ class HealthNotificationService {
 
     const message =
       type === 'hours'
-        ? `🚨 Daily limit exceeded! You've played ${current.toFixed(1)} hours (limit: ${max} hours)`
-        : `🚨 Daily limit exceeded! You've had ${current} sessions (limit: ${max} sessions)`
+        ? i18n.t('notifications.goalExceededHours', { current: current.toFixed(1), max })
+        : i18n.t('notifications.goalExceededSessions', { current, max })
 
     toast.error(message, {
       autoClose: false, // Don't auto-close for exceeded goals
@@ -182,7 +183,7 @@ class HealthNotificationService {
       return
     }
 
-    toast.warning('🌙 Late night gaming detected. Consider taking a break for better sleep.', {
+    toast.warning(i18n.t('notifications.lateNightWarning'), {
       autoClose: 12000,
       pauseOnHover: true,
       draggable: true,

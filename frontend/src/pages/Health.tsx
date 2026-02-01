@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Info,
 } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import CalHeatmap from 'cal-heatmap'
 import 'cal-heatmap/cal-heatmap.css'
 import Tooltip from 'cal-heatmap/plugins/Tooltip'
@@ -54,6 +55,7 @@ function formatDuration(seconds: number): string {
 
 export default function Health() {
   const theme = useTheme()
+  const { t } = useTranslation()
   const { isAuthReady, isAuthenticated } = useAuthContext()
   const { getFirstDayNumber } = useWeekStart()
   const { timeFormat } = useTimeFormat()
@@ -159,7 +161,7 @@ export default function Health() {
               day: 'numeric', 
               year: 'numeric' 
             })
-            return `${formattedDate}: ${value !== null && value !== undefined ? `Score ${value}` : 'No data'}`
+            return `${formattedDate}: ${value !== null && value !== undefined ? `${t('health.scoreLabel')} ${value}` : t('health.noDataShort')}`
           },
         },
       ],
@@ -167,7 +169,7 @@ export default function Health() {
         LegendLite,
         {
           itemSelector: '#legend',
-          label: 'Health Score',
+          label: t('health.legend'),
         },
       ],
     ])
@@ -199,7 +201,7 @@ export default function Health() {
       <Box>
         <Box sx={{ my: 4 }}>
           <Typography variant="h5" color="text.secondary">
-            No health data available yet. Start gaming to track your health!
+            {t('health.noData')}
           </Typography>
         </Box>
       </Box>
@@ -223,7 +225,7 @@ export default function Health() {
             color: theme.palette.mode === 'light' ? '#212529' : '#ffffff'
           }}
         >
-          Health Dashboard
+          {t('health.title')}
         </Typography>
 
         {/* Top Section: Health Score Card + Weekly Trend */}
@@ -248,9 +250,9 @@ export default function Health() {
               <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
-                    Today's Health Score
+                    {t('health.todaysScore')}
                   </Typography>
-                  <MuiTooltip title="Health score is calculated based on hours played, sessions, breaks, mood, and late-night gaming">
+                  <MuiTooltip title={t('health.scoreTooltip')}>
                     <IconButton size="small">
                       <Info />
                     </IconButton>
@@ -271,7 +273,7 @@ export default function Health() {
                       {currentScore !== null ? currentScore : '--'}
                     </Typography>
                     <Typography variant="h6" color="text.secondary">
-                      / 100
+                      {t('health.outOf100')}
                     </Typography>
                   </Box>
                 </Box>
@@ -304,7 +306,7 @@ export default function Health() {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUp sx={{ mr: 1, color: '#667eea' }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Weekly Trend
+                  {t('health.weeklyTrend')}
                 </Typography>
               </Box>
 
@@ -314,7 +316,7 @@ export default function Health() {
                     {Math.round(dashboard.weeklyAverageScore)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Average score this week
+                    {t('health.averageScoreWeek')}
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end', height: 80 }}>
@@ -339,7 +341,7 @@ export default function Health() {
                 </>
               ) : (
                 <Typography color="text.secondary">
-                  Not enough data yet. Keep gaming!
+                  {t('health.notEnoughData')}
                 </Typography>
               )}
               </Box>
@@ -376,7 +378,7 @@ export default function Health() {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            Year Overview
+            {t('health.yearOverview')}
           </Typography>
           <Box 
             ref={calHeatmapRef} 
@@ -438,7 +440,7 @@ export default function Health() {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <SelfImprovement sx={{ mr: 1, color: '#667eea' }} />
                   <Typography variant="subtitle2" fontWeight={600}>
-                    Break Compliance
+                    {t('health.breakCompliance')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
@@ -447,7 +449,7 @@ export default function Health() {
                     : '--'}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Sessions with breaks this week
+                  {t('health.sessionsWithBreaks')}
                 </Typography>
               </CardContent>
             </Card>
@@ -474,7 +476,7 @@ export default function Health() {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Mood sx={{ mr: 1, color: '#f59e0b' }} />
                   <Typography variant="subtitle2" fontWeight={600}>
-                    Average Mood
+                    {t('health.averageMood')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
@@ -483,7 +485,7 @@ export default function Health() {
                     : '--'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Out of 5.0 this week
+                  {t('health.outOf5Week')}
                 </Typography>
               </CardContent>
             </Card>
@@ -510,14 +512,14 @@ export default function Health() {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <NightsStay sx={{ mr: 1, color: '#8b5cf6' }} />
                   <Typography variant="subtitle2" fontWeight={600}>
-                    Late Night Gaming
+                    {t('health.lateNightGaming')}
                   </Typography>
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
                   {Math.floor(dashboard.weekMetrics.lateNightMinutes / 60)}h
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  After {timeFormat === '12h' ? '10:00 PM' : '22:00'} this week
+                  {t('health.afterTime', { time: timeFormat === '12h' ? '10:00 PM' : '22:00' })}
                 </Typography>
               </CardContent>
             </Card>
@@ -542,14 +544,14 @@ export default function Health() {
             }}
           >
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-              Goal Progress
+              {t('health.goalProgress')}
             </Typography>
 
             <Grid container spacing={3}>
               {dashboard.goalProgress.maxHoursPerDayEnabled && dashboard.goalProgress.maxHoursPerDay && (
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Hours Today
+                    {t('health.hoursToday')}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -568,7 +570,7 @@ export default function Health() {
                     }}
                   />
                   <Typography variant="body2">
-                    {dashboard.goalProgress.hoursToday.toFixed(1)} / {dashboard.goalProgress.maxHoursPerDay} hours
+                    {dashboard.goalProgress.hoursToday.toFixed(1)} / {dashboard.goalProgress.maxHoursPerDay} {t('health.hours')}
                   </Typography>
                 </Grid>
               )}
@@ -576,7 +578,7 @@ export default function Health() {
               {dashboard.goalProgress.maxSessionsPerDayEnabled && dashboard.goalProgress.maxSessionsPerDay && (
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Sessions Today
+                    {t('health.sessionsToday')}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -595,7 +597,7 @@ export default function Health() {
                     }}
                   />
                   <Typography variant="body2">
-                    {dashboard.goalProgress.sessionsToday} / {dashboard.goalProgress.maxSessionsPerDay} sessions
+                    {dashboard.goalProgress.sessionsToday} / {dashboard.goalProgress.maxSessionsPerDay} {t('health.sessions')}
                   </Typography>
                 </Grid>
               )}
@@ -603,7 +605,7 @@ export default function Health() {
               {dashboard.goalProgress.maxHoursPerWeekEnabled && dashboard.goalProgress.maxHoursPerWeek && (
                 <Grid item xs={12} md={4}>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Hours This Week
+                    {t('health.hoursThisWeek')}
                   </Typography>
                   <LinearProgress
                     variant="determinate"
@@ -622,7 +624,7 @@ export default function Health() {
                     }}
                   />
                   <Typography variant="body2">
-                    {dashboard.goalProgress.hoursThisWeek.toFixed(1)} / {dashboard.goalProgress.maxHoursPerWeek} hours
+                    {dashboard.goalProgress.hoursThisWeek.toFixed(1)} / {dashboard.goalProgress.maxHoursPerWeek} {t('health.hours')}
                   </Typography>
                 </Grid>
               )}
@@ -646,7 +648,7 @@ export default function Health() {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            Recent Sessions
+            {t('health.recentSessions')}
           </Typography>
 
           {dashboard.recentSessions.length > 0 ? (
@@ -679,7 +681,7 @@ export default function Health() {
                   </Box>
                   {session.moodRating && (
                     <Chip
-                      label={`Mood: ${session.moodRating}/5`}
+                      label={`${t('health.mood')}: ${session.moodRating}/5`}
                       size="small"
                       sx={{
                         bgcolor: 
@@ -698,7 +700,7 @@ export default function Health() {
             </Box>
           ) : (
             <Typography color="text.secondary">
-              No sessions recorded yet.
+              {t('health.noSessionsYet')}
             </Typography>
           )}
         </Paper>

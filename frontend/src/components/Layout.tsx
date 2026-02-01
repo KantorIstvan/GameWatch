@@ -64,7 +64,7 @@ function Layout() {
     { label: t('nav.statistics'), path: '/statistics', icon: <BarChart /> },
     { label: t('nav.myGames'), path: '/games', icon: <VideogameAsset /> },
     { label: t('nav.calendar'), path: '/calendar', icon: <CalendarMonth /> },
-    { label: 'Health', path: '/health', icon: <Favorite /> },
+    { label: t('nav.health'), path: '/health', icon: <Favorite /> },
   ]
 
   if (!isAuthenticated) {
