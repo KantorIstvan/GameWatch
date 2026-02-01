@@ -104,6 +104,9 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
               '& .MuiDayCalendar-weekDayLabel': {
                 margin: 0,
               },
+              '& .MuiTimeClock-root': {
+                marginTop: 5,
+              },
             },
           },
         }}
