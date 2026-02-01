@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Playthrough, getPlatformColor } from '../types'
 import { formatTimeHMS, formatDate, formatPlaythroughType, getPlaythroughTypeColor } from '../utils/formatters'
+import { useSessionTimer } from '../contexts/SessionTimerContext'
 
 interface StopwatchCardProps {
   playthrough: Playthrough
@@ -25,28 +26,25 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const theme = useTheme()
+  const sessionTimer = useSessionTimer()
   const [localPlaythrough, setLocalPlaythrough] = useState<Playthrough>(playthrough)
   const [elapsedTime, setElapsedTime] = useState<number>(0)
-  const [currentSessionTime, setCurrentSessionTime] = useState<number>(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Calculate currentSessionTime dynamically from playthrough data
+  const currentSessionTime = (localPlaythrough.isActive || localPlaythrough.isPaused) && localPlaythrough.sessionStartTime
+    ? sessionTimer.getSessionTime(
+        localPlaythrough.id,
+        (localPlaythrough.durationSeconds || 0) - (localPlaythrough.sessionStartDurationSeconds || 0),
+        localPlaythrough.startedAt || null,
+        localPlaythrough.isActive
+      )
+    : 0
 
   useEffect(() => {
     setLocalPlaythrough(playthrough)
-    
-    if ((playthrough.isActive || playthrough.isPaused) && playthrough.startedAt) {
-      // Calculate current session elapsed time (for both active and paused)
-      const now = Date.now()
-      const startTime = new Date(playthrough.startedAt).getTime()
-      const currentSessionElapsed = Math.floor((now - startTime) / 1000)
-      setCurrentSessionTime(currentSessionElapsed)
-      
-      // Set overall time to base duration (frozen during active/paused session)
-      setElapsedTime(playthrough.durationSeconds || 0)
-    } else {
-      // When idle (not active and not paused), show total duration
-      setElapsedTime(playthrough.durationSeconds || 0)
-      setCurrentSessionTime(0)
-    }
+    // Always set elapsed time from playthrough data
+    setElapsedTime(playthrough.durationSeconds || 0)
   }, [playthrough])
 
   useEffect(() => {
@@ -56,9 +54,9 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
     }
     
     if (localPlaythrough.isActive) {
-      // Only increment current session time, not overall time
+      // Force re-render every second to update the calculated time
       intervalRef.current = setInterval(() => {
-        setCurrentSessionTime(prev => prev + 1)
+        setLocalPlaythrough(prev => ({ ...prev }))
       }, 1000)
     }
 

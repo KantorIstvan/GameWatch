@@ -34,4 +34,6 @@ public class PlaythroughDto {
     private Long importedFromPlaythroughId;
     private Long importedDurationSeconds;
     private Long lastSessionHistoryId;
+    private Instant sessionStartTime;
+    private Long sessionStartDurationSeconds;
 }

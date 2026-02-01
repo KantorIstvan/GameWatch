@@ -571,6 +571,8 @@ public class PlaythroughService {
             .createdAt(playthrough.getCreatedAt())
             .importedFromPlaythroughId(playthrough.getImportedFromPlaythrough() != null ? playthrough.getImportedFromPlaythrough().getId() : null)
             .importedDurationSeconds(playthrough.getImportedDurationSeconds())
+            .sessionStartTime(playthrough.getSessionStartTime())
+            .sessionStartDurationSeconds(playthrough.getSessionStartDurationSeconds())
             .build();
     }
 }

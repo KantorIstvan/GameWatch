@@ -17,6 +17,7 @@ import Loading from './components/Loading'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { TimeFormatProvider } from './contexts/TimeFormatContext'
+import { SessionTimerProvider } from './contexts/SessionTimerContext'
 import { useHealthGoals } from './hooks/useHealthGoals'
 
 function AppContent() {
@@ -76,9 +77,11 @@ function App() {
     <Suspense fallback={<Loading />}>
       <ThemeProvider>
         <AuthProvider>
-          <TimeFormatProvider>
-            <AppContent />
-          </TimeFormatProvider>
+          <SessionTimerProvider>
+            <TimeFormatProvider>
+              <AppContent />
+            </TimeFormatProvider>
+          </SessionTimerProvider>
         </AuthProvider>
       </ThemeProvider>
     </Suspense>

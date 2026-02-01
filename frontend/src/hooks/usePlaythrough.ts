@@ -4,17 +4,28 @@ import { playthroughsApi, gamesApi } from '../services/api'
 import healthApi from '../services/healthApi'
 import { Playthrough, Game } from '../types'
 import { healthNotificationService } from '../services/healthNotificationService'
+import { useSessionTimer } from '../contexts/SessionTimerContext'
 
 export function usePlaythrough(id: number, isAuthReady: boolean) {
   const navigate = useNavigate()
+  const sessionTimer = useSessionTimer()
   const [playthrough, setPlaythrough] = useState<Playthrough | null>(null)
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [currentSessionTime, setCurrentSessionTime] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [timerGradient, setTimerGradient] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+  
+  // Calculate currentSessionTime dynamically from playthrough data
+  const currentSessionTime = playthrough && (playthrough.isActive || playthrough.isPaused) && playthrough.sessionStartTime
+    ? sessionTimer.getSessionTime(
+        id,
+        (playthrough.durationSeconds || 0) - (playthrough.sessionStartDurationSeconds || 0),
+        playthrough.startedAt || null,
+        playthrough.isActive
+      )
+    : 0
 
   const fetchPlaythrough = useCallback(async () => {
     try {
@@ -25,20 +36,8 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(ptResponse.data)
       setGame(gameResponse.data)
       
-      if ((ptResponse.data.isActive || ptResponse.data.isPaused) && ptResponse.data.startedAt) {
-        // Calculate current session time from when it started (for both active and paused)
-        const now = Date.now()
-        const startTime = new Date(ptResponse.data.startedAt).getTime()
-        const currentSessionSeconds = Math.floor((now - startTime) / 1000)
-        setCurrentSessionTime(currentSessionSeconds)
-        
-        // Set elapsed time to the base duration (frozen overall timer)
-        setElapsedTime(ptResponse.data.durationSeconds || 0)
-      } else {
-        // When idle (not active and not paused), show total duration
-        setElapsedTime(ptResponse.data.durationSeconds || 0)
-        setCurrentSessionTime(0)
-      }
+      // Always set elapsed time from backend data
+      setElapsedTime(ptResponse.data.durationSeconds || 0)
       
       setIsRunning(ptResponse.data.isActive === true)
       setError(null)
@@ -67,9 +66,9 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
     let lateNightCheckInterval: NodeJS.Timeout | null = null
     
     if (isRunning && playthrough?.isActive === true) {
-      // Only increment the current session timer, not the overall timer
+      // Force re-render every second to update the calculated time
       interval = setInterval(() => {
-        setCurrentSessionTime((prev) => prev + 1)
+        setPlaythrough(prev => prev ? { ...prev } : null)
       }, 1000)
       
       // Check for late night gaming every 5 minutes
@@ -110,34 +109,16 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
 
   const handleStart = useCallback(async () => {
     try {
-      const wasPaused = playthrough?.isPaused === true
-      const previousSessionTime = currentSessionTime
-      
       const response = await playthroughsApi.start(id)
       setPlaythrough(response.data)
       setIsRunning(true)
-      
-      // If continuing from pause, keep the existing currentSessionTime
-      // Do NOT recalculate or reset it
-      if (wasPaused && previousSessionTime > 0) {
-        // Keep the exact time from before pause - DO NOT RESET
-        setCurrentSessionTime(previousSessionTime)
-      } else if (response.data.startedAt) {
-        // Only calculate from startedAt if starting a brand new session
-        const now = Date.now()
-        const startTime = new Date(response.data.startedAt).getTime()
-        const currentSessionSeconds = Math.floor((now - startTime) / 1000)
-        setCurrentSessionTime(currentSessionSeconds)
-      } else {
-        setCurrentSessionTime(0)
-      }
       
       // Start health notifications
       healthNotificationService.startSession()
     } catch (err: any) {
       setError('Failed to start timer.')
     }
-  }, [id, playthrough, currentSessionTime])
+  }, [id])
 
   const handlePause = useCallback(async () => {
     if (!playthrough?.isActive) return
@@ -167,8 +148,8 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       
       // Update the overall timer with the new total (base + current session)
       setElapsedTime(response.data.durationSeconds || 0)
-      // Hard reset: Clear currentSessionTime on session end
-      setCurrentSessionTime(0)
+      // Clear session - this will make currentSessionTime return 0
+      sessionTimer.clearSessionTime(id)
       
       // Stop all health reminders when session ends
       healthNotificationService.stopAllReminders()
@@ -182,7 +163,7 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       }
       throw err
     }
-  }, [id, playthrough])
+  }, [id, playthrough, sessionTimer])
 
   const handleFinish = useCallback(async () => {
     try {

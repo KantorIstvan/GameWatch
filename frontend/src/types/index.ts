@@ -63,6 +63,8 @@ export interface Playthrough {
   importedFromPlaythroughId?: number
   importedDurationSeconds?: number
   lastSessionHistoryId?: number
+  sessionStartTime?: string
+  sessionStartDurationSeconds?: number
   dominantColor1?: string
   dominantColor2?: string
   bannerImageUrl?: string
