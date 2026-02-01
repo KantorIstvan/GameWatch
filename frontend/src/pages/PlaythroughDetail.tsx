@@ -19,8 +19,11 @@ import {
   IconButton,
   alpha,
   useTheme,
+  Chip,
+  Tooltip,
+  Grid,
 } from '@mui/material'
-import { ArrowBack, Schedule, Close } from '@mui/icons-material'
+import { ArrowBack, Schedule, Close, Edit } from '@mui/icons-material'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import Loading from '../components/Loading'
@@ -28,16 +31,14 @@ import ConfirmModal from '../components/ConfirmModal'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
 import LogManualSessionDialog from '../components/LogManualSessionDialog'
 import TimerControls from '../components/TimerControls'
-import GameDetails from '../components/GameDetails'
 import TimerDisplay from '../components/playthrough/TimerDisplay'
-import PlaythroughHeader from '../components/playthrough/PlaythroughHeader'
 import MoodPromptModal from '../components/MoodPromptModal'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { usePlaythrough } from '../hooks/usePlaythrough'
 import { useMoodPrompt } from '../hooks/useHealth'
 import { formatTime } from '../utils/formatters'
-import { formatPlaythroughType, formatDescription } from '../utils/playthroughUtils'
+import { formatPlaythroughType, formatDescription, getPlaythroughTypeColor } from '../utils/playthroughUtils'
 
 function PlaythroughDetail() {
   const { id } = useParams()
@@ -285,46 +286,464 @@ function PlaythroughDetail() {
         </TimerDisplay>
 
         {/* Game Details Section */}
-        <Card elevation={3}>
-          <CardContent sx={{ p: 3 }}>
-            <PlaythroughHeader
-              playthrough={playthrough}
-              gameName={game.name}
-              onEditTitle={handleOpenTitleDialog}
-              onImport={handleOpenImportDialog}
-              showImportButton={playthrough.playthroughType === '100%'}
-              t={t}
-            />
+        <Card 
+          elevation={3}
+          sx={{
+            borderRadius: 2,
+            overflow: 'hidden',
+            boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            {/* 1. TITLE - Highest Priority */}
+            <Box sx={{ mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                <Typography 
+                  variant="h3" 
+                  component="h1"
+                  sx={{ 
+                    fontWeight: 700,
+                    fontSize: { xs: '2rem', md: '2.75rem' },
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.02em',
+                    flex: 1,
+                  }}
+                >
+                  {game.name}
+                </Typography>
+              </Box>
+              
+              {/* Playthrough Type Chip */}
+              <Box sx={{ mb: 2 }}>
+                <Chip 
+                  label={formatPlaythroughType(playthrough.playthroughType)} 
+                  size="medium"
+                  sx={{
+                    backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType),
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    px: 1,
+                  }}
+                />
+              </Box>
+
+              {/* Custom Title */}
+              {playthrough.title && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                  <Typography 
+                    variant="h6" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontWeight: 500,
+                      fontSize: '1.125rem',
+                    }}
+                  >
+                    {playthrough.title}
+                  </Typography>
+                  <Tooltip title={t('playthrough.editTitle')} arrow>
+                    <IconButton
+                      size="small"
+                      onClick={handleOpenTitleDialog}
+                      sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                          color: 'primary.main',
+                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        },
+                      }}
+                    >
+                      <Edit sx={{ fontSize: '1rem' }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+              {!playthrough.title && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    {t('playthrough.noTitle')}
+                  </Typography>
+                  <Tooltip title={t('playthrough.editTitle')} arrow>
+                    <IconButton
+                      size="small"
+                      onClick={handleOpenTitleDialog}
+                      sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                          color: 'primary.main',
+                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        },
+                      }}
+                    >
+                      <Edit sx={{ fontSize: '1rem' }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+
+              {/* Import Button */}
+              {playthrough.playthroughType === '100%' && (
+                <Box sx={{ mt: 2 }}>
+                  <Tooltip 
+                    title={playthrough.importedFromPlaythroughId 
+                      ? "Already imported from another playthrough (one-time only)" 
+                      : "Import playtime from another playthrough"
+                    } 
+                    arrow
+                  >
+                    <span>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleOpenImportDialog}
+                        disabled={playthrough.importedFromPlaythroughId !== null && playthrough.importedFromPlaythroughId !== undefined}
+                        sx={{
+                          fontSize: '0.75rem',
+                          py: 0.5,
+                          px: 1.5,
+                          borderRadius: 1.5,
+                          textTransform: 'none',
+                          borderWidth: 1.5,
+                          '&:hover': {
+                            borderWidth: 1.5,
+                          },
+                          '&:disabled': {
+                            borderColor: 'success.main',
+                            color: 'success.main',
+                            opacity: 0.7,
+                          }
+                        }}
+                      >
+                        {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
+
+            {/* 2. RATINGS - Secondary Priority */}
+            {(game.rating || game.metacritic) && (
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" spacing={3} flexWrap="wrap" sx={{ gap: 2 }}>
+                  {game.rating && (
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography 
+                          variant="h5" 
+                          component="span"
+                          sx={{ 
+                            fontWeight: 700,
+                            fontSize: '1.5rem',
+                          }}
+                        >
+                          {game.rating}/5
+                        </Typography>
+                        <Typography variant="h5" component="span">⭐</Typography>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                        {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
+                        {(game.ratingTop ?? 0) > 0 && ` • ${t('game.top')}: ${game.ratingTop}`}
+                      </Typography>
+                    </Box>
+                  )}
+                  {(game.metacritic ?? 0) > 0 && (
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+                        {/* Metacritic Score Badge */}
+                        <Box
+                          component={game.metacriticUrl ? 'a' : 'div'}
+                          href={game.metacriticUrl || undefined}
+                          target={game.metacriticUrl ? '_blank' : undefined}
+                          rel={game.metacriticUrl ? 'noopener noreferrer' : undefined}
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 0.5,
+                            fontWeight: 700,
+                            fontSize: '1.5rem',
+                            backgroundColor: (game.metacritic ?? 0) >= 75 ? '#66cc33' : (game.metacritic ?? 0) >= 50 ? '#ffcc33' : '#ff6666',
+                            color: '#fff',
+                            textDecoration: 'none',
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            border: '2px solid',
+                            borderColor: (game.metacritic ?? 0) >= 75 ? '#66cc33' : (game.metacritic ?? 0) >= 50 ? '#ffcc33' : '#ff6666',
+                            '&:hover': game.metacriticUrl ? {
+                              transform: 'scale(1.05)',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            } : {},
+                          }}
+                        >
+                          {game.metacritic}
+                        </Box>
+                        <Box>
+                          <Typography 
+                            variant="h6" 
+                            sx={{ 
+                              fontWeight: 600,
+                              fontSize: '1.125rem',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            Metacritic
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>
+                            {(game.metacritic ?? 0) >= 75 ? 'Generally favorable' : (game.metacritic ?? 0) >= 50 ? 'Mixed or average' : 'Generally unfavorable'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+                </Stack>
+              </Box>
+            )}
+
+            {/* 3. DEVELOPERS & PUBLISHERS - Tertiary Priority */}
+            {(game.developers || game.publishers) && (
+              <Box sx={{ mb: 2.5 }}>
+                <Stack direction="row" spacing={1} divider={<Typography color="text.secondary">•</Typography>}>
+                  {game.developers && (
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        fontWeight: 500,
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {game.developers}
+                    </Typography>
+                  )}
+                  {game.publishers && (
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontWeight: 500,
+                        fontSize: '1rem',
+                      }}
+                    >
+                      {game.publishers}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            )}
+
+            {/* 4. PLATFORMS - Supporting Information */}
+            {game.platforms && (
+              <Box sx={{ mb: 2.5 }}>
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                  {game.platforms.split(',').map((platform, idx) => (
+                    <Chip
+                      key={idx}
+                      label={platform.trim()}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 1,
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        borderWidth: 1.5,
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                        }
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
 
             <Divider sx={{ my: 3 }} />
 
-            <GameDetails game={game} t={t} />
+            {/* 5. REST - Remaining Content */}
+            <Box>
+              {/* Release Date and ESRB */}
+              <Grid container spacing={3} sx={{ mb: 2 }}>
+                {game.releaseDate && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
+                      {t('game.released')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5, fontSize: '0.9375rem' }}>
+                      {game.releaseDate}
+                    </Typography>
+                  </Grid>
+                )}
+                {game.esrbRating && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
+                      {t('game.esrbRating')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5, fontSize: '0.9375rem' }}>
+                      {game.esrbRating}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
 
-            {game.description && (
-              <>
-                <Divider sx={{ my: 3 }} />
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    {t('game.aboutThisGame')}
+              {/* Genres and Tags */}
+              {game.genres && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em', mb: 1, display: 'block' }}>
+                    {t('game.genres')}
                   </Typography>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 1 }}>
+                    {game.genres.split(', ').filter((g: string) => g).map((genre: string, idx: number) => (
+                      <Chip 
+                        key={idx} 
+                        label={genre} 
+                        size="small" 
+                        sx={{
+                          borderRadius: 1,
+                          backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+                          color: 'text.primary',
+                          fontWeight: 500,
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {game.tags && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em', mb: 1, display: 'block' }}>
+                    {t('game.tags')}
+                  </Typography>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 1 }}>
+                    {game.tags.split(', ').filter((t: string) => t).slice(0, 10).map((tag: string, idx: number) => (
+                      <Chip 
+                        key={idx} 
+                        label={tag} 
+                        size="small" 
+                        sx={{
+                          borderRadius: 1,
+                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                          color: 'primary.main',
+                          fontWeight: 500,
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Website */}
+              {game.website && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
+                    {t('game.officialWebsite')}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
+                    <a 
+                      href={game.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      style={{ 
+                        color: theme.palette.primary.main, 
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        transition: 'opacity 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                    >
+                      {t('game.visitWebsite')}
+                    </a>
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Reddit Community */}
+              {(game.redditUrl || game.redditName) && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
+                    {t('game.redditCommunity')}
+                  </Typography>
+                  {game.redditUrl && (
+                    <Typography variant="body1" sx={{ mt: 0.5 }}>
+                      <a 
+                        href={game.redditUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={{ 
+                          color: theme.palette.primary.main, 
+                          textDecoration: 'none',
+                          fontWeight: 500,
+                          transition: 'opacity 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        r/{game.redditName || t('game.visitSubreddit')}
+                      </a>
+                      {game.redditCount && ` • ${game.redditCount.toLocaleString()} ${t('game.members')}`}
+                    </Typography>
+                  )}
+                  {game.redditDescription && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.875rem', lineHeight: 1.6 }}>
+                      {game.redditDescription}
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {/* Alternative Names */}
+              {game.alternativeNames && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
+                    {t('game.alsoKnownAs')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.875rem' }}>
+                    {game.alternativeNames}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Description */}
+              {game.description && (
+                <>
+                  <Divider sx={{ my: 3 }} />
                   <Box>
-                    {formatDescription(game.description)}
+                    <Typography 
+                      variant="h6" 
+                      gutterBottom
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: '1.125rem',
+                        mb: 1.5,
+                      }}
+                    >
+                      {t('game.aboutThisGame')}
+                    </Typography>
+                    <Box sx={{ 
+                      fontSize: '0.9375rem', 
+                      lineHeight: 1.7,
+                      color: 'text.secondary',
+                    }}>
+                      {formatDescription(game.description)}
+                    </Box>
                   </Box>
-                </Box>
-              </>
-            )}
+                </>
+              )}
 
-            {game.slug && (
-              <>
-                <Divider sx={{ my: 3 }} />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('game.slug')}: {game.slug}
-                    {game.updated && ` • ${t('game.lastUpdated')}: ${new Date(game.updated).toLocaleDateString()}`}
-                  </Typography>
-                </Box>
-              </>
-            )}
+              {/* Metadata Footer */}
+              {game.slug && (
+                <>
+                  <Divider sx={{ my: 3 }} />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                      {t('game.slug')}: {game.slug}
+                      {game.updated && ` • ${t('game.lastUpdated')}: ${new Date(game.updated).toLocaleDateString()}`}
+                    </Typography>
+                  </Box>
+                </>
+              )}
+            </Box>
           </CardContent>
         </Card>
 
