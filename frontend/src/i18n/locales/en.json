@@ -408,7 +408,21 @@
     "more": "more",
     "noEvents": "No playthroughs with dates yet",
     "noEventsDescription": "Start adding dates to your playthroughs to see them on the calendar",
-    "errorLoading": "Error loading calendar data"
+    "noMatchingEvents": "No matching events",
+    "tryDifferentFilters": "Try adjusting your search or filters to find events",
+    "errorLoading": "Error loading calendar data",
+    "searchPlaceholder": "Search games...",
+    "filters": "Filters",
+    "allFilters": "All",
+    "startEvents": "Start",
+    "finishEvents": "Finish",
+    "dropEvents": "Drop",
+    "showingEvents": "Showing events",
+    "viewMode": "View Mode",
+    "calendarView": "Calendar",
+    "listView": "List",
+    "event": "event",
+    "events": "events"
   },
   "errors": {
     "failedLoadData": "Failed to load data. Please try again.",
