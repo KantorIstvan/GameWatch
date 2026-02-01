@@ -352,7 +352,7 @@ function Help() {
           <Button
             variant="contained"
             startIcon={<Email />}
-            href="mailto:support@gamewatch.example.com"
+            href="mailto:kantoristvan13@gmail.com"
             sx={{
               backgroundColor: mode === 'light' ? '#667eea' : '#8b9af7',
               color: '#ffffff',

@@ -482,8 +482,8 @@
       "a1": "Go to the 'Timers' page, click 'New Playthrough' to create a playthrough for your game, then click 'Start' to begin tracking your time. The timer will run in the background even if you navigate to other pages.",
       "q2": "Can I log a session manually?",
       "a2": "Yes! On any playthrough card, click the three-dot menu and select 'Log Session Manually'. Enter the session details including start time, end time, and any breaks you took.",
-      "q3": "How do I edit or delete a session?",
-      "a3": "Navigate to the game's statistics page to see all sessions. Click on a session to edit its details or use the delete button to remove it. Note: some actions cannot be undone.",
+      "q3": "How do I delete a session?",
+      "a3": "Navigate to the game's statistics page to see all sessions. Click on the delete button to remove it. Note: it cannot be undone.",
       "q4": "What happens if I forget to pause the timer?",
       "a4": "You can manually edit the playthrough time by clicking the 'Edit Time Manually' option in the playthrough menu. This allows you to adjust the time to reflect actual playtime."
     },

@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Link as MuiLink, IconButton, useMediaQuery } from '@mui/material'
-import { GitHub, Twitter, Chat } from '@mui/icons-material'
+import { GitHub, Twitter, Chat, LinkedIn } from '@mui/icons-material'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 
@@ -80,37 +80,7 @@ function Footer() {
               {t('footer.help')}
             </MuiLink>
             <MuiLink
-              href="#"
-              underline="hover"
-              sx={{
-                color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                transition: 'color 0.2s ease',
-                '&:hover': {
-                  color: mode === 'light' ? '#667eea' : '#8b9af7',
-                },
-              }}
-            >
-              {t('footer.privacy')}
-            </MuiLink>
-            <MuiLink
-              href="#"
-              underline="hover"
-              sx={{
-                color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                transition: 'color 0.2s ease',
-                '&:hover': {
-                  color: mode === 'light' ? '#667eea' : '#8b9af7',
-                },
-              }}
-            >
-              {t('footer.terms')}
-            </MuiLink>
-            <MuiLink
-              href="#"
+              href="mailto:kantoristvan13@gmail.com"
               underline="hover"
               sx={{
                 color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
@@ -135,7 +105,7 @@ function Footer() {
             }}
           >
             <IconButton
-              href="https://github.com"
+              href="https://github.com/KantorIstvan"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
@@ -152,10 +122,10 @@ function Footer() {
               <GitHub fontSize="small" />
             </IconButton>
             <IconButton
-              href="https://twitter.com"
+              href="https://www.linkedin.com/in/istv%C3%A1n-k%C3%A1ntor/"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Twitter"
+              aria-label="LinkedIn"
               sx={{
                 color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
                 transition: 'all 0.2s ease',
@@ -166,24 +136,7 @@ function Footer() {
                 },
               }}
             >
-              <Twitter fontSize="small" />
-            </IconButton>
-            <IconButton
-              href="https://discord.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Discord"
-              sx={{
-                color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  color: mode === 'light' ? '#667eea' : '#8b9af7',
-                  backgroundColor: mode === 'light' ? 'rgba(102, 126, 234, 0.08)' : 'rgba(139, 154, 247, 0.08)',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <Chat fontSize="small" />
+              <LinkedIn fontSize="small" />
             </IconButton>
           </Box>
         </Box>
