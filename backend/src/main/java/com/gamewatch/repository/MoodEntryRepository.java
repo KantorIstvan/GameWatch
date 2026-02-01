@@ -25,4 +25,6 @@ public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
     Double calculateAverageMood(@Param("userId") Long userId, 
                                 @Param("startDate") Instant startDate, 
                                 @Param("endDate") Instant endDate);
+    
+    List<MoodEntry> findByUserId(Long userId);
 }

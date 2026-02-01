@@ -44,7 +44,7 @@ export interface Playthrough {
   gameBannerImageUrl?: string
   name: string
   title?: string
-  playthroughType: 'story' | 'speedrun' | 'casual' | '100%' | '100_percent'
+  playthroughType: 'story' | 'speedrun' | 'casual' | '100%'
   platform?: string
   totalPlaytimeSeconds: number
   durationSeconds?: number

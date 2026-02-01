@@ -23,4 +23,6 @@ public interface SessionHistoryRepository extends JpaRepository<SessionHistory, 
     List<SessionHistory> findSessionsByUserAndDateRange(@Param("userId") Long userId,
                                                          @Param("startDate") Instant startDate,
                                                          @Param("endDate") Instant endDate);
+    
+    List<SessionHistory> findByPlaythroughIdIn(List<Long> playthroughIds);
 }
