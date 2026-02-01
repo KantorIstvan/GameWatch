@@ -180,6 +180,20 @@ function CreatePlaythroughDialog({
               label={t('playthrough.selectGame')}
               margin="normal"
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  minHeight: 56,
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.primary.main,
+                    borderWidth: 2,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderWidth: 2,
+                  },
+                },
+              }}
             />
           )}
           ListboxProps={{
@@ -197,6 +211,20 @@ function CreatePlaythroughDialog({
           margin="normal"
           placeholder={selectedGame ? `${selectedGame.name} playthrough` : ''}
           helperText={t('playthrough.playthroughTitleHelper')}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              minHeight: 56,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover fieldset': {
+                borderColor: theme.palette.primary.main,
+                borderWidth: 2,
+              },
+              '&.Mui-focused fieldset': {
+                borderWidth: 2,
+              },
+            },
+          }}
         />
         <TextField
           select
@@ -206,6 +234,20 @@ function CreatePlaythroughDialog({
           onChange={(e) => setPlaythroughType(e.target.value)}
           margin="normal"
           required
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              minHeight: 56,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover fieldset': {
+                borderColor: theme.palette.primary.main,
+                borderWidth: 2,
+              },
+              '&.Mui-focused fieldset': {
+                borderWidth: 2,
+              },
+            },
+          }}
         >
           <MenuItem value="story">Story</MenuItem>
           <MenuItem value="100%">100%</MenuItem>
@@ -222,6 +264,20 @@ function CreatePlaythroughDialog({
           required
           disabled={!selectedGame || availablePlatforms.length === 0}
           helperText={!selectedGame ? t('playthrough.selectGameFirst') : availablePlatforms.length === 0 ? t('playthrough.noPlatformsAvailable') : ''}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              minHeight: 56,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover fieldset': {
+                borderColor: theme.palette.primary.main,
+                borderWidth: 2,
+              },
+              '&.Mui-focused fieldset': {
+                borderWidth: 2,
+              },
+            },
+          }}
         >
           {availablePlatforms.map((p) => (
             <MenuItem key={p} value={p}>

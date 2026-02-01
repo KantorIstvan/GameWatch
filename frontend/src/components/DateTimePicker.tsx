@@ -5,7 +5,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { renderTimeViewClock } from '@mui/x-date-pickers/timeViewRenderers'
 import dayjs, { Dayjs } from 'dayjs'
 import 'dayjs/locale/en'
+import 'dayjs/locale/en-gb'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import { useWeekStart } from '../contexts/WeekStartContext'
 
 interface DateTimePickerProps {
   label?: string
@@ -31,6 +33,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   minDateTime,
 }) => {
   const { timeFormat } = useTimeFormat()
+  const { getFirstDayNumber } = useWeekStart()
   
   const handleChange = (newValue: Dayjs | null) => {
     if (newValue) {
@@ -40,8 +43,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
   const parsedValue = value ? dayjs(value) : null
 
+  // Use en-gb locale for Monday start, en for Sunday start
+  const adapterLocale = getFirstDayNumber() === 1 ? 'en-gb' : 'en'
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en">
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={adapterLocale}>
       <MuiDateTimePicker
         label={label}
         value={parsedValue}
@@ -63,8 +69,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             sx: {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
+                minHeight: 56,
+                transition: 'all 0.2s ease-in-out',
                 '&:hover fieldset': {
                   borderColor: (theme) => theme.palette.primary.main,
+                  borderWidth: 2,
+                },
+                '&.Mui-focused fieldset': {
+                  borderWidth: 2,
                 },
               },
             },

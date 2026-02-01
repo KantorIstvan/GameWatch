@@ -112,6 +112,20 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
               </>
             ),
           }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              minHeight: 56,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover fieldset': {
+                borderColor: (theme) => theme.palette.primary.main,
+                borderWidth: 2,
+              },
+              '&.Mui-focused fieldset': {
+                borderWidth: 2,
+              },
+            },
+          }}
         />
       )}
       renderOption={(props, option) => (
