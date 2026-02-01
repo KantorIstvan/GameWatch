@@ -138,7 +138,7 @@ public class RawgApiService {
                     .block();
 
             if (response != null) {
-                return mapToSearchResult(response, true);
+                return mapToSearchResult(response, false);
             }
         } catch (Exception e) {
             log.error("Error fetching game details from RAWG API", e);

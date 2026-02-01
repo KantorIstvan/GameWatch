@@ -40,6 +40,12 @@ class PlaythroughServiceTest {
     @Mock
     private SessionHistoryRepository sessionHistoryRepository;
 
+    @Mock
+    private HealthService healthService;
+
+    @Mock
+    private ColorExtractionService colorExtractionService;
+
     @InjectMocks
     private PlaythroughService playthroughService;
 
@@ -94,6 +100,7 @@ class PlaythroughServiceTest {
             .build();
 
         when(gameRepository.findById(1L)).thenReturn(Optional.of(testGame));
+        when(colorExtractionService.extractDominantColors(anyString())).thenReturn(new String[]{"#FF5733", "#33C4FF"});
         when(playthroughRepository.save(any(Playthrough.class))).thenReturn(testPlaythrough);
 
         PlaythroughDto result = playthroughService.createPlaythrough(testUser, request);
@@ -107,6 +114,7 @@ class PlaythroughServiceTest {
         assertThat(result.getIsCompleted()).isFalse();
 
         verify(gameRepository).findById(1L);
+        verify(colorExtractionService).extractDominantColors("https://example.com/banner.jpg");
         verify(playthroughRepository).save(any(Playthrough.class));
     }
 

@@ -101,11 +101,11 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
   }, [isRunning, playthrough])
 
   useEffect(() => {
-    if (game?.dominantColor1 && game?.dominantColor2) {
-      const gradient = `linear-gradient(135deg, ${game.dominantColor1} 0%, ${game.dominantColor2} 100%)`
+    if (playthrough?.dominantColor1 && playthrough?.dominantColor2) {
+      const gradient = `linear-gradient(135deg, ${playthrough.dominantColor1} 0%, ${playthrough.dominantColor2} 100%)`
       setTimerGradient(gradient)
     }
-  }, [game])
+  }, [playthrough])
 
   const handleStart = useCallback(async () => {
     try {

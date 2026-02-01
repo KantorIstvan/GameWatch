@@ -111,6 +111,12 @@ public class Playthrough {
     @Builder.Default
     private Boolean manualTimeSet = false;
 
+    @Column(name = "dominant_color_1", length = 7)
+    private String dominantColor1;
+
+    @Column(name = "dominant_color_2", length = 7)
+    private String dominantColor2;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

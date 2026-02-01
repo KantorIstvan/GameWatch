@@ -36,4 +36,6 @@ public class PlaythroughDto {
     private Long lastSessionHistoryId;
     private Instant sessionStartTime;
     private Long sessionStartDurationSeconds;
+    private String dominantColor1;
+    private String dominantColor2;
 }

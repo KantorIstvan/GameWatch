@@ -30,6 +30,7 @@ public class PlaythroughService {
     private final GameRepository gameRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final HealthService healthService;
+    private final ColorExtractionService colorExtractionService;
 
     @Transactional
     public PlaythroughDto createPlaythrough(User user, CreatePlaythroughRequest request) {
@@ -39,6 +40,12 @@ public class PlaythroughService {
         // Validate start date is not in the future
         if (request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now())) {
             throw new RuntimeException("Cannot set a future start date for a playthrough");
+        }
+
+        // Extract dominant colors from game banner
+        String[] colors = null;
+        if (game.getBannerImageUrl() != null && !game.getBannerImageUrl().isEmpty()) {
+            colors = colorExtractionService.extractDominantColors(game.getBannerImageUrl());
         }
 
         Playthrough playthrough = Playthrough.builder()
@@ -55,10 +62,13 @@ public class PlaythroughService {
             .sessionCount(0)
             .pauseCount(0)
             .sessionStartDurationSeconds(0L)
+            .dominantColor1(colors != null && colors.length > 0 ? colors[0] : null)
+            .dominantColor2(colors != null && colors.length > 1 ? colors[1] : null)
             .build();
 
         playthrough = playthroughRepository.save(playthrough);
-        log.info("Created playthrough for user {} and game {}", user.getId(), game.getId());
+        log.info("Created playthrough for user {} and game {} with colors {} and {}", 
+                 user.getId(), game.getId(), playthrough.getDominantColor1(), playthrough.getDominantColor2());
 
         return mapToDto(playthrough);
     }
@@ -573,6 +583,8 @@ public class PlaythroughService {
             .importedDurationSeconds(playthrough.getImportedDurationSeconds())
             .sessionStartTime(playthrough.getSessionStartTime())
             .sessionStartDurationSeconds(playthrough.getSessionStartDurationSeconds())
+            .dominantColor1(playthrough.getDominantColor1())
+            .dominantColor2(playthrough.getDominantColor2())
             .build();
     }
 }
