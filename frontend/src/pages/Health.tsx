@@ -27,6 +27,7 @@ import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import healthApi, { HealthDashboard } from '../services/healthApi'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
+import { useTimeFormat } from '../contexts/TimeFormatContext'
 
 function getScoreColor(score: number | null) {
   if (score === null) return '#9e9e9e'
@@ -55,6 +56,7 @@ export default function Health() {
   const theme = useTheme()
   const { isAuthReady, isAuthenticated } = useAuthContext()
   const { getFirstDayNumber } = useWeekStart()
+  const { timeFormat } = useTimeFormat()
   const [dashboard, setDashboard] = useState<HealthDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const calHeatmapRef = useRef<HTMLDivElement>(null)
@@ -515,7 +517,7 @@ export default function Health() {
                   {Math.floor(dashboard.weekMetrics.lateNightMinutes / 60)}h
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  After 22:00 this week
+                  After {timeFormat === '12h' ? '10:00 PM' : '22:00'} this week
                 </Typography>
               </CardContent>
             </Card>

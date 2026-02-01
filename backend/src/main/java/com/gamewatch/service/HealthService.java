@@ -179,15 +179,30 @@ public class HealthService {
             }
         }
 
-        // Calculate break compliance
-        int sessionsWithBreaks = (int) sessions.stream()
+        // Calculate break compliance (only for sessions > 50 minutes)
+        List<SessionHistory> longSessions = sessions.stream()
+            .filter(s -> s.getDurationSeconds() > 3000) // 50 minutes
+            .collect(Collectors.toList());
+        
+        int longSessionCount = longSessions.size();
+        int longSessionsWithBreaks = (int) longSessions.stream()
             .filter(s -> s.getPauseCount() > 0)
             .count();
-        double breakComplianceRatio = sessionCount > 0 ? (double) sessionsWithBreaks / sessionCount : 0.0;
+        
+        // Only calculate break compliance if there are sessions > 50 minutes
+        // Otherwise, perfect compliance (no penalty)
+        double breakComplianceRatio = longSessionCount > 0 
+            ? (double) longSessionsWithBreaks / longSessionCount 
+            : 1.0;
 
         // Calculate health score
         Integer healthScore = calculateHealthScore(user, totalHours, sessionCount, 
             averageMood, lateNightMinutes, breakComplianceRatio, date);
+
+        // For statistics tracking, count all sessions with breaks (regardless of duration)
+        int allSessionsWithBreaks = (int) sessions.stream()
+            .filter(s -> s.getPauseCount() > 0)
+            .count();
 
         // Save or update metrics
         DailyHealthMetrics metrics = dailyHealthMetricsRepository
@@ -203,7 +218,7 @@ public class HealthService {
         metrics.setAverageMood(averageMood);
         metrics.setLateNightMinutes(lateNightMinutes);
         metrics.setBreakComplianceRatio(breakComplianceRatio);
-        metrics.setSessionsWithBreaks(sessionsWithBreaks);
+        metrics.setSessionsWithBreaks(allSessionsWithBreaks);
         metrics.setMorningSessions(morningSessions);
         metrics.setAfternoonSessions(afternoonSessions);
         metrics.setEveningSessions(eveningSessions);
