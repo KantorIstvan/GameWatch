@@ -108,45 +108,49 @@ function TimerControls({
           </Button>
         )}
         
-        {/* Finish Button */}
-        <Button
-          variant="contained"
-          startIcon={<Stop />}
-          onClick={onFinish}
-          disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
-          size="small"
-          sx={{ 
-            ...buttonStyle,
-            bgcolor: '#4caf50',
-            color: 'white',
-            border: 'none',
-            minWidth: { xs: 'auto', sm: 100 },
-            '&:hover': { bgcolor: '#45a049' },
-            '&:disabled': { bgcolor: 'rgba(76, 175, 80, 0.3)' }
-          }}
-        >
-          {t('playthrough.finish')}
-        </Button>
+        {/* Finish Button - Hide for casual playthroughs */}
+        {playthrough.playthroughType !== 'casual' && (
+          <Button
+            variant="contained"
+            startIcon={<Stop />}
+            onClick={onFinish}
+            disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
+            size="small"
+            sx={{ 
+              ...buttonStyle,
+              bgcolor: '#4caf50',
+              color: 'white',
+              border: 'none',
+              minWidth: { xs: 'auto', sm: 100 },
+              '&:hover': { bgcolor: '#45a049' },
+              '&:disabled': { bgcolor: 'rgba(76, 175, 80, 0.3)' }
+            }}
+          >
+            {t('playthrough.finish')}
+          </Button>
+        )}
 
-        {/* Drop Button */}
-        <Button
-          variant="contained"
-          startIcon={<Stop />}
-          onClick={onDrop}
-          disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
-          size="small"
-          sx={{ 
-            ...buttonStyle,
-            bgcolor: '#f44336',
-            color: 'white',
-            border: 'none',
-            minWidth: { xs: 'auto', sm: 90 },
-            '&:hover': { bgcolor: '#d32f2f' },
-            '&:disabled': { bgcolor: 'rgba(244, 67, 54, 0.3)' }
-          }}
-        >
-          {t('playthrough.drop')}
-        </Button>
+        {/* Drop Button - Hide for casual playthroughs */}
+        {playthrough.playthroughType !== 'casual' && (
+          <Button
+            variant="contained"
+            startIcon={<Stop />}
+            onClick={onDrop}
+            disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
+            size="small"
+            sx={{ 
+              ...buttonStyle,
+              bgcolor: '#f44336',
+              color: 'white',
+              border: 'none',
+              minWidth: { xs: 'auto', sm: 90 },
+              '&:hover': { bgcolor: '#d32f2f' },
+              '&:disabled': { bgcolor: 'rgba(244, 67, 54, 0.3)' }
+            }}
+          >
+            {t('playthrough.drop')}
+          </Button>
+        )}
       </Stack>
 
       {/* Log Manual Session Button - Show when not active */}

@@ -28,11 +28,11 @@ function Games() {
     const saved = localStorage.getItem('gameCardSize')
     return saved ? parseInt(saved, 10) : 2
   })
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('name-asc')
-  const [filterGenre, setFilterGenre] = useState('')
-  const [filterPlatform, setFilterPlatform] = useState('')
-  const [filterYear, setFilterYear] = useState('')
+  const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('gamesSearchQuery') || '')
+  const [sortBy, setSortBy] = useState(() => localStorage.getItem('gamesSortBy') || 'name-asc')
+  const [filterGenre, setFilterGenre] = useState(() => localStorage.getItem('gamesFilterGenre') || '')
+  const [filterPlatform, setFilterPlatform] = useState(() => localStorage.getItem('gamesFilterPlatform') || '')
+  const [filterYear, setFilterYear] = useState(() => localStorage.getItem('gamesFilterYear') || '')
 
   useEffect(() => {
     if (isAuthReady) {
@@ -43,6 +43,14 @@ function Games() {
   useEffect(() => {
     localStorage.setItem('gameCardSize', cardSize.toString())
   }, [cardSize])
+
+  useEffect(() => {
+    localStorage.setItem('gamesSearchQuery', searchQuery)
+    localStorage.setItem('gamesSortBy', sortBy)
+    localStorage.setItem('gamesFilterGenre', filterGenre)
+    localStorage.setItem('gamesFilterPlatform', filterPlatform)
+    localStorage.setItem('gamesFilterYear', filterYear)
+  }, [searchQuery, sortBy, filterGenre, filterPlatform, filterYear])
 
   const fetchGames = async () => {
     try {

@@ -368,12 +368,6 @@ function GameStatisticsPage() {
                 background: alpha(theme.palette.background.paper, 0.6),
                 backdropFilter: 'blur(20px)',
                 border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`,
-                  borderColor: alpha(theme.palette.primary.main, 0.3)
-                }
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
