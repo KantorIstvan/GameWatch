@@ -13,6 +13,7 @@ import Calendar from './pages/Calendar'
 import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
+import Help from './pages/Help'
 import Loading from './components/Loading'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -48,6 +49,7 @@ function AppContent() {
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="help" element={<Help />} />
         </Route>
       </Routes>
       <ToastContainer

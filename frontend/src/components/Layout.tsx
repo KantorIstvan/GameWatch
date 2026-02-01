@@ -1,10 +1,11 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { AppBar, Toolbar, Typography, Button, Box, Container, Avatar, Menu, MenuItem, IconButton, Tabs, Tab, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, useMediaQuery } from '@mui/material'
-import { Brightness4, Brightness7, Settings as SettingsIcon, Menu as MenuIcon, Timer, BarChart, VideogameAsset, CalendarMonth, Close, Favorite } from '@mui/icons-material'
+import { Brightness4, Brightness7, Settings as SettingsIcon, Menu as MenuIcon, Timer, BarChart, VideogameAsset, CalendarMonth, Close, Favorite, HelpOutline } from '@mui/icons-material'
 import { useState, useEffect } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
+import Footer from './Footer'
 
 function Layout() {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0()
@@ -327,6 +328,10 @@ function Layout() {
               <SettingsIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
               {t('nav.settings')}
             </MenuItem>
+            <MenuItem component={Link} to="/help" onClick={handleClose}>
+              <HelpOutline sx={{ mr: 1, fontSize: '1.2rem' }} />
+              {t('footer.help')}
+            </MenuItem>
             <MenuItem onClick={handleLogout}>{t('auth.logout')}</MenuItem>
           </Menu>
         </Toolbar>
@@ -503,6 +508,8 @@ function Layout() {
       >
         <Outlet />
       </Container>
+
+      <Footer />
     </Box>
   )
 }

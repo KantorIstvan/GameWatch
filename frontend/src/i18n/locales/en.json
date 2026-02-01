@@ -440,5 +440,78 @@
     "timers": "timers",
     "active": "active",
     "clickNewPlaythrough": "Click the \"New Playthrough\" button above to get started"
+  },
+  "footer": {
+    "copyright": "© {{year}} {{appName}}",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact",
+    "help": "Help & FAQ"
+  },
+  "faq": {
+    "title": "Help & FAQ",
+    "searchPlaceholder": "Search questions...",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your search terms",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
+    "stillNeedHelp": "Still need help?",
+    "contactSupport": "Contact Support",
+    "responseTime": "We typically respond within 24-48 hours",
+    "categories": {
+      "gettingStarted": "Getting Started",
+      "sessionTracking": "Session Tracking",
+      "statistics": "Statistics & Analytics",
+      "accountSettings": "Account Settings",
+      "troubleshooting": "Troubleshooting"
+    },
+    "gettingStarted": {
+      "q1": "How do I create an account?",
+      "a1": "Click the 'Log In' button on the homepage and use your preferred authentication method. GameWatch supports Auth0 authentication for secure access.",
+      "q2": "How do I add my first game?",
+      "a2": "Navigate to the 'My Games' page using the navigation menu, click the 'Add Game' button, and search for your game. Select it from the results to add it to your library.",
+      "q3": "What is a playthrough?",
+      "a3": "A playthrough represents a single run through a game. You can have multiple playthroughs for the same game (e.g., first run, speedrun, 100% completion run). Each playthrough tracks time separately."
+    },
+    "sessionTracking": {
+      "q1": "How do I start tracking a gaming session?",
+      "a1": "Go to the 'Timers' page, click 'New Playthrough' to create a playthrough for your game, then click 'Start' to begin tracking your time. The timer will run in the background even if you navigate to other pages.",
+      "q2": "Can I log a session manually?",
+      "a2": "Yes! On any playthrough card, click the three-dot menu and select 'Log Session Manually'. Enter the session details including start time, end time, and any breaks you took.",
+      "q3": "How do I edit or delete a session?",
+      "a3": "Navigate to the game's statistics page to see all sessions. Click on a session to edit its details or use the delete button to remove it. Note: some actions cannot be undone.",
+      "q4": "What happens if I forget to pause the timer?",
+      "a4": "You can manually edit the playthrough time by clicking the 'Edit Time Manually' option in the playthrough menu. This allows you to adjust the time to reflect actual playtime."
+    },
+    "statistics": {
+      "q1": "How do I view my gaming statistics?",
+      "a1": "Click on 'Statistics' in the navigation menu to see your overall gaming statistics, including total playtime, favorite games, time distribution, and more.",
+      "q2": "Can I view statistics for a specific game?",
+      "a2": "Yes! Go to 'My Games', click on any game card, and you'll see detailed statistics including playtime, session history, and completion data for that game.",
+      "q3": "Can I export my gaming data?",
+      "a3": "Currently, you can export statistics to CSV format by clicking the 'Export CSV' button on the Statistics page. This includes all your gaming data in a spreadsheet format.",
+      "q4": "What time ranges can I view?",
+      "a4": "Most statistics pages allow you to filter by Week, Month, Year, or All Time. Some charts also support custom date ranges."
+    },
+    "accountSettings": {
+      "q1": "How do I change my time format?",
+      "a1": "Go to Settings from the profile menu (top-right), and select your preferred time format: 12-hour (8:30 PM) or 24-hour (20:30). This will update all time displays across the app.",
+      "q2": "How do I change the app language?",
+      "a2": "Navigate to Settings and select 'Language' from the options. GameWatch supports over 30 languages including English, Spanish, French, German, Japanese, and more.",
+      "q3": "How do I change between light and dark mode?",
+      "a3": "Click the sun/moon icon in the top navigation bar to toggle between light and dark themes instantly. Your preference will be saved automatically.",
+      "q4": "Can I set my timezone?",
+      "a4": "Yes, in Settings you can configure your timezone to ensure all timestamps are displayed correctly for your location."
+    },
+    "troubleshooting": {
+      "q1": "I can't log in. What should I do?",
+      "a1": "First, ensure you're using the correct authentication method (the same one you used to create your account). If issues persist, try clearing your browser cache or using a different browser. Contact support if the problem continues.",
+      "q2": "My playtime isn't showing correctly",
+      "a2": "If your playtime seems incorrect, check that you've properly ended your sessions. You can manually adjust the time using the 'Edit Time Manually' option in the playthrough menu if the timer was left running.",
+      "q3": "The app is loading slowly",
+      "a3": "Slow loading can be caused by large datasets or network issues. Try refreshing the page, clearing your browser cache, or checking your internet connection. The app works best on modern browsers like Chrome, Firefox, or Edge.",
+      "q4": "My games aren't appearing in search",
+      "a4": "Game search uses the RAWG API. Try using different search terms, checking spelling, or searching by the game's original title. Some older or lesser-known games may not be in the database."
+    }
   }
 }
