@@ -10,6 +10,31 @@
   --iron-grey: #495057;
   --gunmetal: #343a40;
   --carbon-black: #212529;
+
+  /* ===== DESIGN SYSTEM TOKENS ===== */
+  
+  /* Card Design Tokens (Based on Health Page) */
+  --card-border-radius: 24px; /* 3 in MUI spacing (8px * 3) */
+  --card-border-width: 1px;
+  --card-padding: 32px; /* 4 in MUI spacing (8px * 4) */
+  --card-padding-sm: 24px; /* 3 in MUI spacing for smaller cards */
+  
+  /* Input Design Tokens */
+  --input-border-radius: 8px;
+  --input-border-width: 1px;
+  --input-padding-vertical: 12px;
+  --input-padding-horizontal: 16px;
+  --input-font-size: 14px;
+  --input-height: 42px;
+  
+  /* Button Design Tokens */
+  --button-border-radius: 8px;
+  --button-padding-vertical: 10px;
+  --button-padding-horizontal: 24px;
+  --button-font-size: 14px;
+  --button-font-weight: 500;
+  --button-min-height: 40px;
+  --button-transition: all 0.2s ease;
 }
 
 /* Light Mode Theme */
@@ -34,6 +59,18 @@
   --shadow-sm: rgba(33, 37, 41, 0.08);
   --shadow-md: rgba(33, 37, 41, 0.12);
   --shadow-lg: rgba(33, 37, 41, 0.16);
+
+  /* Card-specific tokens for light mode */
+  --card-border-alpha: 0.1;
+  --card-background: rgba(255, 255, 255, 0.9);
+  --card-border-color: rgba(0, 0, 0, 0.1);
+  
+  /* Input-specific tokens for light mode */
+  --input-border-color: rgba(0, 0, 0, 0.23);
+  --input-background: #ffffff;
+  --input-focus-color: #1976d2;
+  --input-error-color: #f44336;
+  --input-disabled-background: rgba(0, 0, 0, 0.04);
 }
 
 /* Dark Mode Theme */
@@ -58,6 +95,18 @@
   --shadow-sm: rgba(0, 0, 0, 0.3);
   --shadow-md: rgba(0, 0, 0, 0.5);
   --shadow-lg: rgba(0, 0, 0, 0.7);
+
+  /* Card-specific tokens for dark mode */
+  --card-border-alpha: 0.1;
+  --card-background: rgba(33, 37, 41, 0.5);
+  --card-border-color: rgba(255, 255, 255, 0.1);
+  
+  /* Input-specific tokens for dark mode */
+  --input-border-color: rgba(255, 255, 255, 0.23);
+  --input-background: rgba(255, 255, 255, 0.05);
+  --input-focus-color: #90caf9;
+  --input-error-color: #f44336;
+  --input-disabled-background: rgba(255, 255, 255, 0.02);
 }
 
 * {

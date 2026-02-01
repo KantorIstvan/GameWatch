@@ -233,7 +233,8 @@ function Statistics() {
               <Paper 
                 elevation={0}
                 sx={{ 
-                  p: 3, 
+                  p: 4, // Unified card padding (32px)
+                  borderRadius: 3, // Unified card border radius (24px)
                   height: '100%',
                   background: alpha(theme.palette.background.paper, 0.6),
                   backdropFilter: 'blur(20px)',

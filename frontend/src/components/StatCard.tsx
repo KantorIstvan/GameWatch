@@ -15,6 +15,7 @@ const StatCard = React.memo(({ title, value, icon, color }: StatCardProps) => {
     <Card 
       sx={{ 
         height: '100%',
+        borderRadius: 3, // Using consistent card border radius (24px)
         background: color 
           ? `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`
           : alpha(theme.palette.background.paper, 0.6),
@@ -22,7 +23,7 @@ const StatCard = React.memo(({ title, value, icon, color }: StatCardProps) => {
         border: `1px solid ${alpha(color || theme.palette.divider, color ? 0.2 : 0.1)}`,
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: 4 }}> {/* Using consistent card padding (32px) */}
         <Box display="flex" alignItems="center" mb={2}>
           <Box
             sx={{

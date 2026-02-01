@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo, ReactNode } fr
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
 import { useTranslation } from 'react-i18next'
 import CssBaseline from '@mui/material/CssBaseline'
+import { getMuiOverrides } from '../theme/muiOverrides'
 
 type ThemeMode = 'light' | 'dark'
 
@@ -37,8 +38,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   const theme = useMemo(
-    () =>
-      createTheme({
+    () => {
+      const baseTheme = createTheme({
         direction: i18n.language === 'ar' ? 'rtl' : 'ltr',
         palette: {
           mode,
@@ -132,7 +133,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             },
           },
         },
-      }),
+      })
+      
+      // Apply design system overrides
+      const overrides = getMuiOverrides(baseTheme)
+      return createTheme({
+        ...baseTheme,
+        components: {
+          ...baseTheme.components,
+          ...overrides,
+        },
+      })
+    },
     [mode, i18n.language]
   )
 

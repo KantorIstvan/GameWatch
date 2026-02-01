@@ -16,8 +16,9 @@ function InfoCard({ icon, iconColor, title, value, subtitle }: InfoCardProps) {
     <Paper 
       elevation={0}
       sx={{ 
-        p: 3, 
+        p: 4, // Using consistent card padding (32px)
         height: '100%',
+        borderRadius: 3, // Using consistent card border radius (24px)
         background: alpha(theme.palette.background.paper, 0.6),
         backdropFilter: 'blur(20px)',
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,

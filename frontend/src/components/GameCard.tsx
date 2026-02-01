@@ -41,7 +41,7 @@ function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
         display: 'flex', 
         flexDirection: 'column',
         position: 'relative',
-        borderRadius: 2,
+        borderRadius: 3, // Unified card border radius (24px)
         overflow: 'visible',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -59,7 +59,7 @@ function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
       }}
     >
       {/* Banner Image Container */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', display: 'block', lineHeight: 0, fontSize: 0, borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+      <Box sx={{ position: 'relative', overflow: 'hidden', display: 'block', lineHeight: 0, fontSize: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}> {/* Updated to match unified border radius */}
         {game.bannerImageUrl && (
           <>
             <Box
