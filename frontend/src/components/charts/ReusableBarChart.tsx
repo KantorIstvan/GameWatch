@@ -1,6 +1,7 @@
 import { Box, Typography, useTheme } from '@mui/material'
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { alpha } from '@mui/material'
+import { useTimeFormat } from '../../contexts/TimeFormatContext'
 
 interface BarChartData {
   [key: string]: string | number
@@ -21,6 +22,8 @@ interface ReusableBarChartProps {
   height?: number
   noDataMessage?: string
   showLegend?: boolean
+  isHourlyChart?: boolean
+  highlightCurrentHour?: boolean
 }
 
 function ReusableBarChart({ 
@@ -31,13 +34,40 @@ function ReusableBarChart({
   bars,
   height = 300,
   noDataMessage = 'No data available',
-  showLegend = false
+  showLegend = false,
+  isHourlyChart = false,
+  highlightCurrentHour = false
 }: ReusableBarChartProps) {
   const theme = useTheme()
+  const { timeFormat } = useTimeFormat()
   
   const hasData = data.length > 0 && data.some(item => 
     bars.some(bar => (item[bar.dataKey] as number) > 0)
   )
+
+  // Format hour labels based on time format preference
+  const formatHourLabel = (hourNum: number): string => {
+    if (!isHourlyChart) return hourNum.toString()
+    
+    if (timeFormat === '12h') {
+      if (hourNum === 0) return '12AM'
+      if (hourNum < 12) return `${hourNum}AM`
+      if (hourNum === 12) return '12PM'
+      return `${hourNum - 12}PM`
+    }
+    return `${hourNum.toString().padStart(2, '0')}:00`
+  }
+
+  // Prepare chart data with formatted labels for hourly charts
+  const chartData = isHourlyChart ? data.map(item => ({
+    ...item,
+    hour: formatHourLabel(item.hourNum as number),
+    hourNum: item.hourNum
+  })) : data
+
+  // Get current hour for highlighting
+  const currentHour = new Date().getHours()
+  const highlightColor = '#FF6B35'
 
   return (
     <>
@@ -66,7 +96,7 @@ function ReusableBarChart({
         >
           <ResponsiveContainer width="100%" height="100%">
             <RechartsBarChart 
-              data={data}
+              data={chartData}
               margin={{ 
                 top: 10, 
                 right: window.innerWidth < 600 ? 5 : 30, 
@@ -107,7 +137,14 @@ function ReusableBarChart({
                   fill={bar.fill}
                   name={bar.name}
                   radius={[8, 8, 0, 0]}
-                />
+                >
+                  {isHourlyChart && highlightCurrentHour && chartData.map((entry: any, idx: number) => (
+                    <Cell 
+                      key={`cell-${idx}`} 
+                      fill={entry.hourNum === currentHour ? highlightColor : bar.fill}
+                    />
+                  ))}
+                </Bar>
               ))}
             </RechartsBarChart>
           </ResponsiveContainer>

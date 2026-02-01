@@ -379,6 +379,8 @@ function Statistics() {
                   }]}
                   height={280}
                   noDataMessage={t('statistics.userStats.noData')}
+                  isHourlyChart={true}
+                  highlightCurrentHour={true}
                 />
               </Paper>
             </Grid>

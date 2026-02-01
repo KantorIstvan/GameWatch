@@ -2,8 +2,9 @@ import { Container, Paper, Typography, Box, FormControl, InputLabel, Select, Men
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
-import { Language, Schedule, DeleteForever, Favorite, ExpandMore, ExpandLess, Public, Backup, Upload } from '@mui/icons-material'
+import { Language, Schedule, DeleteForever, Favorite, ExpandMore, ExpandLess, Public, Backup, Upload, CalendarToday } from '@mui/icons-material'
 import { useState, useEffect, useRef } from 'react'
 import { userApi } from '../services/api'
 import healthApi, { HealthSettings as HealthSettingsType } from '../services/healthApi'
@@ -18,6 +19,7 @@ function Settings() {
   const { t, i18n } = useTranslation()
   const { mode } = useTheme()
   const { timeFormat, setTimeFormat: setTimeFormatContext, timezone: contextTimezone, setTimezone: setTimezoneContext } = useTimeFormat()
+  const { weekStart, setWeekStart: setWeekStartContext } = useWeekStart()
   const { logout, isAuthReady, isAuthenticated } = useAuthContext()
   const navigate = useNavigate()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -119,6 +121,17 @@ function Settings() {
 
   const handleTimeFormatChange = (event: any) => {
     setTimeFormatContext(event.target.value)
+  }
+
+  const handleWeekStartChange = async (event: any) => {
+    const newWeekStart = event.target.value as 'MONDAY' | 'SUNDAY'
+    try {
+      await userApi.updateFirstDayOfWeek(newWeekStart)
+      setWeekStartContext(newWeekStart)
+      toast.success('First day of week updated successfully')
+    } catch (error) {
+      toast.error('Failed to update first day of week')
+    }
   }
 
   const handleDeleteAccount = async () => {
@@ -396,6 +409,66 @@ function Settings() {
               >
                 <MenuItem value="24h">{t('settings.format24h')}</MenuItem>
                 <MenuItem value="12h">{t('settings.format12h')}</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Divider sx={{ 
+            my: 4,
+            borderColor: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.08)' 
+              : 'rgba(255, 255, 255, 0.08)'
+          }} />
+
+          {/* First Day of Week Section */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <CalendarToday sx={{ mr: 1.5, color: '#667eea' }} />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 500,
+                  color: mode === 'light' ? '#212529' : '#ffffff'
+                }}
+              >
+                {t('settings.firstDayOfWeek')}
+              </Typography>
+            </Box>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mb: 2,
+                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
+              }}
+            >
+              {t('settings.firstDayOfWeekDescription')}
+            </Typography>
+            <FormControl fullWidth>
+              <InputLabel id="week-start-select-label">{t('settings.firstDayOfWeek')}</InputLabel>
+              <Select
+                labelId="week-start-select-label"
+                id="week-start-select"
+                value={weekStart}
+                label={t('settings.firstDayOfWeek')}
+                onChange={handleWeekStartChange}
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: mode === 'light' 
+                      ? 'rgba(0, 0, 0, 0.12)' 
+                      : 'rgba(255, 255, 255, 0.12)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: mode === 'light' 
+                      ? 'rgba(102, 126, 234, 0.5)' 
+                      : 'rgba(139, 154, 247, 0.5)',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#667eea',
+                  },
+                }}
+              >
+                <MenuItem value="MONDAY">{t('settings.monday')}</MenuItem>
+                <MenuItem value="SUNDAY">{t('settings.sunday')}</MenuItem>
               </Select>
             </FormControl>
           </Box>

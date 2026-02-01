@@ -40,6 +40,15 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
+    @PutMapping("/me/first-day-of-week")
+    public ResponseEntity<User> updateFirstDayOfWeek(
+            Authentication authentication,
+            @RequestBody Map<String, String> request) {
+        User user = userService.getOrCreateUser(authentication);
+        User updated = userService.updateFirstDayOfWeek(user, request.get("firstDayOfWeek"));
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAccount(Authentication authentication) {
         User user = userService.getOrCreateUser(authentication);

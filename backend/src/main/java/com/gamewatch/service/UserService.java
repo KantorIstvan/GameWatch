@@ -72,6 +72,17 @@ public class UserService {
     }
 
     @Transactional
+    public User updateFirstDayOfWeek(User user, String firstDayOfWeek) {
+        if (firstDayOfWeek != null && !firstDayOfWeek.equals("MONDAY") && !firstDayOfWeek.equals("SUNDAY")) {
+            throw new RuntimeException("Invalid first day of week. Must be MONDAY or SUNDAY.");
+        }
+        user.setFirstDayOfWeek(firstDayOfWeek);
+        user = userRepository.save(user);
+        log.info("Updated first day of week for user {}: {}", user.getId(), firstDayOfWeek);
+        return user;
+    }
+
+    @Transactional
     public void deleteAccount(User user) {
         log.info("Deleting account for user: {}", user.getId());
         userRepository.delete(user);

@@ -26,6 +26,7 @@ import Tooltip from 'cal-heatmap/plugins/Tooltip'
 import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import healthApi, { HealthDashboard } from '../services/healthApi'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useWeekStart } from '../contexts/WeekStartContext'
 
 function getScoreColor(score: number | null) {
   if (score === null) return '#9e9e9e'
@@ -53,6 +54,7 @@ function formatDuration(seconds: number): string {
 export default function Health() {
   const theme = useTheme()
   const { isAuthReady, isAuthenticated } = useAuthContext()
+  const { getFirstDayNumber } = useWeekStart()
   const [dashboard, setDashboard] = useState<HealthDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const calHeatmapRef = useRef<HTMLDivElement>(null)
@@ -111,7 +113,7 @@ export default function Health() {
       },
       date: { 
         start: startDate,
-        locale: { weekStart: 1 }
+        locale: { weekStart: getFirstDayNumber() }
       },
       range: 12,
       scale: {

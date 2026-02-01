@@ -32,7 +32,7 @@ public class UserStatisticsService {
 
     @Transactional(readOnly = true)
     public UserStatisticsDto getUserStatistics(User user, String interval) {
-        Instant cutoffDate = getCutoffDate(interval);
+        Instant cutoffDate = getCutoffDate(user, interval);
         
         List<Playthrough> allPlaythroughs = playthroughRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
         
@@ -79,15 +79,23 @@ public class UserStatisticsService {
             .build();
     }
 
-    private Instant getCutoffDate(String interval) {
+    private Instant getCutoffDate(User user, String interval) {
         LocalDateTime now = LocalDateTime.now();
         
         return switch (interval.toLowerCase()) {
             case "week" -> {
-                // Get Monday of current week at 00:00 (ISO 8601 standard)
+                // Get first day of week based on user preference
                 LocalDate today = now.toLocalDate();
-                LocalDate monday = today.with(java.time.DayOfWeek.MONDAY);
-                yield monday.atStartOfDay(ZoneId.systemDefault()).toInstant();
+                String firstDayOfWeek = user.getFirstDayOfWeek() != null ? user.getFirstDayOfWeek() : "MONDAY";
+                java.time.DayOfWeek startDay = firstDayOfWeek.equals("SUNDAY") 
+                    ? java.time.DayOfWeek.SUNDAY 
+                    : java.time.DayOfWeek.MONDAY;
+                LocalDate weekStart = today.with(startDay);
+                // If today is before the start day, go back a week
+                if (weekStart.isAfter(today)) {
+                    weekStart = weekStart.minusWeeks(1);
+                }
+                yield weekStart.atStartOfDay(ZoneId.systemDefault()).toInstant();
             }
             case "month" -> {
                 // Get 1st day of current month at 00:00

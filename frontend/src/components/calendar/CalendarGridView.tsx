@@ -3,6 +3,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { useTranslation } from 'react-i18next'
+import { useWeekStart } from '../../contexts/WeekStartContext'
 
 interface CalendarEvent {
   id: string
@@ -30,6 +31,7 @@ interface CalendarGridViewProps {
 
 export const CalendarGridView = ({ events, mode, onEventClick }: CalendarGridViewProps) => {
   const { t } = useTranslation()
+  const { getFirstDayNumber } = useWeekStart()
 
   const renderEventContent = (eventInfo: any) => {
     const isCompleted = eventInfo.event.extendedProps.isCompleted
@@ -254,7 +256,7 @@ export const CalendarGridView = ({ events, mode, onEventClick }: CalendarGridVie
         eventContent={renderEventContent}
         height="auto"
         contentHeight="auto"
-        firstDay={1}
+        firstDay={getFirstDayNumber()}
         weekNumbers={false}
         editable={false}
         selectable={false}

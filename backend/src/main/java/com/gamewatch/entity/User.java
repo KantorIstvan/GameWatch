@@ -42,6 +42,10 @@ public class User {
     @Column(length = 100)
     private String timezone;
 
+    @Column(name = "first_day_of_week", length = 10)
+    @Builder.Default
+    private String firstDayOfWeek = "MONDAY";
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

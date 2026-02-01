@@ -33,6 +33,7 @@ import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTranslation } from 'react-i18next'
 import { getStartOfWeek, getStartOfMonth, getStartOfYear } from '../utils/dateUtils'
 import type { GameStatistics } from '../types'
@@ -42,6 +43,7 @@ function GameStatisticsPage() {
   const navigate = useNavigate()
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
+  const { weekStart } = useWeekStart()
   const theme = useTheme()
   const { formatTime, formatDateTime } = useTimeFormat()
   const [statistics, setStatistics] = useState<GameStatistics | null>(null)
@@ -148,7 +150,7 @@ function GameStatisticsPage() {
     switch (timeInterval) {
       case 'week':
         // Current calendar week (Monday to today)
-        cutoffDate = getStartOfWeek(now)
+        cutoffDate = getStartOfWeek(now, weekStart)
         break
       case 'month':
         // Current calendar month (1st to today)

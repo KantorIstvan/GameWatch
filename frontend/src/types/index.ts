@@ -309,6 +309,7 @@ export interface User {
   profilePictureUrl?: string
   age?: number
   timezone?: string
+  firstDayOfWeek?: 'MONDAY' | 'SUNDAY'
   createdAt: string
   updatedAt: string
 }

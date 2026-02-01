@@ -18,6 +18,7 @@ import Loading from './components/Loading'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { TimeFormatProvider } from './contexts/TimeFormatContext'
+import { WeekStartProvider } from './contexts/WeekStartContext'
 import { SessionTimerProvider } from './contexts/SessionTimerContext'
 import { useHealthGoals } from './hooks/useHealthGoals'
 
@@ -81,7 +82,9 @@ function App() {
         <AuthProvider>
           <SessionTimerProvider>
             <TimeFormatProvider>
-              <AppContent />
+              <WeekStartProvider>
+                <AppContent />
+              </WeekStartProvider>
             </TimeFormatProvider>
           </SessionTimerProvider>
         </AuthProvider>

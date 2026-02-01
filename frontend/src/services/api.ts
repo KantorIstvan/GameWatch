@@ -90,6 +90,8 @@ export const userApi = {
   getCurrentUser: () => apiClient.get('/users/me'),
   updateAge: (age: number) => apiClient.put('/users/me/age', { age }),
   updateTimezone: (timezone: string) => apiClient.put('/users/me/timezone', { timezone }),
+  updateFirstDayOfWeek: (firstDayOfWeek: 'MONDAY' | 'SUNDAY') => 
+    apiClient.put('/users/me/first-day-of-week', { firstDayOfWeek }),
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 

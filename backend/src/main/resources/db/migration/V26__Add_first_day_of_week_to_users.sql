@@ -1,0 +1,2 @@
+ALTER TABLE users
+ADD COLUMN first_day_of_week VARCHAR(10) DEFAULT 'MONDAY';

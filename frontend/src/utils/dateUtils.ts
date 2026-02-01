@@ -2,20 +2,31 @@
  * Date utility functions for calendar-based period calculations.
  * 
  * IMPORTANT: These functions use calendar boundaries (week/month/year), NOT rolling periods.
- * - Week: Monday 00:00 to current time (ISO 8601)
+ * - Week: First day of week (Monday or Sunday) 00:00 to current time
  * - Month: 1st day 00:00 to current time
  * - Year: January 1st 00:00 to current time
  */
 
+type WeekStart = 'MONDAY' | 'SUNDAY'
+
 /**
- * Get the start of the current calendar week (Monday at 00:00:00).
- * Follows ISO 8601 standard where weeks start on Monday.
+ * Get the start of the current calendar week.
+ * @param date - The date to calculate from (defaults to now)
+ * @param weekStart - First day of week ('MONDAY' for ISO 8601, 'SUNDAY' for US standard)
  */
-export function getStartOfWeek(date: Date = new Date()): Date {
+export function getStartOfWeek(date: Date = new Date(), weekStart: WeekStart = 'MONDAY'): Date {
   const result = new Date(date)
-  const day = result.getDay()
-  // Calculate days to subtract to get to Monday (0 = Sunday, 1 = Monday, etc.)
-  const diff = day === 0 ? 6 : day - 1
+  const day = result.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  
+  let diff: number
+  if (weekStart === 'SUNDAY') {
+    // For Sunday start: Sunday = 0 days back, Monday = 1 day back, etc.
+    diff = day
+  } else {
+    // For Monday start (ISO 8601): Monday = 0 days back, Tuesday = 1 day back, ..., Sunday = 6 days back
+    diff = day === 0 ? 6 : day - 1
+  }
+  
   result.setDate(result.getDate() - diff)
   result.setHours(0, 0, 0, 0)
   return result
@@ -51,12 +62,14 @@ export function getEndOfDay(date: Date = new Date()): Date {
 }
 
 /**
- * Get the current week's date range (Monday 00:00 to now).
+ * Get the current week's date range.
+ * @param now - Current date/time (defaults to now)
+ * @param weekStart - First day of week ('MONDAY' or 'SUNDAY')
  * Use this for "weekly" data calculations.
  */
-export function getCurrentWeekRange(now: Date = new Date()): { start: Date; end: Date } {
+export function getCurrentWeekRange(now: Date = new Date(), weekStart: WeekStart = 'MONDAY'): { start: Date; end: Date } {
   return {
-    start: getStartOfWeek(now),
+    start: getStartOfWeek(now, weekStart),
     end: new Date(now), // Current moment
   }
 }
