@@ -91,6 +91,25 @@ export const usePlaythroughEvents = (mode: string) => {
                 durationSeconds: playthrough.durationSeconds || 0,
               },
             })
+          } else if (playthrough.isDropped && playthrough.droppedAt) {
+            // For dropped games that were never picked up, only show event on the drop date
+            const dropDate = new Date(playthrough.droppedAt).toISOString().split('T')[0]
+            calendarEvents.push({
+              id: playthrough.id.toString(),
+              title: playthrough.gameName || '',
+              start: dropDate,
+              end: new Date(new Date(dropDate).getTime() + 86400000).toISOString().split('T')[0],
+              backgroundColor: mode === 'light' ? '#f44336' : '#ef5350',
+              borderColor: mode === 'light' ? '#f44336' : '#ef5350',
+              textColor: '#ffffff',
+              extendedProps: {
+                gameId: playthrough.gameId || 0,
+                playthroughType: playthrough.playthroughType || 'story',
+                isCompleted: false,
+                isDropped: true,
+                durationSeconds: playthrough.durationSeconds || 0,
+              },
+            })
           } else {
             const endDate = playthrough.endDate 
               ? new Date(new Date(playthrough.endDate).getTime() + 86400000).toISOString().split('T')[0]

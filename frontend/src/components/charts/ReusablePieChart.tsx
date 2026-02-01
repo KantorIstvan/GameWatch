@@ -21,38 +21,12 @@ interface ReusablePieChartProps {
 function ReusablePieChart({ 
   data, 
   title, 
-  minLabelPercent = 0.05, 
-  showLabel = true,
   height = 300,
   noDataMessage = 'No data available'
 }: ReusablePieChartProps) {
   const theme = useTheme()
   const hasData = data.length > 0 && data.some(item => item.value > 0)
-
-  const renderLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props
-    const RADIAN = Math.PI / 180
-    
-    if (percent < minLabelPercent) return null
-    
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
-    
-    return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor="middle" 
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight={600}
-      >
-        {name}
-      </text>
-    )
-  }
+  const filteredData = data.filter(item => item.value > 0)
 
   const tooltipContent = (value: any, name: string | undefined, props: any) => {
     const displayName = props?.payload?.fullName || name || ''
@@ -72,40 +46,95 @@ function ReusablePieChart({
         {title}
       </Typography>
       {hasData ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data.filter(item => item.value > 0)}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={showLabel ? renderLabel : false}
-                outerRadius={85}
-                fill="#8884d8"
-                dataKey="value"
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'column', md: 'row' }, 
+          gap: { xs: 2, md: 3 }, 
+          alignItems: 'center',
+          width: '100%' 
+        }}>
+          <Box sx={{ 
+            width: { xs: '100%', md: '60%' },
+            height: { xs: 250, sm: 280, md: 300 },
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center'
+          }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={filteredData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={false}
+                  outerRadius="70%"
+                  innerRadius="0%"
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {filteredData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={tooltipContent}
+                  contentStyle={{
+                    backgroundColor: theme.palette.background.paper,
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 8,
+                    color: theme.palette.text.primary,
+                  }}
+                  labelStyle={{
+                    color: theme.palette.text.primary,
+                  }}
+                  itemStyle={{
+                    color: theme.palette.text.primary,
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </Box>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: { xs: 1, md: 1.5 },
+              width: { xs: '100%', md: '40%' },
+              justifyContent: 'center',
+            }}
+          >
+            {filteredData.map((entry, index) => (
+              <Box 
+                key={`legend-${index}`}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5,
+                }}
               >
-                {data.filter(item => item.value > 0).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={tooltipContent}
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 8,
-                  color: theme.palette.text.primary,
-                }}
-                labelStyle={{
-                  color: theme.palette.text.primary,
-                }}
-                itemStyle={{
-                  color: theme.palette.text.primary,
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: entry.fill,
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontSize: '0.875rem',
+                    lineHeight: 1.3,
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  {entry.fullName || entry.name}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Box>
       ) : (
         <Box

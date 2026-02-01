@@ -32,7 +32,7 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       { name: t('statistics.userStats.dawn'), fullName: `${t('statistics.userStats.dawn')} (4-7)`, value: statistics.timeOfDayStats.dawnSeconds / 3600, fill: '#ffd93d' },
       { name: t('statistics.userStats.morning'), fullName: `${t('statistics.userStats.morning')} (7-12)`, value: statistics.timeOfDayStats.morningSeconds / 3600, fill: '#ffb347' },
       { name: t('statistics.userStats.noon'), fullName: `${t('statistics.userStats.noon')} (12-13)`, value: statistics.timeOfDayStats.noonSeconds / 3600, fill: '#ff6b6b' },
-      { name: t('statistics.userStats.afternoon'), fullName: `${t('statistics.userStats.afternoon')} (13-18)`, value: statistics.timeOfDayStats.afternoonSeconds / 3600, fill: '#ee5a6f' },
+      { name: t('statistics.userStats.afternoon'), fullName: `${t('statistics.userStats.afternoon')} (13-18)`, value: statistics.timeOfDayStats.afternoonSeconds / 3600, fill: '#9966ff' },
       { name: t('statistics.userStats.evening'), fullName: `${t('statistics.userStats.evening')} (18-22)`, value: statistics.timeOfDayStats.eveningSeconds / 3600, fill: '#4ecdc4' },
       { name: t('statistics.userStats.night'), fullName: `${t('statistics.userStats.night')} (22-4)`, value: statistics.timeOfDayStats.nightSeconds / 3600, fill: '#3d5a80' },
     ]
