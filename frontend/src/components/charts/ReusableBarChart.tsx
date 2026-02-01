@@ -108,7 +108,24 @@ function ReusableBarChart({
               <XAxis 
                 dataKey={xAxisKey}
                 stroke={theme.palette.text.secondary}
-                tick={{ fontSize: window.innerWidth < 600 ? 9 : 12 }}
+                tick={isHourlyChart && highlightCurrentHour ? (props: any) => {
+                  const { x, y, payload } = props
+                  const hourData = chartData.find((d: any) => d[xAxisKey] === payload.value)
+                  const isCurrentHour = hourData?.hourNum === currentHour
+                  
+                  return (
+                    <text
+                      x={x}
+                      y={y + 10}
+                      textAnchor="middle"
+                      fill={isCurrentHour ? highlightColor : theme.palette.text.secondary}
+                      fontSize={window.innerWidth < 600 ? 9 : 12}
+                      fontWeight={isCurrentHour ? 700 : 500}
+                    >
+                      {payload.value}
+                    </text>
+                  )
+                } : { fontSize: window.innerWidth < 600 ? 9 : 12 }}
                 interval={window.innerWidth < 600 ? 2 : 0}
               />
               <YAxis 
