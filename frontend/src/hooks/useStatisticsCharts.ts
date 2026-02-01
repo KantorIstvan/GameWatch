@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UserStatistics, getPlatformColorVariant } from '../types'
+import { useWeekStart } from '../contexts/WeekStartContext'
 
 const CHART_COLORS = [
   '#8884d8',
@@ -17,6 +18,7 @@ const CHART_COLORS = [
 
 export function useStatisticsCharts(statistics: UserStatistics | null) {
   const { t } = useTranslation()
+  const { weekStart } = useWeekStart()
   
   return useMemo(() => {
     if (!statistics) return null
@@ -67,9 +69,20 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       })
       .sort((a, b) => a.hourNum - b.hourNum)
 
-    const dayOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+    // Reorder days based on first day of week setting
+    const baseDayOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+    const baseDayNameKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    
+    const dayOrder = weekStart === 'SUNDAY' 
+      ? ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+      : baseDayOrder
+    
+    const dayNameKeys = weekStart === 'SUNDAY'
+      ? ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+      : baseDayNameKeys
+    
     const dayOfWeekData = dayOrder.map((day, index) => ({
-      day: t(`statistics.userStats.${['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][index]}`),
+      day: t(`statistics.userStats.${dayNameKeys[index]}`),
       hours: Math.round(((statistics.dayOfWeekTotalPlaytime[day] || 0) / 3600) * 10) / 10,
       avgHours: Math.round(((statistics.dayOfWeekPlaytime[day] || 0) / 3600) * 10) / 10,
     }))
@@ -82,5 +95,5 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       hourlyData, 
       dayOfWeekData
     }
-  }, [statistics, t])
+  }, [statistics, t, weekStart])
 }

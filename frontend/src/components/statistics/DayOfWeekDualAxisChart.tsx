@@ -1,6 +1,7 @@
 import { Box, Typography, useTheme } from '@mui/material'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { alpha } from '@mui/material'
+import { useWeekStart } from '../../contexts/WeekStartContext'
 
 interface DayOfWeekData {
   day: string
@@ -20,13 +21,18 @@ function DayOfWeekDualAxisChart({
   noDataMessage = 'No data available'
 }: DayOfWeekDualAxisChartProps) {
   const theme = useTheme()
+  const { weekStart } = useWeekStart()
 
   const hasData = data.length > 0 && data.some(item => item.hours > 0 || item.avgHours > 0)
 
   // Get current day of week (0 = Sunday, 1 = Monday, etc.)
   const currentDayIndex = new Date().getDay()
-  // Convert to match our data order: Monday = 0, Sunday = 6
-  const currentDayMappedIndex = currentDayIndex === 0 ? 6 : currentDayIndex - 1
+  // Convert to match our data order based on weekStart setting
+  // If weekStart is MONDAY: Monday = 0, Sunday = 6
+  // If weekStart is SUNDAY: Sunday = 0, Monday = 1
+  const currentDayMappedIndex = weekStart === 'SUNDAY' 
+    ? currentDayIndex 
+    : (currentDayIndex === 0 ? 6 : currentDayIndex - 1)
 
   // Enhanced color palette with gradients
   const vibrantPrimary = '#FF6B35'
