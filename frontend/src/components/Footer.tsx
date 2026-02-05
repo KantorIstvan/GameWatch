@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Link as MuiLink, IconButton, useMediaQuery } from '@mui/material'
-import { GitHub, Twitter, Chat, LinkedIn } from '@mui/icons-material'
+import { GitHub, LinkedIn } from '@mui/icons-material'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 
