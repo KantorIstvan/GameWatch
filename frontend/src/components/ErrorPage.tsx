@@ -1,22 +1,8 @@
 import React from 'react'
-import {
-  Box,
-  Typography,
-  Button,
-  Container,
-  Paper,
-  useTheme,
-  alpha,
-} from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import {
-  Error as ErrorIcon,
-  Lock as LockIcon,
-  SearchOff as NotFoundIcon,
-  Refresh as RefreshIcon,
-  Home as HomeIcon,
-} from '@mui/icons-material'
+import { CircleAlert, Lock, SearchX, RefreshCw, Home } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface ErrorPageProps {
   errorCode?: 401 | 404 | 500 | number
@@ -35,19 +21,18 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   showRetryButton = false,
   onRetry,
 }) => {
-  const theme = useTheme()
   const { t } = useTranslation()
   const navigate = useNavigate()
 
   const getErrorIcon = () => {
     switch (errorCode) {
       case 401:
-        return <LockIcon sx={{ fontSize: 80, color: theme.palette.error.main }} />
+        return <Lock className="size-20 text-amber-500" />
       case 404:
-        return <NotFoundIcon sx={{ fontSize: 80, color: theme.palette.warning.main }} />
+        return <SearchX className="size-20 text-amber-500" />
       case 500:
       default:
-        return <ErrorIcon sx={{ fontSize: 80, color: theme.palette.error.main }} />
+        return <CircleAlert className="size-20 text-destructive" />
     }
   }
 
@@ -88,119 +73,39 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   }
 
   return (
-    <Container maxWidth="md">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 4,
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            borderRadius: 3,
-            background: alpha(theme.palette.background.paper, 0.8),
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            maxWidth: 500,
-            width: '100%',
-          }}
-        >
-          <Box sx={{ mb: 4 }}>
-            {getErrorIcon()}
-          </Box>
+    <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md rounded-xl border border-border bg-surface/80 p-12 text-center shadow-2 backdrop-blur-md">
+        <div className="mb-8 flex justify-center">{getErrorIcon()}</div>
 
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              mb: 2,
-              fontWeight: 700,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            {errorCode}
-          </Typography>
+        <p className="mb-4 bg-linear-to-br from-accent to-accent-hover bg-clip-text text-h1 font-bold text-transparent">
+          {errorCode}
+        </p>
 
-          <Typography
-            variant="h5"
-            component="h2"
-            sx={{
-              mb: 3,
-              fontWeight: 600,
-              color: theme.palette.text.primary,
-            }}
-          >
-            {title || getDefaultTitle()}
-          </Typography>
+        <h2 className="mb-6 text-h4 font-semibold text-text-primary">
+          {title || getDefaultTitle()}
+        </h2>
 
-          <Typography
-            variant="body1"
-            sx={{
-              mb: 4,
-              color: theme.palette.text.secondary,
-              lineHeight: 1.6,
-              maxWidth: 400,
-              mx: 'auto',
-            }}
-          >
-            {message || getDefaultMessage()}
-          </Typography>
+        <p className="mx-auto mb-8 max-w-sm text-body text-text-secondary">
+          {message || getDefaultMessage()}
+        </p>
 
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {showHomeButton && (
-              <Button
-                variant="contained"
-                startIcon={<HomeIcon />}
-                onClick={handleGoHome}
-                sx={{
-                  borderRadius: 2,
-                  px: 3,
-                  py: 1.5,
-                  fontWeight: 600,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                  '&:hover': {
-                    background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                  },
-                }}
-              >
-                {t('common.backToDashboard', 'Go Home')}
-              </Button>
-            )}
+        <div className="flex flex-wrap justify-center gap-4">
+          {showHomeButton && (
+            <Button onClick={handleGoHome} size="lg">
+              <Home className="size-4" />
+              {t('common.backToDashboard', 'Go Home')}
+            </Button>
+          )}
 
-            {showRetryButton && (
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={handleRetry}
-                sx={{
-                  borderRadius: 2,
-                  px: 3,
-                  py: 1.5,
-                  fontWeight: 600,
-                  borderColor: theme.palette.primary.main,
-                  color: theme.palette.primary.main,
-                  '&:hover': {
-                    borderColor: theme.palette.primary.dark,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                  },
-                }}
-              >
-                {t('common.retry', 'Try Again')}
-              </Button>
-            )}
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+          {showRetryButton && (
+            <Button onClick={handleRetry} variant="outline" size="lg">
+              <RefreshCw className="size-4" />
+              {t('common.retry', 'Try Again')}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
