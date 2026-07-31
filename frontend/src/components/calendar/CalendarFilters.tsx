@@ -1,6 +1,7 @@
-import { Box, Typography, ToggleButton, ToggleButtonGroup, TextField, InputAdornment } from '@mui/material'
-import { FilterList, Search, CheckCircle, Cancel, PlayArrow } from '@mui/icons-material'
+import { Filter, Search, CircleCheck, CircleX, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Input } from '@/components/ui/input'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 interface CalendarFiltersProps {
   mode: string
@@ -9,6 +10,8 @@ interface CalendarFiltersProps {
   searchQuery: string
   setSearchQuery: (query: string) => void
 }
+
+const accent = (mode: string) => (mode === 'light' ? '#667eea' : '#8b9af7')
 
 export const CalendarFilters = ({
   mode,
@@ -20,164 +23,80 @@ export const CalendarFilters = ({
   const { t } = useTranslation()
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <FilterList sx={{ color: mode === 'light' ? '#667eea' : '#8b9af7', fontSize: '1.25rem' }} />
-        <Typography
-          variant="subtitle1"
-          sx={{
-            fontWeight: 600,
-            color: mode === 'light' ? '#495057' : '#adb5bd',
-          }}
-        >
+    <div className="mb-6">
+      <div className="mb-2 flex items-center gap-1">
+        <Filter className="size-5" style={{ color: accent(mode) }} />
+        <p className="font-semibold" style={{ color: mode === 'light' ? '#495057' : '#adb5bd' }}>
           {t('calendar.filter', 'Filter')}
-        </Typography>
-      </Box>
-      
-      <TextField
-        fullWidth
-        placeholder={t('calendar.searchPlaceholder', 'Search games...')}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{
-          mb: 2,
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23',
-            '& fieldset': {
-              borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.2)' : 'rgba(139, 154, 247, 0.2)',
-            },
-            '&:hover fieldset': {
-              borderColor: mode === 'light' ? '#667eea' : '#8b9af7',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: mode === 'light' ? '#667eea' : '#8b9af7',
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search sx={{ color: mode === 'light' ? '#667eea' : '#8b9af7' }} />
-            </InputAdornment>
-          ),
-        }}
-      />
-      
-      <ToggleButtonGroup
+        </p>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" style={{ color: accent(mode) }} />
+        <Input
+          placeholder={t('calendar.searchPlaceholder', 'Search games...')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+          style={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23' }}
+        />
+      </div>
+
+      <ToggleGroup
+        type="single"
         value={statusFilter}
-        exclusive
-        onChange={(_, newFilter) => newFilter && setStatusFilter(newFilter)}
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          '& .MuiToggleButtonGroup-grouped': {
-            border: '1px solid',
-            borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.2)' : 'rgba(139, 154, 247, 0.2)',
-            borderRadius: '8px !important',
-            margin: 0,
-            '&:not(:first-of-type)': {
-              marginLeft: 0,
-            },
-          },
-        }}
+        onValueChange={(v) => v && setStatusFilter(v)}
+        variant="outline"
+        className="flex-wrap justify-start gap-2"
       >
-        <ToggleButton
+        <ToggleGroupItem
           value="all"
-          sx={{
-            px: { xs: 2, sm: 3 },
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: { xs: '0.85rem', sm: '0.95rem' },
-            color: statusFilter === 'all'
-              ? '#ffffff'
-              : mode === 'light' ? '#667eea' : '#8b9af7',
-            backgroundColor: statusFilter === 'all'
-              ? (mode === 'light' ? '#667eea' : '#8b9af7')
-              : 'transparent',
-            '&:hover': {
-              backgroundColor: statusFilter === 'all'
-                ? (mode === 'light' ? '#5568d3' : '#7481e0')
-                : (mode === 'light' ? 'rgba(102, 126, 234, 0.1)' : 'rgba(139, 154, 247, 0.1)'),
-            },
-          }}
+          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
+          style={
+            statusFilter === 'all'
+              ? { backgroundColor: accent(mode), borderColor: accent(mode) }
+              : { color: accent(mode), borderColor: `${accent(mode)}33` }
+          }
         >
           {t('calendar.all', 'All')}
-        </ToggleButton>
-        <ToggleButton
+        </ToggleGroupItem>
+        <ToggleGroupItem
           value="completed"
-          sx={{
-            px: { xs: 2, sm: 3 },
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: { xs: '0.85rem', sm: '0.95rem' },
-            color: statusFilter === 'completed'
-              ? '#ffffff'
-              : mode === 'light' ? '#10b981' : '#34d399',
-            backgroundColor: statusFilter === 'completed'
-              ? (mode === 'light' ? '#10b981' : '#34d399')
-              : 'transparent',
-            '&:hover': {
-              backgroundColor: statusFilter === 'completed'
-                ? (mode === 'light' ? '#059669' : '#10b981')
-                : (mode === 'light' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(52, 211, 153, 0.1)'),
-            },
-          }}
+          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
+          style={
+            statusFilter === 'completed'
+              ? { backgroundColor: mode === 'light' ? '#10b981' : '#34d399', borderColor: mode === 'light' ? '#10b981' : '#34d399' }
+              : { color: mode === 'light' ? '#10b981' : '#34d399', borderColor: mode === 'light' ? '#10b98133' : '#34d39933' }
+          }
         >
-          <CheckCircle sx={{ fontSize: '1rem', mr: 0.5 }} />
+          <CircleCheck className="mr-1 size-4" />
           {t('calendar.completed', 'Completed')}
-        </ToggleButton>
-        <ToggleButton
+        </ToggleGroupItem>
+        <ToggleGroupItem
           value="dropped"
-          sx={{
-            px: { xs: 2, sm: 3 },
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: { xs: '0.85rem', sm: '0.95rem' },
-            color: statusFilter === 'dropped'
-              ? '#ffffff'
-              : mode === 'light' ? '#f44336' : '#ef5350',
-            backgroundColor: statusFilter === 'dropped'
-              ? (mode === 'light' ? '#f44336' : '#ef5350')
-              : 'transparent',
-            '&:hover': {
-              backgroundColor: statusFilter === 'dropped'
-                ? (mode === 'light' ? '#d32f2f' : '#f44336')
-                : (mode === 'light' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(239, 83, 80, 0.1)'),
-            },
-          }}
+          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
+          style={
+            statusFilter === 'dropped'
+              ? { backgroundColor: mode === 'light' ? '#f44336' : '#ef5350', borderColor: mode === 'light' ? '#f44336' : '#ef5350' }
+              : { color: mode === 'light' ? '#f44336' : '#ef5350', borderColor: mode === 'light' ? '#f4433633' : '#ef535033' }
+          }
         >
-          <Cancel sx={{ fontSize: '1rem', mr: 0.5 }} />
+          <CircleX className="mr-1 size-4" />
           {t('calendar.dropped', 'Dropped')}
-        </ToggleButton>
-        <ToggleButton
+        </ToggleGroupItem>
+        <ToggleGroupItem
           value="started"
-          sx={{
-            px: { xs: 2, sm: 3 },
-            py: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: { xs: '0.85rem', sm: '0.95rem' },
-            color: statusFilter === 'started'
-              ? '#ffffff'
-              : mode === 'light' ? '#f59e0b' : '#fbbf24',
-            backgroundColor: statusFilter === 'started'
-              ? (mode === 'light' ? '#f59e0b' : '#fbbf24')
-              : 'transparent',
-            '&:hover': {
-              backgroundColor: statusFilter === 'started'
-                ? (mode === 'light' ? '#d97706' : '#f59e0b')
-                : (mode === 'light' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(251, 191, 36, 0.1)'),
-            },
-          }}
+          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
+          style={
+            statusFilter === 'started'
+              ? { backgroundColor: mode === 'light' ? '#f59e0b' : '#fbbf24', borderColor: mode === 'light' ? '#f59e0b' : '#fbbf24' }
+              : { color: mode === 'light' ? '#f59e0b' : '#fbbf24', borderColor: mode === 'light' ? '#f59e0b33' : '#fbbf2433' }
+          }
         >
-          <PlayArrow sx={{ fontSize: '1rem', mr: 0.5 }} />
+          <Play className="mr-1 size-4" />
           {t('calendar.started', 'Started')}
-        </ToggleButton>
-      </ToggleButtonGroup>
-    </Box>
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
   )
 }

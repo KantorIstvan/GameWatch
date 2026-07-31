@@ -1,6 +1,6 @@
-import { Box, Card, Typography, Chip } from '@mui/material'
-import { CheckCircle, Cancel, PlayArrow } from '@mui/icons-material'
+import { CircleCheck, CircleX, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge } from '@/components/ui/badge'
 
 interface CalendarEvent {
   id: string
@@ -28,22 +28,23 @@ interface EventCardProps {
 
 export const EventCard = ({ event, mode, onEventClick }: EventCardProps) => {
   const { t } = useTranslation()
+  const accent = mode === 'light' ? '#667eea' : '#8b9af7'
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString(t('app.locale', 'en'), { 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString(t('app.locale', 'en'), {
+      month: 'short',
+      day: 'numeric',
     })
   }
 
   const getEventIcon = () => {
     if (event.extendedProps.isCompleted) {
-      return <CheckCircle sx={{ fontSize: '1.25rem', color: '#10b981' }} />
+      return <CircleCheck className="size-5" style={{ color: '#10b981' }} />
     } else if (event.extendedProps.isDropped) {
-      return <Cancel sx={{ fontSize: '1.25rem', color: '#f44336' }} />
+      return <CircleX className="size-5" style={{ color: '#f44336' }} />
     } else {
-      return <PlayArrow sx={{ fontSize: '1.25rem', color: '#f59e0b' }} />
+      return <Play className="size-5" style={{ color: '#f59e0b' }} />
     }
   }
 
@@ -59,98 +60,56 @@ export const EventCard = ({ event, mode, onEventClick }: EventCardProps) => {
   }
 
   return (
-    <Card
+    <div
       onClick={() => onEventClick(event.extendedProps.originalId?.toString() || event.id)}
-      elevation={0}
-      sx={{
-        mb: 2,
-        p: 2,
+      className="group mb-2 cursor-pointer rounded-md border p-4 transition-all duration-200 hover:translate-x-1"
+      style={{
         backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23',
-        border: '1px solid',
-        borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.1)' : 'rgba(139, 154, 247, 0.1)',
-        borderRadius: 2,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          transform: 'translateX(4px)',
-          borderColor: mode === 'light' ? '#667eea' : '#8b9af7',
-          boxShadow: mode === 'light' 
-            ? '0 4px 12px rgba(102, 126, 234, 0.15)'
-            : '0 4px 12px rgba(139, 154, 247, 0.2)',
-        },
+        borderColor: `${accent}1a`,
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = accent)}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = `${accent}1a`)}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            backgroundColor: event.backgroundColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
+      <div className="flex items-center gap-4">
+        <div
+          className="flex size-12 shrink-0 items-center justify-center rounded-md"
+          style={{ backgroundColor: event.backgroundColor }}
         >
           {getEventIcon()}
-        </Box>
-        
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: { xs: '0.95rem', sm: '1.05rem' },
-              fontWeight: 600,
-              color: mode === 'light' ? '#212529' : '#ffffff',
-              mb: 0.5,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p
+            className="mb-0.5 truncate text-body-sm font-semibold sm:text-body"
+            style={{ color: mode === 'light' ? '#212529' : '#ffffff' }}
           >
             {event.title}
-          </Typography>
-          
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
-            <Typography
-              variant="body2"
-              sx={{
-                color: mode === 'light' ? '#6c757d' : '#868e96',
-                fontSize: '0.85rem',
-              }}
-            >
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-caption" style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}>
               {formatEventDate(event.start)}
               {event.end && ` - ${formatEventDate(event.end)}`}
-            </Typography>
-            
-            <Chip
-              label={getEventTypeLabel()}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                backgroundColor: event.backgroundColor,
-                color: '#ffffff',
-              }}
-            />
-            
+            </span>
+
+            <Badge
+              className="h-5 text-[0.7rem] font-semibold text-white"
+              style={{ backgroundColor: event.backgroundColor }}
+            >
+              {getEventTypeLabel()}
+            </Badge>
+
             {event.extendedProps.durationSeconds > 0 && (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: mode === 'light' ? '#6c757d' : '#868e96',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                }}
+              <span
+                className="text-[0.75rem] font-medium"
+                style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}
               >
                 {formatDuration(event.extendedProps.durationSeconds)}
-              </Typography>
+              </span>
             )}
-          </Box>
-        </Box>
-      </Box>
-    </Card>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
