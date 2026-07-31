@@ -1,2 +1,187 @@
 @import "tailwindcss";
 
+/* =========================================================================
+   PRIMITIVES — plain CSS vars, deliberately OUTSIDE @theme so Tailwind never
+   turns these into utility classes on their own. Components must reference
+   semantic tokens below, never these directly.
+   ========================================================================= */
+:root {
+  /* Neutral scale — black/white minimal palette */
+  --gray-0: #ffffff;
+  --gray-50: #f9f9fb;
+  --gray-100: #f1f1f4;
+  --gray-200: #e4e4e9;
+  --gray-300: #d1d1d8;
+  --gray-400: #a8a8b3;
+  --gray-500: #8b8b96;
+  --gray-600: #6b6b76;
+  --gray-700: #48484f;
+  --gray-800: #2c2c32;
+  --gray-900: #1a1a1e;
+  --gray-950: #0a0a0c;
+
+  /* Single confident accent — matches the app's existing brand hue */
+  --accent-100: #eaeefc;
+  --accent-500: #667eea;
+  --accent-600: #5468c9;
+
+  --danger-500: #dc3d33;
+  --success-500: #1f9d55;
+  --warning-500: #ed6c02;
+
+  /* Signature brand gradient (logo wordmark) — one deliberate moment, not reused elsewhere */
+  --brand-start: #667eea;
+  --brand-end: #764ba2;
+}
+
+/* =========================================================================
+   SEMANTIC — inside @theme, so Tailwind auto-generates bg-, text-, border-
+   utilities from these, and ONLY from these.
+   ========================================================================= */
+@theme {
+  /* Typography */
+  --font-sans: 'Roboto', -apple-system, 'Segoe UI Variable', 'Segoe UI', Roboto, sans-serif;
+
+  --text-display: 3.5rem;
+  --text-display--line-height: 4rem;
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 3rem;
+  --text-h2: 2rem;
+  --text-h2--line-height: 2.5rem;
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 2rem;
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.75rem;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.25rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+
+  /* Radius — concentric scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.16);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Core semantic surfaces/text (project naming) */
+  --color-bg: var(--gray-0);
+  --color-surface: var(--gray-50);
+  --color-surface-raised: #ffffff;
+  --color-border: var(--gray-200);
+  --color-text-primary: var(--gray-950);
+  --color-text-secondary: var(--gray-500);
+
+  --color-accent: var(--accent-500);
+  --color-accent-hover: var(--accent-600);
+  --color-accent-subtle: var(--accent-100);
+  --color-accent-foreground: var(--gray-0);
+
+  --color-danger: var(--danger-500);
+  --color-success: var(--success-500);
+  --color-warning: var(--warning-500);
+
+  --color-brand-start: var(--brand-start);
+  --color-brand-end: var(--brand-end);
+
+  /* ShadcnUI-standard aliases — mapped onto the same semantic values above so
+     every vendor primitive (dialog, popover, dropdown-menu, select, command,
+     calendar, table, badge, button...) stays visually identical to the rest
+     of the app instead of rendering unstyled/transparent. */
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text-primary);
+
+  --color-card: var(--color-surface-raised);
+  --color-card-foreground: var(--color-text-primary);
+
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-text-primary);
+
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--gray-0);
+
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-text-primary);
+
+  --color-muted: var(--color-surface);
+  --color-muted-foreground: var(--color-text-secondary);
+
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: var(--gray-0);
+
+  --color-input: var(--gray-200);
+  --color-ring: var(--color-accent);
+}
+
+/* Dark theme — plain selector override of the SAME variable names. Every
+   Tailwind utility generated above references var(--color-x), so overriding
+   the variable here re-themes every one of them automatically. */
+[data-theme='dark'] {
+  --color-bg: var(--gray-950);
+  --color-surface: #131316;
+  --color-surface-raised: #1c1c1f;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text-primary: var(--gray-0);
+  --color-text-secondary: #a1a1a6;
+
+  --color-accent: #8b9df5;
+  --color-accent-hover: #a5b4f7;
+  --color-accent-subtle: rgba(139, 157, 245, 0.16);
+  --color-accent-foreground: var(--gray-950);
+
+  --color-danger: #ef5350;
+  --color-success: #34c77a;
+  --color-warning: #ffa94d;
+
+  --color-input: rgba(255, 255, 255, 0.12);
+  --color-destructive-foreground: var(--gray-0);
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+/* Optional glass surface — reserve for one signature moment, not every card */
+.glass {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

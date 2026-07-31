@@ -54,7 +54,7 @@ function TypedConfirmDialog({
     }
   }
 
-  const color = destructive ? 'var(--color-danger)' : '#ed6c02'
+  const color = destructive ? 'var(--color-danger)' : 'var(--color-warning)'
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>

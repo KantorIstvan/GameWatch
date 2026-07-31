@@ -413,13 +413,13 @@ function Games() {
         onClose={handleCloseDialog}
         title={t('games.addGame')}
         icon={<Gamepad2 className="size-12" />}
-        iconColor="#10b981"
+        iconColor="var(--color-success)"
         actions={dialogActions}
       >
         <div className="mt-1">
           <GameSearchAutocomplete onGameSelect={handleGameSelect} disabled={false} />
           {selectedGame && (
-            <div className="mt-4 rounded-md border border-[#10b981]/20 bg-[#10b981]/8 p-5">
+            <div className="mt-4 rounded-md border border-success/20 bg-success/8 p-5">
               <p className="mb-1 text-body-sm text-text-secondary">{t('games.selectedGame')}:</p>
               <p className="mb-1 font-bold">{selectedGame.name}</p>
               {selectedGame.genres && (

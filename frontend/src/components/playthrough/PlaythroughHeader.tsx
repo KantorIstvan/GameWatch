@@ -86,7 +86,7 @@ function PlaythroughHeader({
           <Badge variant="destructive" className="font-semibold">{t('playthrough.dropped')}</Badge>
         )}
         {playthrough.isActive && (
-          <Badge className="bg-amber-500 font-semibold text-white">{t('playthrough.active')}</Badge>
+          <Badge className="bg-accent font-semibold text-white">{t('playthrough.active')}</Badge>
         )}
       </div>
     </>

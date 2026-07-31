@@ -465,7 +465,7 @@ function GameStatisticsPage() {
                     return (
                       <TableRow key={`${session.playthroughId}-${session.sessionNumber}`}>
                         <TableCell>
-                          <Badge className="min-w-12.5 bg-blue-500/10 font-semibold text-blue-500">
+                          <Badge className="min-w-12.5 bg-text-secondary/10 font-semibold text-text-secondary">
                             #{session.sessionNumber}
                           </Badge>
                         </TableCell>
@@ -479,7 +479,7 @@ function GameStatisticsPage() {
                         </TableCell>
                         <TableCell className="font-semibold text-text-primary">{formatDuration(session.sessionTimeSeconds)}</TableCell>
                         <TableCell>
-                          <Badge className="min-w-10 bg-amber-500/10 font-medium text-amber-500">
+                          <Badge className="min-w-10 bg-text-secondary/10 font-medium text-text-secondary">
                             {session.pauseCount || 0}
                           </Badge>
                         </TableCell>

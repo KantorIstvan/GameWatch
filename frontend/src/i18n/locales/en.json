@@ -13,7 +13,9 @@
     "myGames": "My Games",
     "calendar": "Calendar",
     "health": "Health",
-    "settings": "Settings"
+    "settings": "Settings",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode"
   },
   "settings": {
     "title": "Settings",
@@ -176,7 +178,13 @@
     "gameAll": "All Games",
     "filterByPlatform": "Filter by Platform",
     "platformAll": "All Platforms",
-    "searchTimers": "Search timers..."
+    "searchTimers": "Search timers...",
+    "overview": {
+      "totalPlaytime": "Total Playtime",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed"
+    }
   },
   "statistics": {
     "title": "Statistics",

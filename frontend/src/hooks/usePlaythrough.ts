@@ -15,7 +15,7 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
   const [error, setError] = useState<string | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const [timerGradient, setTimerGradient] = useState('linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+  const [timerGradient, setTimerGradient] = useState('linear-gradient(135deg, var(--color-brand-start) 0%, var(--color-brand-end) 100%)')
   
   // Calculate currentSessionTime dynamically from playthrough data
   const currentSessionTime = playthrough && (playthrough.isActive || playthrough.isPaused) && playthrough.sessionStartTime

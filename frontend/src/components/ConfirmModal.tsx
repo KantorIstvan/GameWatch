@@ -18,9 +18,9 @@ const colorMap: Record<NonNullable<ConfirmModalProps['confirmColor']>, string> =
   primary: 'var(--color-accent)',
   secondary: 'var(--color-text-secondary)',
   error: 'var(--color-danger)',
-  warning: '#ed6c02',
+  warning: 'var(--color-warning)',
   success: 'var(--color-success)',
-  info: '#0288d1',
+  info: 'var(--color-accent)',
 }
 
 function ConfirmModal({

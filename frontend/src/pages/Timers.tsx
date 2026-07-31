@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, X, CirclePlay, PauseCircle, CircleCheck, Timer as TimerIcon } from 'lucide-react'
 import { playthroughsApi, gamesApi } from '../services/api'
 import StopwatchCard from '../components/StopwatchCard'
 import CreatePlaythroughDialog from '../components/CreatePlaythroughDialog'
 import Loading from '../components/Loading'
+import StatCard from '../components/StatCard'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { formatTime } from '../utils/formatters'
 import { Playthrough, Game } from '../types'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -147,6 +149,16 @@ function Timers() {
     return filtered
   }, [playthroughs, games, sortBy, filterStatus, filterType, filterGame, filterPlatform, searchQuery])
 
+  const overview = useMemo(() => {
+    const totalSeconds = playthroughs.reduce((sum, p) => sum + (p.durationSeconds || 0), 0)
+    return {
+      totalSeconds,
+      active: playthroughs.filter(p => p.isActive).length,
+      paused: playthroughs.filter(p => p.isPaused).length,
+      completed: playthroughs.filter(p => p.isCompleted).length,
+    }
+  }, [playthroughs])
+
   if (loading) {
     return <Loading />
   }
@@ -170,6 +182,34 @@ function Timers() {
           {t('timers.newPlaythrough')}
         </Button>
       </div>
+
+      {playthroughs.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8">
+          <StatCard
+            hero
+            title={t('timers.overview.totalPlaytime')}
+            value={formatTime(overview.totalSeconds)}
+            icon={<TimerIcon className="size-6" />}
+          />
+          <div className="grid grid-cols-3 gap-4 sm:gap-5">
+            <StatCard
+              title={t('timers.overview.active')}
+              value={overview.active}
+              icon={<CirclePlay className="size-5" />}
+            />
+            <StatCard
+              title={t('timers.overview.paused')}
+              value={overview.paused}
+              icon={<PauseCircle className="size-5" />}
+            />
+            <StatCard
+              title={t('timers.overview.completed')}
+              value={overview.completed}
+              icon={<CircleCheck className="size-5" />}
+            />
+          </div>
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive" className="mb-6">

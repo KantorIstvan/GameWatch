@@ -20,7 +20,7 @@ interface CalendarEvent {
   }
 }
 
-export const usePlaythroughEvents = (mode: string) => {
+export const usePlaythroughEvents = () => {
   const [playthroughs, setPlaythroughs] = useState<Playthrough[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,13 +28,13 @@ export const usePlaythroughEvents = (mode: string) => {
 
   const getEventColor = (playthrough: Playthrough) => {
     if (playthrough.isDropped) {
-      return mode === 'light' ? '#f44336' : '#ef5350'
+      return 'var(--color-danger)'
     } else if (playthrough.isCompleted) {
-      return mode === 'light' ? '#10b981' : '#34d399'
+      return 'var(--color-success)'
     } else if (playthrough.isActive) {
-      return mode === 'light' ? '#667eea' : '#8b9af7'
+      return 'var(--color-accent)'
     } else {
-      return mode === 'light' ? '#f59e0b' : '#fbbf24'
+      return 'var(--color-warning)'
     }
   }
 
@@ -57,8 +57,8 @@ export const usePlaythroughEvents = (mode: string) => {
               title: playthrough.gameName || '',
               start: playthrough.startDate!,
               end: new Date(new Date(dropDate).getTime() + 86400000).toISOString().split('T')[0],
-              backgroundColor: mode === 'light' ? '#f44336' : '#ef5350',
-              borderColor: mode === 'light' ? '#f44336' : '#ef5350',
+              backgroundColor: 'var(--color-danger)',
+              borderColor: 'var(--color-danger)',
               textColor: '#ffffff',
               extendedProps: {
                 gameId: playthrough.gameId || 0,
@@ -99,8 +99,8 @@ export const usePlaythroughEvents = (mode: string) => {
               title: playthrough.gameName || '',
               start: dropDate,
               end: new Date(new Date(dropDate).getTime() + 86400000).toISOString().split('T')[0],
-              backgroundColor: mode === 'light' ? '#f44336' : '#ef5350',
-              borderColor: mode === 'light' ? '#f44336' : '#ef5350',
+              backgroundColor: 'var(--color-danger)',
+              borderColor: 'var(--color-danger)',
               textColor: '#ffffff',
               extendedProps: {
                 gameId: playthrough.gameId || 0,

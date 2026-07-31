@@ -37,7 +37,7 @@ function GameRecommendations({ recommendations, title, noDataMessage }: GameReco
                   {game.matchingPublishers?.slice(0, 2).map((publisher, idx) => (
                     <Badge
                       key={`pub-${idx}`}
-                      className="h-4.5 bg-blue-500/20 px-1.5 text-[0.65rem] text-blue-500"
+                      className="h-4.5 bg-accent/20 px-1.5 text-[0.65rem] text-accent"
                     >
                       {publisher}
                     </Badge>
