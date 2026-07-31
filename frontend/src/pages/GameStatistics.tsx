@@ -1,32 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  alpha,
-  useTheme,
-  Chip,
-  Divider,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Paper,
-  TablePagination
-} from '@mui/material'
-import { ArrowBack, Search, Delete, Download } from '@mui/icons-material'
+import { ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { gamesApi, playthroughsApi } from '../services/api'
 import Loading from '../components/Loading'
@@ -37,6 +11,14 @@ import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTranslation } from 'react-i18next'
 import { getStartOfWeek, getStartOfMonth, getStartOfYear } from '../utils/dateUtils'
 import type { GameStatistics } from '../types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
+const ALL = '__all__'
 
 function GameStatisticsPage() {
   const { id } = useParams<{ id: string }>()
@@ -44,7 +26,6 @@ function GameStatisticsPage() {
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
   const { weekStart } = useWeekStart()
-  const theme = useTheme()
   const { formatTime, formatDateTime } = useTimeFormat()
   const [statistics, setStatistics] = useState<GameStatistics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -78,10 +59,10 @@ function GameStatisticsPage() {
 
   const handleDeleteSession = async () => {
     if (!sessionToDelete || !sessionToDelete.sessionId) return
-    
+
     try {
       await playthroughsApi.deleteSession(sessionToDelete.playthroughId, sessionToDelete.sessionId)
-      await fetchStatistics() 
+      await fetchStatistics()
       setSessionToDelete(null)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete session')
@@ -93,7 +74,7 @@ function GameStatisticsPage() {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`
     } else if (minutes > 0) {
@@ -111,16 +92,16 @@ function GameStatisticsPage() {
   const formatDateOnly = (dateString: string | undefined): string => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
-    return date.toLocaleDateString(undefined, { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric'
     })
   }
 
   const aggregateDataByDate = () => {
     const dataByDate: { [key: string]: number } = {}
-    
+
     statistics?.sessions.forEach(session => {
       if (session.sessionDate) {
         const date = new Date(session.sessionDate).toLocaleDateString(undefined, {
@@ -143,27 +124,24 @@ function GameStatisticsPage() {
 
   const filterDataByTimeInterval = (data: { date: string; hours: number }[]) => {
     if (timeInterval === 'all') return data
-    
+
     const now = new Date()
     let cutoffDate: Date
-    
+
     switch (timeInterval) {
       case 'week':
-        // Current calendar week (Monday to today)
         cutoffDate = getStartOfWeek(now, weekStart)
         break
       case 'month':
-        // Current calendar month (1st to today)
         cutoffDate = getStartOfMonth(now)
         break
       case 'year':
-        // Current calendar year (Jan 1 to today)
         cutoffDate = getStartOfYear(now)
         break
       default:
         return data
     }
-    
+
     return data.filter(item => new Date(item.date) >= cutoffDate)
   }
 
@@ -178,21 +156,21 @@ function GameStatisticsPage() {
 
   const filteredAndSortedSessions = useMemo(() => {
     if (!statistics) return []
-    
+
     let sessions = [...statistics.sessions]
-    
+
     if (sessionFilterPlaythrough) {
       sessions = sessions.filter(s => s.playthroughTitle === sessionFilterPlaythrough)
     }
-    
+
     if (sessionSearchQuery) {
       const query = sessionSearchQuery.toLowerCase()
-      sessions = sessions.filter(s => 
+      sessions = sessions.filter(s =>
         s.playthroughTitle.toLowerCase().includes(query) ||
         s.sessionNumber.toString().includes(query)
       )
     }
-    
+
     sessions.sort((a, b) => {
       switch (sessionSortBy) {
         case 'date-desc':
@@ -211,7 +189,7 @@ function GameStatisticsPage() {
           return 0
       }
     })
-    
+
     return sessions
   }, [statistics, sessionSortBy, sessionFilterPlaythrough, sessionSearchQuery])
 
@@ -219,25 +197,18 @@ function GameStatisticsPage() {
     return filteredAndSortedSessions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   }, [filteredAndSortedSessions, page, rowsPerPage])
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedSessions.length / rowsPerPage))
 
   const exportToCSV = () => {
     if (!statistics) return
 
     const rows: (string | number)[][] = []
-    
+
     rows.push(['GameWatch Game Statistics Export'])
     rows.push(['Game', statistics.gameName])
     rows.push(['Export Date', new Date().toLocaleString()])
     rows.push([])
-    
+
     rows.push(['Overview'])
     rows.push(['Total Playtime', formatDuration(statistics.totalPlayTimeSeconds)])
     rows.push(['Total Sessions', statistics.totalSessions.toString()])
@@ -249,7 +220,7 @@ function GameStatisticsPage() {
     if (statistics.longestCompletionSeconds) rows.push(['Longest Completion', formatDuration(statistics.longestCompletionSeconds)])
     if (statistics.shortestCompletionSeconds) rows.push(['Shortest Completion', formatDuration(statistics.shortestCompletionSeconds)])
     rows.push([])
-    
+
     rows.push(['Session Details'])
     rows.push(['Session #', 'Playthrough', 'Date', 'Duration', 'Pause Count'])
     filteredAndSortedSessions.forEach(session => {
@@ -261,8 +232,8 @@ function GameStatisticsPage() {
         session.pauseCount || 0
       ])
     })
-    
-    const csvContent = rows.map(row => 
+
+    const csvContent = rows.map(row =>
       row.map(cell => {
         const cellStr = String(cell ?? '')
         if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
@@ -271,7 +242,7 @@ function GameStatisticsPage() {
         return cellStr
       }).join(',')
     ).join('\n')
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
@@ -287,9 +258,9 @@ function GameStatisticsPage() {
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <div className="p-6">
+        <p className="text-destructive">{error}</p>
+      </div>
     )
   }
 
@@ -304,548 +275,275 @@ function GameStatisticsPage() {
     { label: t('statistics.gameStats.firstStarted'), value: formatDateOnly(statistics.firstStartedDate) },
     { label: t('statistics.gameStats.lastPlayed'), value: formatDateOnly(statistics.lastPlayedDate) },
     { label: t('statistics.gameStats.gameAdded'), value: formatDateOnly(statistics.gameAddedDate) },
-    { 
-      label: t('statistics.gameStats.longestCompletion'), 
-      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na') 
+    {
+      label: t('statistics.gameStats.longestCompletion'),
+      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na')
     },
-    { 
-      label: t('statistics.gameStats.shortestCompletion'), 
-      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na') 
+    {
+      label: t('statistics.gameStats.shortestCompletion'),
+      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na')
     },
   ]
 
   return (
-    <Box sx={{ maxWidth: 1800, mx: 'auto', px: 3, py: 2 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4, flexWrap: 'wrap', gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton 
-            onClick={() => navigate('/games')} 
-            sx={{ 
-              mr: 2,
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1)
-              }
-            }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Box>
-            <Typography variant="h4" fontWeight="600">
-              {statistics.gameName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {t('statistics.gameStats.title')}
-            </Typography>
-          </Box>
-        </Box>
-        <IconButton
-          onClick={exportToCSV}
-          sx={{
-            bgcolor: theme.palette.success.main,
-            color: 'white',
-            '&:hover': {
-              bgcolor: theme.palette.success.dark
-            },
-            px: 2,
-            borderRadius: 2
-          }}
-        >
-          <Download sx={{ mr: 1 }} />
-          <Typography variant="button">{t('statistics.exportCSV')}</Typography>
-        </IconButton>
-      </Box>
+    <div className="mx-auto max-w-[1800px] px-4 py-2">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/games')} className="mr-3">
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div>
+            <h1 className="text-h2 font-semibold">{statistics.gameName}</h1>
+            <p className="mt-1 text-body-sm text-text-secondary">{t('statistics.gameStats.title')}</p>
+          </div>
+        </div>
+        <Button onClick={exportToCSV} className="bg-success text-white hover:bg-success/90">
+          <Download className="size-4" />
+          {t('statistics.exportCSV')}
+        </Button>
+      </div>
 
-      {/* Key Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         {statCards.map((stat, index) => (
-          <Grid item xs={6} sm={4} md={2.4} key={index}>
-            <Card
-              elevation={0}
-              sx={{
-                height: '100%',
-                borderRadius: 2,
-                background: alpha(theme.palette.background.paper, 0.6),
-                backdropFilter: 'blur(20px)',
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-              }}
-            >
-              <CardContent sx={{ p: 2.5 }}>
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
-                  sx={{ 
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                    fontWeight: 500,
-                    fontSize: '0.7rem'
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-                <Typography 
-                  variant="h5" 
-                  fontWeight="700" 
-                  sx={{ mt: 1, color: theme.palette.primary.main }}
-                >
-                  {stat.value}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+          <div key={index} className="h-full rounded-lg border border-border bg-surface/60 p-5 backdrop-blur-xl">
+            <p className="text-caption font-medium uppercase tracking-wide text-text-secondary">{stat.label}</p>
+            <p className="mt-2 text-h4 font-bold text-accent">{stat.value}</p>
+          </div>
         ))}
-      </Grid>
+      </div>
 
-      {/* Playtime Chart */}
-      <Card 
-        elevation={0}
-        sx={{ 
-          mb: 4,
-          borderRadius: 2,
-          background: alpha(theme.palette.background.paper, 0.6),
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-        }}
-      >
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between', 
-            alignItems: { xs: 'flex-start', sm: 'center' }, 
-            mb: 2,
-            gap: 2
-          }}>
-            <Typography variant="h6" fontWeight="600">
-              {t('statistics.gameStats.dailyPlaytime')}
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <InputLabel>{t('statistics.gameStats.timeRange')}</InputLabel>
-              <Select
-                value={timeInterval}
-                label={t('statistics.gameStats.timeRange')}
-                onChange={(e) => setTimeInterval(e.target.value as 'week' | 'month' | 'year' | 'all')}
+      <div className="mb-8 rounded-lg border border-border bg-surface/60 p-6 backdrop-blur-xl">
+        <div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="text-h4 font-semibold">{t('statistics.gameStats.dailyPlaytime')}</p>
+          <Select value={timeInterval} onValueChange={(v) => setTimeInterval(v as any)}>
+            <SelectTrigger className="w-full sm:w-45">
+              <SelectValue placeholder={t('statistics.gameStats.timeRange')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">{t('statistics.gameStats.oneWeek')}</SelectItem>
+              <SelectItem value="month">{t('statistics.gameStats.oneMonth')}</SelectItem>
+              <SelectItem value="year">{t('statistics.gameStats.oneYear')}</SelectItem>
+              <SelectItem value="all">{t('statistics.gameStats.all')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Separator className="mb-6" />
+        {chartData.length > 0 ? (
+          <div className="h-75 w-full sm:h-87.5">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{
+                  top: 10,
+                  right: window.innerWidth < 600 ? 5 : 30,
+                  left: window.innerWidth < 600 ? -20 : 0,
+                  bottom: window.innerWidth < 600 ? 40 : 0
+                }}
               >
-                <MenuItem value="week">{t('statistics.gameStats.oneWeek')}</MenuItem>
-                <MenuItem value="month">{t('statistics.gameStats.oneMonth')}</MenuItem>
-                <MenuItem value="year">{t('statistics.gameStats.oneYear')}</MenuItem>
-                <MenuItem value="all">{t('statistics.gameStats.all')}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
-          {chartData.length > 0 ? (
-            <Box
-              sx={{
-                width: '100%',
-                height: { xs: 300, sm: 350 },
-                '& .recharts-cartesian-axis-tick-value': {
-                  fontSize: { xs: '0.65rem', sm: '0.75rem' }
-                },
-                '& .recharts-label': {
-                  fontSize: { xs: '0.7rem', sm: '0.75rem' }
-                }
-              }}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart 
-                  data={chartData} 
-                  margin={{ 
-                    top: 10, 
-                    right: window.innerWidth < 600 ? 5 : 30, 
-                    left: window.innerWidth < 600 ? -20 : 0, 
-                    bottom: window.innerWidth < 600 ? 40 : 0 
+                <defs>
+                  <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis
+                  dataKey="date"
+                  stroke="var(--color-text-secondary)"
+                  style={{ fontSize: window.innerWidth < 600 ? '0.65rem' : '0.75rem' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={window.innerWidth < 600 ? 70 : 80}
+                  interval={window.innerWidth < 600 ? 'preserveStartEnd' : 0}
+                />
+                <YAxis
+                  stroke="var(--color-text-secondary)"
+                  style={{ fontSize: window.innerWidth < 600 ? '0.65rem' : '0.75rem' }}
+                  width={window.innerWidth < 600 ? 35 : 60}
+                  label={window.innerWidth >= 600 ? {
+                    value: t('statistics.gameStats.hours'),
+                    angle: -90,
+                    position: 'insideLeft'
+                  } : undefined}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--color-surface-raised)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
                   }}
-                >
-                  <defs>
-                    <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.3)} />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke={theme.palette.text.secondary}
-                    style={{ fontSize: window.innerWidth < 600 ? '0.65rem' : '0.75rem' }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={window.innerWidth < 600 ? 70 : 80}
-                    interval={window.innerWidth < 600 ? 'preserveStartEnd' : 0}
-                  />
-                  <YAxis 
-                    stroke={theme.palette.text.secondary}
-                    style={{ fontSize: window.innerWidth < 600 ? '0.65rem' : '0.75rem' }}
-                    width={window.innerWidth < 600 ? 35 : 60}
-                    label={window.innerWidth >= 600 ? { 
-                      value: t('statistics.gameStats.hours'), 
-                      angle: -90, 
-                      position: 'insideLeft' 
-                    } : undefined}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: alpha(theme.palette.background.paper, 0.95),
-                      border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                      borderRadius: 8,
-                      boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`
-                    }}
-                    labelStyle={{ color: theme.palette.text.primary, fontWeight: 600 }}
-                    formatter={(value: number | undefined) => [`${value || 0} ${t('statistics.gameStats.hours').toLowerCase()}`, t('statistics.gameStats.playtime')]}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="hours" 
-                    stroke={theme.palette.primary.main}
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorHours)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Box>
-          ) : (
-            <Box sx={{ py: 8, textAlign: 'center' }}>
-              <Typography color="text.secondary">
-                {t('statistics.gameStats.noChartData')}
-              </Typography>
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+                  labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
+                  formatter={(value: number | undefined) => [`${value || 0} ${t('statistics.gameStats.hours').toLowerCase()}`, t('statistics.gameStats.playtime')]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="hours"
+                  stroke="var(--color-accent)"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorHours)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="py-16 text-center">
+            <p className="text-text-secondary">{t('statistics.gameStats.noChartData')}</p>
+          </div>
+        )}
+      </div>
 
-      {/* Session History Table */}
-      <Card 
-        elevation={0}
-        sx={{
-          borderRadius: 2,
-          background: alpha(theme.palette.background.paper, 0.6),
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-        }}
-      >
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" fontWeight="600" gutterBottom>
-            {t('statistics.gameStats.sessionHistory')}
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          
-          {/* Search and Filters */}
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <TextField
+      <div className="rounded-lg border border-border bg-surface/60 p-6 backdrop-blur-xl">
+        <p className="text-h4 font-semibold">{t('statistics.gameStats.sessionHistory')}</p>
+        <Separator className="my-4" />
+
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div className="relative min-w-62.5">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
               placeholder={t('statistics.gameStats.searchSessions')}
               value={sessionSearchQuery}
               onChange={(e) => setSessionSearchQuery(e.target.value)}
-              size="small"
-              sx={{ minWidth: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
+              className="pl-9"
             />
-            
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>{t('statistics.gameStats.sortBy')}</InputLabel>
-              <Select
-                value={sessionSortBy}
-                label={t('statistics.gameStats.sortBy')}
-                onChange={(e) => setSessionSortBy(e.target.value)}
-              >
-                <MenuItem value="date-desc">{t('statistics.gameStats.sortDateDesc')}</MenuItem>
-                <MenuItem value="date-asc">{t('statistics.gameStats.sortDateAsc')}</MenuItem>
-                <MenuItem value="duration-desc">{t('statistics.gameStats.sortDurationDesc')}</MenuItem>
-                <MenuItem value="duration-asc">{t('statistics.gameStats.sortDurationAsc')}</MenuItem>
-              </Select>
-            </FormControl>
-            
-            {availablePlaythroughs.length > 1 && (
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>{t('statistics.gameStats.filterByPlaythrough')}</InputLabel>
-                <Select
-                  value={sessionFilterPlaythrough}
-                  label={t('statistics.gameStats.filterByPlaythrough')}
-                  onChange={(e) => setSessionFilterPlaythrough(e.target.value)}
-                >
-                  <MenuItem value="">{t('statistics.gameStats.allPlaythroughs')}</MenuItem>
-                  {availablePlaythroughs.map((playthrough) => (
-                    <MenuItem key={playthrough} value={playthrough}>{playthrough}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          </Box>
-          
-          {/* MUI Table */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              width: '100%', 
-              overflow: 'hidden',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-              borderRadius: 1
-            }}
-          >
-            <TableContainer sx={{ maxHeight: 500 }}>
-              <Table stickyHeader aria-label="session history table">
-                <TableHead>
+          </div>
+
+          <Select value={sessionSortBy} onValueChange={setSessionSortBy}>
+            <SelectTrigger className="w-45">
+              <SelectValue placeholder={t('statistics.gameStats.sortBy')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date-desc">{t('statistics.gameStats.sortDateDesc')}</SelectItem>
+              <SelectItem value="date-asc">{t('statistics.gameStats.sortDateAsc')}</SelectItem>
+              <SelectItem value="duration-desc">{t('statistics.gameStats.sortDurationDesc')}</SelectItem>
+              <SelectItem value="duration-asc">{t('statistics.gameStats.sortDurationAsc')}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {availablePlaythroughs.length > 1 && (
+            <Select value={sessionFilterPlaythrough || ALL} onValueChange={(v) => setSessionFilterPlaythrough(v === ALL ? '' : v)}>
+              <SelectTrigger className="w-50">
+                <SelectValue placeholder={t('statistics.gameStats.filterByPlaythrough')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t('statistics.gameStats.allPlaythroughs')}</SelectItem>
+                {availablePlaythroughs.map((playthrough) => (
+                  <SelectItem key={playthrough} value={playthrough}>{playthrough}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        <div className="overflow-hidden rounded-md border border-border">
+          <div className="max-h-125 overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-surface-raised hover:bg-surface-raised">
+                  <TableHead>{t('statistics.gameStats.sessionNumber')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.dateTime')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.startTime')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.endTime')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.playthrough')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.duration')}</TableHead>
+                  <TableHead>{t('statistics.gameStats.pauses')}</TableHead>
+                  <TableHead className="w-20 text-center">{t('statistics.gameStats.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedSessions.length === 0 ? (
                   <TableRow>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.sessionNumber')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.dateTime')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.startTime')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.endTime')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.playthrough')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.duration')}
-                    </TableCell>
-                    <TableCell 
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary
-                      }}
-                    >
-                      {t('statistics.gameStats.pauses')}
-                    </TableCell>
-                    <TableCell 
-                      align="center"
-                      sx={{ 
-                        fontWeight: 700,
-                        backgroundColor: theme.palette.mode === 'dark' 
-                          ? theme.palette.background.default
-                          : theme.palette.grey[100],
-                        borderBottom: `2px solid ${theme.palette.divider}`,
-                        color: theme.palette.text.primary,
-                        width: 80
-                      }}
-                    >
-                      {t('statistics.gameStats.actions')}
+                    <TableCell colSpan={8} className="text-center">
+                      <p className="py-16 text-body text-text-secondary">{t('statistics.gameStats.noSessions')}</p>
                     </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedSessions.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center">
-                        <Box sx={{ py: 8 }}>
-                          <Typography color="text.secondary" variant="body1">
-                            {t('statistics.gameStats.noSessions')}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedSessions.map((session, index) => {
-                      const startTime = session.startedAt ? formatTime(session.startedAt) : 'N/A'
-                      const endTime = session.endedAt ? formatTime(session.endedAt) : 'N/A'
-                      
-                      return (
-                        <TableRow 
-                          key={`${session.playthroughId}-${session.sessionNumber}`}
-                          hover
-                          sx={{ 
-                            '&:hover': {
-                              backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                              cursor: 'pointer'
-                            },
-                            '&:last-child td, &:last-child th': { 
-                              border: 0 
-                            },
-                            backgroundColor: index % 2 === 0 
-                              ? 'transparent' 
-                              : alpha(theme.palette.action.hover, 0.02)
-                          }}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Chip
-                                label={`#${session.sessionNumber}`}
-                                size="small"
-                                sx={{
-                                  backgroundColor: alpha(theme.palette.info.main, 0.1),
-                                  color: theme.palette.info.main,
-                                  fontWeight: 600,
-                                  minWidth: 50
-                                }}
-                              />
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color="text.primary">
-                              {formatDate(session.sessionDate)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                fontFamily: 'monospace', 
-                                color: 'text.secondary',
-                                fontSize: '0.875rem'
-                              }}
-                            >
-                              {startTime}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                fontFamily: 'monospace', 
-                                color: 'text.secondary',
-                                fontSize: '0.875rem'
-                              }}
-                            >
-                              {endTime}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={session.playthroughTitle} 
-                              size="small" 
-                              sx={{
-                                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                                fontWeight: 500,
-                                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography 
-                              variant="body2" 
-                              fontWeight="600"
-                              color="text.primary"
-                            >
-                              {formatDuration(session.sessionTimeSeconds)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={session.pauseCount || 0}
-                              size="small"
-                              sx={{
-                                backgroundColor: alpha(theme.palette.warning.main, 0.1),
-                                color: theme.palette.warning.main,
-                                fontWeight: 500,
-                                minWidth: 40
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={() => setSessionToDelete({
-                                sessionId: session.sessionId,
-                                playthroughId: session.playthroughId,
-                                sessionNumber: session.sessionNumber
-                              })}
-                              sx={{
-                                color: theme.palette.error.main,
-                                '&:hover': {
-                                  backgroundColor: alpha(theme.palette.error.main, 0.1),
-                                  transform: 'scale(1.1)'
-                                },
-                                transition: 'all 0.2s ease'
-                              }}
-                            >
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25, 50]}
-              component="div"
-              count={filteredAndSortedSessions.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{
-                borderTop: `1px solid ${theme.palette.divider}`,
-                backgroundColor: alpha(theme.palette.background.default, 0.3)
-              }}
-            />
-          </Paper>
-        </CardContent>
-      </Card>
+                ) : (
+                  paginatedSessions.map((session) => {
+                    const startTime = session.startedAt ? formatTime(session.startedAt) : 'N/A'
+                    const endTime = session.endedAt ? formatTime(session.endedAt) : 'N/A'
 
-      {/* Delete Confirmation Modal */}
+                    return (
+                      <TableRow key={`${session.playthroughId}-${session.sessionNumber}`}>
+                        <TableCell>
+                          <Badge className="min-w-12.5 bg-blue-500/10 font-semibold text-blue-500">
+                            #{session.sessionNumber}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-text-primary">{formatDate(session.sessionDate)}</TableCell>
+                        <TableCell className="font-mono text-body-sm text-text-secondary">{startTime}</TableCell>
+                        <TableCell className="font-mono text-body-sm text-text-secondary">{endTime}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-accent/20 bg-accent/10 font-medium text-accent">
+                            {session.playthroughTitle}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-semibold text-text-primary">{formatDuration(session.sessionTimeSeconds)}</TableCell>
+                        <TableCell>
+                          <Badge className="min-w-10 bg-amber-500/10 font-medium text-amber-500">
+                            {session.pauseCount || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setSessionToDelete({
+                              sessionId: session.sessionId,
+                              playthroughId: session.playthroughId,
+                              sessionNumber: session.sessionNumber
+                            })}
+                            className="text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between border-t border-border bg-surface/30 px-4 py-2">
+            <div className="flex items-center gap-2 text-caption text-text-secondary">
+              <span>Rows per page:</span>
+              <Select value={String(rowsPerPage)} onValueChange={(v) => { setRowsPerPage(Number(v)); setPage(0) }}>
+                <SelectTrigger className="h-8 w-18">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 25, 50].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-3 text-caption text-text-secondary">
+              <span>
+                {filteredAndSortedSessions.length === 0 ? 0 : page * rowsPerPage + 1}-
+                {Math.min((page + 1) * rowsPerPage, filteredAndSortedSessions.length)} of {filteredAndSortedSessions.length}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <ConfirmModal
         open={sessionToDelete !== null}
         onClose={() => setSessionToDelete(null)}
@@ -856,7 +554,7 @@ function GameStatisticsPage() {
         cancelText="Cancel"
         confirmColor="error"
       />
-    </Box>
+    </div>
   )
 }
 
