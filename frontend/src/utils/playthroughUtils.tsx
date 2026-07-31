@@ -27,20 +27,18 @@ export const formatDescription = (description: string): JSX.Element[] | null => 
     if (line.startsWith('###')) {
       const headerText = line.replace(/^###\s*/, '')
       elements.push(
-        <Typography key={i} variant="h6" sx={{ mt: 3, mb: 1, fontWeight: 'bold' }}>
+        <p key={i} className="mb-1 mt-6 text-h4 font-bold">
           {headerText}
-        </Typography>
+        </p>
       )
     } else {
       elements.push(
-        <Typography key={i} variant="body1" color="text.secondary" sx={{ mb: 1.5, lineHeight: 1.8 }}>
+        <p key={i} className="mb-3 text-body leading-8 text-text-secondary">
           {line}
-        </Typography>
+        </p>
       )
     }
   }
-  
+
   return elements
 }
-
-import { Typography } from '@mui/material'
