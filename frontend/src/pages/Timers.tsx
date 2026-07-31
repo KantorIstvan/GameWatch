@@ -1,20 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Alert,
-  alpha,
-  useTheme,
-  TextField,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material'
-import { Add, Search } from '@mui/icons-material'
+import { Plus, Search, X } from 'lucide-react'
 import { playthroughsApi, gamesApi } from '../services/api'
 import StopwatchCard from '../components/StopwatchCard'
 import CreatePlaythroughDialog from '../components/CreatePlaythroughDialog'
@@ -22,11 +7,16 @@ import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Playthrough, Game } from '../types'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const ALL = '__all__'
 
 function Timers() {
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
-  const theme = useTheme()
   const [playthroughs, setPlaythroughs] = useState<Playthrough[]>([])
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,7 +59,7 @@ function Timers() {
 
   const handleCreatePlaythrough = async () => {
     if (!selectedGame || !playthroughType || !platform || !startDate) return
-    
+
     try {
       const response = await playthroughsApi.create({
         gameId: selectedGame.id.toString(),
@@ -96,7 +86,7 @@ function Timers() {
 
   const filteredAndSortedPlaythroughs = useMemo(() => {
     let filtered = [...playthroughs]
-    
+
     if (filterStatus) {
       filtered = filtered.filter(p => {
         if (filterStatus === 'active') return p.isActive
@@ -105,19 +95,19 @@ function Timers() {
         return true
       })
     }
-    
+
     if (filterType) {
       filtered = filtered.filter(p => p.playthroughType === filterType)
     }
-    
+
     if (filterGame) {
       filtered = filtered.filter(p => p.gameId.toString() === filterGame)
     }
-    
+
     if (filterPlatform) {
       filtered = filtered.filter(p => p.platform === filterPlatform)
     }
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(p => {
@@ -127,11 +117,11 @@ function Timers() {
         return gameName.includes(query) || playthroughTitle.includes(query)
       })
     }
-    
+
     filtered.sort((a, b) => {
       const gameA = games.find(g => g.id === a.gameId)
       const gameB = games.find(g => g.id === b.gameId)
-      
+
       switch (sortBy) {
         case 'name-asc':
           return (gameA?.name || '').localeCompare(gameB?.name || '')
@@ -153,7 +143,7 @@ function Timers() {
           return 0
       }
     })
-    
+
     return filtered
   }, [playthroughs, games, sortBy, filterStatus, filterType, filterGame, filterPlatform, searchQuery])
 
@@ -162,255 +152,145 @@ function Timers() {
   }
 
   return (
-    <Box>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'flex-start', sm: 'center' }, 
-          mb: { xs: 3, sm: 4 },
-          pb: { xs: 2, sm: 3 },
-          borderBottom: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
-          gap: { xs: 2, sm: 0 },
-        }}
-      >
-        <Box>
-          <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{
-              fontWeight: 700,
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-            }}
-          >
-            {t('timers.title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+    <div>
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 border-b-2 border-border/10 pb-4 sm:mb-8 sm:flex-row sm:items-center sm:pb-6">
+        <div>
+          <h1 className="text-h2 font-bold">{t('timers.title')}</h1>
+          <p className="mt-1 text-body-sm text-text-secondary">
             {playthroughs.length} {playthroughs.length === 1 ? t('labels.timer') : t('labels.timers')} {t('labels.active')}
-          </Typography>
-        </Box>
+          </p>
+        </div>
         <Button
-          variant="contained"
-          startIcon={<Add />}
           onClick={() => setDialogOpen(true)}
           disabled={games.length === 0}
-          size="large"
-          fullWidth={false}
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            px: { xs: 2.5, sm: 3 },
-            py: 1.5,
-            minHeight: 48,
-            width: { xs: '100%', sm: 'auto' },
-            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-            '&:hover': {
-              boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
-              transform: 'translateY(-2px)',
-            },
-            transition: 'all 0.2s ease-in-out',
-          }}
+          size="lg"
+          className="w-full sm:w-auto"
         >
+          <Plus className="size-4" />
           {t('timers.newPlaythrough')}
         </Button>
-      </Box>
+      </div>
 
       {error && (
-        <Alert 
-          severity="error" 
-          sx={{ 
-            mb: 3, 
-            borderRadius: 2,
-            '& .MuiAlert-message': {
-              width: '100%',
-            }
-          }} 
-          onClose={() => setError(null)}
-        >
-          {error}
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>
+            <div className="flex w-full items-center justify-between gap-2">
+              <span>{error}</span>
+              <Button variant="ghost" size="icon-sm" onClick={() => setError(null)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
       {games.length === 0 && (
-        <Alert 
-          severity="info" 
-          sx={{ 
-            mb: 3,
-            borderRadius: 2,
-          }}
-        >
-          {t('errors.noGamesFound')}
+        <Alert variant="info" className="mb-6">
+          <AlertDescription>{t('errors.noGamesFound')}</AlertDescription>
         </Alert>
       )}
 
-      {/* Search and Filters */}
       {playthroughs.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            placeholder={t('timers.searchTimers')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            size="small"
-            sx={{ 
-              mb: 2,
-              '& .MuiInputBase-root': {
-                minHeight: 48,
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
-          
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            flexDirection: { xs: 'column', sm: 'row' },
-            flexWrap: 'wrap',
-          }}>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <InputLabel>{t('timers.sortBy')}</InputLabel>
-              <Select
-                value={sortBy}
-                label={t('timers.sortBy')}
-                onChange={(e) => setSortBy(e.target.value)}
-                sx={{
-                  '& .MuiInputBase-root': {
-                    minHeight: 48,
-                  },
-                }}
-              >
-                <MenuItem value="name-asc">{t('timers.sortNameAsc')}</MenuItem>
-                <MenuItem value="name-desc">{t('timers.sortNameDesc')}</MenuItem>
-                <MenuItem value="time-desc">{t('timers.sortTimeDesc')}</MenuItem>
-                <MenuItem value="time-asc">{t('timers.sortTimeAsc')}</MenuItem>
-                <MenuItem value="date-desc">{t('timers.sortDateDesc')}</MenuItem>
-                <MenuItem value="date-asc">{t('timers.sortDateAsc')}</MenuItem>
-                <MenuItem value="sessions-desc">{t('timers.sortSessionsDesc')}</MenuItem>
-                <MenuItem value="sessions-asc">{t('timers.sortSessionsAsc')}</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-              <InputLabel>{t('timers.filterByStatus')}</InputLabel>
-              <Select
-                value={filterStatus}
-                label={t('timers.filterByStatus')}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <MenuItem value="">{t('timers.statusAll')}</MenuItem>
-                <MenuItem value="active">{t('timers.statusActive')}</MenuItem>
-                <MenuItem value="paused">{t('timers.statusPaused')}</MenuItem>
-                <MenuItem value="completed">{t('timers.statusCompleted')}</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-              <InputLabel>{t('timers.filterByType')}</InputLabel>
-              <Select
-                value={filterType}
-                label={t('timers.filterByType')}
-                onChange={(e) => setFilterType(e.target.value)}
-              >
-                <MenuItem value="">{t('timers.typeAll')}</MenuItem>
-                <MenuItem value="story">{t('timers.typeStory')}</MenuItem>
-                <MenuItem value="speedrun">{t('timers.typeSpeedrun')}</MenuItem>
-                <MenuItem value="casual">{t('timers.typeCasual')}</MenuItem>
-                <MenuItem value="100_percent">{t('timers.type100')}</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-              <InputLabel>{t('timers.filterByGame')}</InputLabel>
-              <Select
-                value={filterGame}
-                label={t('timers.filterByGame')}
-                onChange={(e) => setFilterGame(e.target.value)}
-              >
-                <MenuItem value="">{t('timers.gameAll')}</MenuItem>
+        <div className="mb-6">
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={t('timers.searchTimers')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-12 pl-9"
+            />
+          </div>
+
+          <div className="flex flex-col flex-wrap gap-4 sm:flex-row">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-45">
+                <SelectValue placeholder={t('timers.sortBy')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">{t('timers.sortNameAsc')}</SelectItem>
+                <SelectItem value="name-desc">{t('timers.sortNameDesc')}</SelectItem>
+                <SelectItem value="time-desc">{t('timers.sortTimeDesc')}</SelectItem>
+                <SelectItem value="time-asc">{t('timers.sortTimeAsc')}</SelectItem>
+                <SelectItem value="date-desc">{t('timers.sortDateDesc')}</SelectItem>
+                <SelectItem value="date-asc">{t('timers.sortDateAsc')}</SelectItem>
+                <SelectItem value="sessions-desc">{t('timers.sortSessionsDesc')}</SelectItem>
+                <SelectItem value="sessions-asc">{t('timers.sortSessionsAsc')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus || ALL} onValueChange={(v) => setFilterStatus(v === ALL ? '' : v)}>
+              <SelectTrigger className="w-full sm:w-37.5">
+                <SelectValue placeholder={t('timers.filterByStatus')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t('timers.statusAll')}</SelectItem>
+                <SelectItem value="active">{t('timers.statusActive')}</SelectItem>
+                <SelectItem value="paused">{t('timers.statusPaused')}</SelectItem>
+                <SelectItem value="completed">{t('timers.statusCompleted')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterType || ALL} onValueChange={(v) => setFilterType(v === ALL ? '' : v)}>
+              <SelectTrigger className="w-full sm:w-37.5">
+                <SelectValue placeholder={t('timers.filterByType')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t('timers.typeAll')}</SelectItem>
+                <SelectItem value="story">{t('timers.typeStory')}</SelectItem>
+                <SelectItem value="speedrun">{t('timers.typeSpeedrun')}</SelectItem>
+                <SelectItem value="casual">{t('timers.typeCasual')}</SelectItem>
+                <SelectItem value="100_percent">{t('timers.type100')}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterGame || ALL} onValueChange={(v) => setFilterGame(v === ALL ? '' : v)}>
+              <SelectTrigger className="w-full sm:w-45">
+                <SelectValue placeholder={t('timers.filterByGame')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t('timers.gameAll')}</SelectItem>
                 {games
                   .filter(game => playthroughs.some(p => p.gameId === game.id))
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((game) => (
-                    <MenuItem key={game.id} value={game.id.toString()}>
+                    <SelectItem key={game.id} value={game.id.toString()}>
                       {game.name}
-                    </MenuItem>
+                    </SelectItem>
                   ))}
-              </Select>
-            </FormControl>
-            
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-              <InputLabel>{t('timers.filterByPlatform')}</InputLabel>
-              <Select
-                value={filterPlatform}
-                label={t('timers.filterByPlatform')}
-                onChange={(e) => setFilterPlatform(e.target.value)}
-              >
-                <MenuItem value="">{t('timers.platformAll')}</MenuItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterPlatform || ALL} onValueChange={(v) => setFilterPlatform(v === ALL ? '' : v)}>
+              <SelectTrigger className="w-full sm:w-37.5">
+                <SelectValue placeholder={t('timers.filterByPlatform')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>{t('timers.platformAll')}</SelectItem>
                 {Array.from(new Set(playthroughs.map(p => p.platform).filter(Boolean)))
                   .sort()
                   .map((platform) => (
-                    <MenuItem key={platform} value={platform}>
+                    <SelectItem key={platform} value={platform as string}>
                       {platform}
-                    </MenuItem>
+                    </SelectItem>
                   ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       )}
 
       {filteredAndSortedPlaythroughs.length === 0 ? (
-        <Box 
-          sx={{ 
-            textAlign: 'center', 
-            mt: { xs: 6, sm: 8 },
-            py: { xs: 6, sm: 8 },
-            px: { xs: 3, sm: 4 },
-            borderRadius: 3,
-            background: theme.palette.mode === 'dark'
-              ? alpha(theme.palette.background.paper, 0.4)
-              : alpha(theme.palette.background.paper, 0.6),
-            border: `2px dashed ${alpha(theme.palette.divider, 0.2)}`,
-          }}
-        >
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
-            gutterBottom
-            sx={{
-              fontSize: { xs: '1rem', sm: '1.25rem' },
-            }}
-          >
-            {t('timers.noPlaythroughsMessage')}
-          </Typography>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              mt: 1, 
-              opacity: 0.7,
-              fontSize: { xs: '0.875rem', sm: '0.875rem' },
-            }}
-          >
-            {t('labels.clickNewPlaythrough')}
-          </Typography>
-        </Box>
+        <div className="mt-12 rounded-xl border-2 border-dashed border-border/20 bg-surface/60 px-4 py-12 text-center sm:mt-16 sm:px-6 sm:py-16">
+          <p className="text-body sm:text-h4 text-text-secondary">{t('timers.noPlaythroughsMessage')}</p>
+          <p className="mt-1 text-body-sm text-text-secondary opacity-70">{t('labels.clickNewPlaythrough')}</p>
+        </div>
       ) : (
-        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {filteredAndSortedPlaythroughs.map((playthrough) => (
-            <Grid item xs={12} sm={6} lg={4} key={playthrough.id}>
-              <StopwatchCard playthrough={playthrough} />
-            </Grid>
+            <StopwatchCard key={playthrough.id} playthrough={playthrough} />
           ))}
-        </Grid>
+        </div>
       )}
 
       <CreatePlaythroughDialog
@@ -429,7 +309,7 @@ function Timers() {
         startDate={startDate}
         setStartDate={setStartDate}
       />
-    </Box>
+    </div>
   )
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Box, Typography, Alert, CircularProgress } from '@mui/material'
+import { Loader2 } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -10,13 +10,14 @@ import { CalendarToolbar } from '../components/calendar/CalendarToolbar'
 import { CalendarFilters } from '../components/calendar/CalendarFilters'
 import { CalendarListView } from '../components/calendar/CalendarListView'
 import { CalendarGridView } from '../components/calendar/CalendarGridView'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import './Calendar.css'
 
 function Calendar() {
   const { mode } = useTheme()
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
-  
+
   const { events, loading, error, refetch } = usePlaythroughEvents(mode)
   const { viewMode, setViewMode, isMobile } = useCalendarView()
   const {
@@ -45,14 +46,14 @@ function Calendar() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-accent" />
+      </div>
     )
   }
 
   return (
-    <Box>
+    <div>
       <CalendarToolbar
         mode={mode}
         viewMode={viewMode}
@@ -61,8 +62,8 @@ function Calendar() {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {t(error)}
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{t(error)}</AlertDescription>
         </Alert>
       )}
 
@@ -89,40 +90,28 @@ function Calendar() {
       )}
 
       {events.length === 0 && !loading && (
-        <Box
-          sx={{
-            mt: 6,
-            p: 6,
-            textAlign: 'center',
+        <div
+          className="mt-12 rounded-xl border-2 border-dashed p-12 text-center"
+          style={{
             backgroundColor: mode === 'light' ? 'rgba(102, 126, 234, 0.03)' : 'rgba(139, 154, 247, 0.03)',
-            borderRadius: 3,
-            border: '2px dashed',
             borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.2)' : 'rgba(139, 154, 247, 0.2)',
           }}
         >
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              fontWeight: 600,
-              color: mode === 'light' ? '#495057' : '#adb5bd',
-              mb: 2,
-            }}
+          <p
+            className="mb-2 text-h3 font-semibold"
+            style={{ color: mode === 'light' ? '#495057' : '#adb5bd' }}
           >
             📅 {t('calendar.noEvents')}
-          </Typography>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: mode === 'light' ? '#6c757d' : '#868e96',
-              maxWidth: '500px',
-              mx: 'auto',
-            }}
+          </p>
+          <p
+            className="mx-auto max-w-125"
+            style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}
           >
             {t('calendar.noEventsDescription')}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 
