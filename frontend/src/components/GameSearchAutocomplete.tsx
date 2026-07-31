@@ -1,14 +1,12 @@
-import { useState, useRef, useCallback } from 'react'
-import {
-  TextField,
-  Autocomplete,
-  Box,
-  Typography,
-  CircularProgress,
-  Avatar,
-} from '@mui/material'
+import { useState, useRef, useCallback, useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
 import { gamesApi } from '../services/api'
 import { useTranslation } from 'react-i18next'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 
 interface GameOption {
   id: string
@@ -30,6 +28,7 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
   const [options, setOptions] = useState<GameOption[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [inputValue, setInputValue] = useState<string>('')
+  const [open, setOpen] = useState(false)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const performSearch = useCallback(async (searchQuery: string) => {
@@ -50,118 +49,103 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
     }
   }, [])
 
-  const handleInputChange = (_event: any, newInputValue: string) => {
+  const handleInputChange = (newInputValue: string) => {
     setInputValue(newInputValue)
-    
+    setOpen(true)
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
-    
+
     if (!newInputValue || newInputValue.length < 2) {
       setOptions([])
       setLoading(false)
       return
     }
-    
+
     setLoading(true)
-    
+
     debounceTimerRef.current = setTimeout(() => {
       performSearch(newInputValue)
     }, 300)
   }
 
-  const handleChange = async (_event: any, newValue: GameOption | null) => {
-    if (newValue) {
-      setLoading(true)
-      try {
-        const response = await gamesApi.getDetails(newValue.id)
-        onGameSelect(response.data)
-      } catch (err) {
-        onGameSelect(newValue)
-      } finally {
-        setLoading(false)
-      }
-      setInputValue('')
-      setOptions([])
+  const handleSelect = async (option: GameOption) => {
+    setLoading(true)
+    try {
+      const response = await gamesApi.getDetails(option.id)
+      onGameSelect(response.data)
+    } catch (err) {
+      onGameSelect(option)
+    } finally {
+      setLoading(false)
     }
+    setInputValue('')
+    setOptions([])
+    setOpen(false)
   }
 
+  const emptyMessage = useMemo(
+    () => (inputValue.length < 2 ? t('games.typeAtLeast2Chars') : t('games.noGamesFound')),
+    [inputValue, t]
+  )
+
   return (
-    <Autocomplete
-      fullWidth
-      disabled={disabled}
-      options={options}
-      loading={loading}
-      inputValue={inputValue}
-      onInputChange={handleInputChange}
-      onChange={handleChange}
-      getOptionLabel={(option) => option.name || ''}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
-      filterOptions={(x) => x}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={t('games.searchForGame')}
-          placeholder={t('games.typeToSearch')}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              minHeight: 56,
-              transition: 'all 0.2s ease-in-out',
-              '&:hover fieldset': {
-                borderColor: (theme) => theme.palette.primary.main,
-                borderWidth: 2,
-              },
-              '&.Mui-focused fieldset': {
-                borderWidth: 2,
-              },
-            },
-          }}
-        />
-      )}
-      renderOption={(props, option) => (
-        <Box component="li" {...props} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          {option.bannerImageUrl ? (
-            <Avatar
-              src={option.bannerImageUrl}
-              alt={option.name}
-              variant="rounded"
-              sx={{ width: 60, height: 60 }}
+    <Popover open={open && inputValue.length >= 2} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t('games.searchForGame')}</Label>
+          <div className="relative">
+            <Input
+              value={inputValue}
+              disabled={disabled}
+              placeholder={t('games.typeToSearch')}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onFocus={() => inputValue.length >= 2 && setOpen(true)}
             />
-          ) : (
-            <Avatar variant="rounded" sx={{ width: 60, height: 60 }}>
-              {option.name?.charAt(0)}
-            </Avatar>
-          )}
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body1">{option.name}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {option.releaseDate && `${t('games.released')}: ${option.releaseDate}`}
-              {option.rating && ` • ${t('games.rating')}: ${option.rating}/5`}
-            </Typography>
-            {option.genres && (
-              <Typography variant="caption" display="block" color="text.secondary">
-                {option.genres}
-              </Typography>
+            {loading && (
+              <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
-          </Box>
-        </Box>
-      )}
-      noOptionsText={
-        inputValue.length < 2
-          ? t('games.typeAtLeast2Chars')
-          : t('games.noGamesFound')
-      }
-    />
+          </div>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        className="w-(--radix-popover-trigger-width) p-0"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <Command shouldFilter={false}>
+          <CommandList className="max-h-75">
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.id}
+                  value={option.id}
+                  onSelect={() => handleSelect(option)}
+                  className="gap-3 py-2"
+                >
+                  <Avatar className="size-15 rounded-md">
+                    <AvatarImage src={option.bannerImageUrl} alt={option.name} className="object-cover" />
+                    <AvatarFallback className="rounded-md">{option.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-body">{option.name}</p>
+                    <p className="text-caption text-text-secondary">
+                      {option.releaseDate && `${t('games.released')}: ${option.releaseDate}`}
+                      {option.rating && ` • ${t('games.rating')}: ${option.rating}/5`}
+                    </p>
+                    {option.genres && (
+                      <p className="block text-caption text-text-secondary">{option.genres}</p>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }
 

@@ -1,6 +1,9 @@
-import { Box, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, Button, Slider } from '@mui/material'
-import { Search, GridView, PhotoSizeSelectLarge } from '@mui/icons-material'
+import { Search, LayoutGrid, Image } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 
 interface SearchFilterBarProps {
   searchQuery: string
@@ -22,16 +25,18 @@ interface SearchFilterBarProps {
   onCardSizeChange: (size: number) => void
 }
 
-function SearchFilterBar({ 
-  searchQuery, 
-  onSearchChange, 
-  sortBy, 
-  onSortChange, 
-  filterGenre, 
-  onGenreChange, 
-  filterPlatform, 
-  onPlatformChange, 
-  filterYear, 
+const ALL = '__all__'
+
+function SearchFilterBar({
+  searchQuery,
+  onSearchChange,
+  sortBy,
+  onSortChange,
+  filterGenre,
+  onGenreChange,
+  filterPlatform,
+  onPlatformChange,
+  filterYear,
   onYearChange,
   availableGenres,
   availablePlatforms,
@@ -39,183 +44,101 @@ function SearchFilterBar({
   hasActiveFilters,
   onClearFilters,
   cardSize,
-  onCardSizeChange
+  onCardSizeChange,
 }: SearchFilterBarProps) {
   const { t } = useTranslation()
+  const cardSizeLabel = [t('games.cardSizeSmall'), t('games.cardSizeMedium'), t('games.cardSizeLarge')][cardSize - 1]
 
   return (
     <>
-      {/* Search Bar */}
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          fullWidth
-          placeholder={t('games.searchPlaceholder')}
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              bgcolor: 'background.paper',
-              minHeight: 48,
-            }
-          }}
-        />
-      </Box>
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t('games.searchPlaceholder')}
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-12 bg-surface pl-9"
+          />
+        </div>
+      </div>
 
-      {/* Filters and Sorting */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, flexWrap: 'wrap', alignItems: { xs: 'stretch', sm: 'center' } }}>
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-          <InputLabel>{t('games.sortBy')}</InputLabel>
-          <Select
-            value={sortBy}
-            label={t('games.sortBy')}
-            onChange={(e) => onSortChange(e.target.value)}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 400,
-                }
-              }
-            }}
-            sx={{ minHeight: 48 }}
-          >
-            <MenuItem value="name-asc">{t('games.sortNameAsc')}</MenuItem>
-            <MenuItem value="name-desc">{t('games.sortNameDesc')}</MenuItem>
-            <MenuItem value="date-newest">{t('games.sortNewest')}</MenuItem>
-            <MenuItem value="date-oldest">{t('games.sortOldest')}</MenuItem>
-            <MenuItem value="rating-high">{t('games.sortRatingHigh')}</MenuItem>
-            <MenuItem value="rating-low">{t('games.sortRatingLow')}</MenuItem>
-            <MenuItem value="sessions-high">{t('games.sortSessionsHigh')}</MenuItem>
-            <MenuItem value="sessions-low">{t('games.sortSessionsLow')}</MenuItem>
-            <MenuItem value="playtime-high">{t('games.sortPlaytimeHigh')}</MenuItem>
-            <MenuItem value="playtime-low">{t('games.sortPlaytimeLow')}</MenuItem>
-            <MenuItem value="status-active">{t('games.sortStatusActive')}</MenuItem>
-            <MenuItem value="status-completed">{t('games.sortStatusCompleted')}</MenuItem>
-          </Select>
-        </FormControl>
+      <div className="mb-6 flex flex-col flex-wrap items-stretch gap-4 sm:flex-row sm:items-center">
+        <Select value={sortBy} onValueChange={onSortChange}>
+          <SelectTrigger className="h-12 w-full sm:w-37.5">
+            <SelectValue placeholder={t('games.sortBy')} />
+          </SelectTrigger>
+          <SelectContent className="max-h-100">
+            <SelectItem value="name-asc">{t('games.sortNameAsc')}</SelectItem>
+            <SelectItem value="name-desc">{t('games.sortNameDesc')}</SelectItem>
+            <SelectItem value="date-newest">{t('games.sortNewest')}</SelectItem>
+            <SelectItem value="date-oldest">{t('games.sortOldest')}</SelectItem>
+            <SelectItem value="rating-high">{t('games.sortRatingHigh')}</SelectItem>
+            <SelectItem value="rating-low">{t('games.sortRatingLow')}</SelectItem>
+            <SelectItem value="sessions-high">{t('games.sortSessionsHigh')}</SelectItem>
+            <SelectItem value="sessions-low">{t('games.sortSessionsLow')}</SelectItem>
+            <SelectItem value="playtime-high">{t('games.sortPlaytimeHigh')}</SelectItem>
+            <SelectItem value="playtime-low">{t('games.sortPlaytimeLow')}</SelectItem>
+            <SelectItem value="status-active">{t('games.sortStatusActive')}</SelectItem>
+            <SelectItem value="status-completed">{t('games.sortStatusCompleted')}</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-          <InputLabel>{t('games.genre')}</InputLabel>
-          <Select
-            value={filterGenre}
-            label={t('games.genre')}
-            onChange={(e) => onGenreChange(e.target.value)}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 300,
-                }
-              }
-            }}
-            sx={{ minHeight: 48 }}
-          >
-            <MenuItem value="">{t('games.allGenres')}</MenuItem>
+        <Select value={filterGenre || ALL} onValueChange={(v) => onGenreChange(v === ALL ? '' : v)}>
+          <SelectTrigger className="h-12 w-full sm:w-37.5">
+            <SelectValue placeholder={t('games.genre')} />
+          </SelectTrigger>
+          <SelectContent className="max-h-75">
+            <SelectItem value={ALL}>{t('games.allGenres')}</SelectItem>
             {availableGenres.map(genre => (
-              <MenuItem key={genre} value={genre}>{genre}</MenuItem>
+              <SelectItem key={genre} value={genre}>{genre}</SelectItem>
             ))}
-          </Select>
-        </FormControl>
+          </SelectContent>
+        </Select>
 
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-          <InputLabel>{t('games.platform')}</InputLabel>
-          <Select
-            value={filterPlatform}
-            label={t('games.platform')}
-            onChange={(e) => onPlatformChange(e.target.value)}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 300,
-                }
-              }
-            }}
-            sx={{ minHeight: 48 }}
-          >
-            <MenuItem value="">{t('games.allPlatforms')}</MenuItem>
+        <Select value={filterPlatform || ALL} onValueChange={(v) => onPlatformChange(v === ALL ? '' : v)}>
+          <SelectTrigger className="h-12 w-full sm:w-37.5">
+            <SelectValue placeholder={t('games.platform')} />
+          </SelectTrigger>
+          <SelectContent className="max-h-75">
+            <SelectItem value={ALL}>{t('games.allPlatforms')}</SelectItem>
             {availablePlatforms.map(platform => (
-              <MenuItem key={platform} value={platform}>{platform}</MenuItem>
+              <SelectItem key={platform} value={platform}>{platform}</SelectItem>
             ))}
-          </Select>
-        </FormControl>
+          </SelectContent>
+        </Select>
 
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 120 } }}>
-          <InputLabel>{t('games.year')}</InputLabel>
-          <Select
-            value={filterYear}
-            label={t('games.year')}
-            onChange={(e) => onYearChange(e.target.value)}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 300,
-                }
-              }
-            }}
-            sx={{ minHeight: 48 }}
-          >
-            <MenuItem value="">{t('games.allYears')}</MenuItem>
+        <Select value={filterYear || ALL} onValueChange={(v) => onYearChange(v === ALL ? '' : v)}>
+          <SelectTrigger className="h-12 w-full sm:w-30">
+            <SelectValue placeholder={t('games.year')} />
+          </SelectTrigger>
+          <SelectContent className="max-h-75">
+            <SelectItem value={ALL}>{t('games.allYears')}</SelectItem>
             {availableYears.map(year => (
-              <MenuItem key={year} value={year}>{year}</MenuItem>
+              <SelectItem key={year} value={year}>{year}</SelectItem>
             ))}
-          </Select>
-        </FormControl>
+          </SelectContent>
+        </Select>
 
-        {/* Card Size Slider - Hidden on mobile */}
-        <Box sx={{ 
-          display: { xs: 'none', md: 'flex' }, 
-          alignItems: 'center', 
-          gap: 1, 
-          minWidth: 200, 
-          px: 2, 
-          py: 1, 
-          borderRadius: 2, 
-          bgcolor: 'background.paper', 
-          border: '1px solid', 
-          borderColor: 'rgba(0,0,0,0.08)' 
-        }}>
-          <GridView sx={{ color: 'text.disabled', fontSize: 18 }} />
+        <div className="hidden min-w-50 items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 md:flex">
+          <LayoutGrid className="size-4.5 text-text-disabled" />
           <Slider
-            value={cardSize}
-            onChange={(_e, newValue) => onCardSizeChange(Array.isArray(newValue) ? newValue[0] : newValue)}
+            value={[cardSize]}
+            onValueChange={([v]) => onCardSizeChange(v)}
             min={1}
             max={3}
             step={1}
-            marks={[{ value: 1, label: 'S' }, { value: 2, label: 'M' }, { value: 3, label: 'L' }]}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => [t('games.cardSizeSmall'), t('games.cardSizeMedium'), t('games.cardSizeLarge')][value - 1]}
-            sx={{
-              color: 'grey.300',
-              '& .MuiSlider-thumb': { width: 16, height: 16, backgroundColor: '#fff', border: '2px solid currentColor', transition: '0.3s cubic-bezier(.47,1.64,.41,.8)', '&:hover, &.Mui-focusVisible': { boxShadow: '0 0 0 8px rgba(0, 0, 0, 0.08)' } },
-              '& .MuiSlider-track': { height: 3, border: 'none' },
-              '& .MuiSlider-rail': { height: 3, opacity: 0.3, backgroundColor: 'grey.300' },
-              '& .MuiSlider-mark': { height: 8, width: 2, backgroundColor: 'grey.400' },
-              '& .MuiSlider-markLabel': { color: 'text.secondary', fontSize: '0.7rem' },
-            }}
+            aria-label={cardSizeLabel}
           />
-          <PhotoSizeSelectLarge sx={{ color: 'text.disabled', fontSize: 20 }} />
-        </Box>
+          <Image className="size-5 text-text-disabled" />
+        </div>
 
         {hasActiveFilters && (
-          <Button 
-            size="small" 
-            onClick={onClearFilters}
-            sx={{ 
-              ml: { xs: 0, sm: 'auto' },
-              width: { xs: '100%', sm: 'auto' },
-              minHeight: 44,
-            }}
-          >
+          <Button size="sm" variant="ghost" onClick={onClearFilters} className="w-full sm:ml-auto sm:w-auto">
             {t('games.clearFilters')}
           </Button>
         )}
-      </Box>
+      </div>
     </>
   )
 }
