@@ -116,7 +116,7 @@ export default function Health() {
       },
       domain: {
         type: 'month',
-        gutter: 10,
+        gutter: 6,
         label: {
           text: 'MMM',
           textAlign: 'start',
@@ -125,10 +125,10 @@ export default function Health() {
       },
       subDomain: {
         type: 'day',
-        radius: 4,
-        width: 16,
-        height: 16,
-        gutter: 5,
+        radius: 3,
+        width: 11,
+        height: 11,
+        gutter: 3,
       },
     }, [
       [
@@ -152,7 +152,16 @@ export default function Health() {
           label: t('health.legend'),
         },
       ],
-    ])
+    ]).then(() => {
+      const svg = calHeatmapRef.current?.querySelector('svg')
+      const width = svg?.getAttribute('width')
+      const height = svg?.getAttribute('height')
+      if (svg && width && height) {
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+        svg.removeAttribute('width')
+        svg.removeAttribute('height')
+      }
+    })
   }
 
   const loadDashboard = async () => {
@@ -220,7 +229,7 @@ export default function Health() {
 
         <div className={cardClass}>
           <div className="mb-2 flex items-center">
-            <TrendingUp className="mr-2 size-5 text-[#667eea]" />
+            <TrendingUp className="mr-2 size-5 text-accent" />
             <p className="text-h4 font-semibold">{t('health.weeklyTrend')}</p>
           </div>
 
@@ -251,14 +260,17 @@ export default function Health() {
         className={`${cardClass} mb-6 [&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-plugin-legend-lite]:fill-text-secondary [&_.ch-subdomain-bg]:fill-surface`}
       >
         <p className="mb-6 text-h4 font-semibold">{t('health.yearOverview')}</p>
-        <div ref={calHeatmapRef} className="overflow-x-auto pb-2" />
+        <div
+          ref={calHeatmapRef}
+          className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
+        />
         <div id="legend" className="mt-2 flex flex-wrap gap-2" />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className={`${cardClass} flex min-h-45 flex-col`}>
           <div className="mb-2 flex items-center">
-            <PersonStanding className="mr-2 size-5 text-[#667eea]" />
+            <PersonStanding className="mr-2 size-5 text-accent" />
             <p className="text-body-sm font-semibold">{t('health.breakCompliance')}</p>
           </div>
           <p className="mb-1 text-h3 font-bold">
@@ -271,7 +283,7 @@ export default function Health() {
 
         <div className={`${cardClass} flex min-h-45 flex-col`}>
           <div className="mb-2 flex items-center">
-            <Smile className="mr-2 size-5 text-amber-500" />
+            <Smile className="mr-2 size-5 text-accent" />
             <p className="text-body-sm font-semibold">{t('health.averageMood')}</p>
           </div>
           <p className="mb-1 text-h3 font-bold">
@@ -284,7 +296,7 @@ export default function Health() {
 
         <div className={`${cardClass} flex min-h-45 flex-col`}>
           <div className="mb-2 flex items-center">
-            <MoonStar className="mr-2 size-5 text-violet-500" />
+            <MoonStar className="mr-2 size-5 text-accent" />
             <p className="text-body-sm font-semibold">{t('health.lateNightGaming')}</p>
           </div>
           <p className="mb-1 text-h3 font-bold">
@@ -306,7 +318,7 @@ export default function Health() {
                 <p className="mb-1 text-body-sm text-text-secondary">{t('health.hoursToday')}</p>
                 <Progress
                   value={Math.min(100, (dashboard.goalProgress.hoursToday / dashboard.goalProgress.maxHoursPerDay) * 100)}
-                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursToday > dashboard.goalProgress.maxHoursPerDay ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursToday > dashboard.goalProgress.maxHoursPerDay ? '[&>div]:bg-danger' : '[&>div]:bg-success'}`}
                 />
                 <p className="text-body-sm">
                   {dashboard.goalProgress.hoursToday.toFixed(1)} / {dashboard.goalProgress.maxHoursPerDay} {t('health.hours')}
@@ -319,7 +331,7 @@ export default function Health() {
                 <p className="mb-1 text-body-sm text-text-secondary">{t('health.sessionsToday')}</p>
                 <Progress
                   value={Math.min(100, (dashboard.goalProgress.sessionsToday / dashboard.goalProgress.maxSessionsPerDay) * 100)}
-                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.sessionsToday > dashboard.goalProgress.maxSessionsPerDay ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.sessionsToday > dashboard.goalProgress.maxSessionsPerDay ? '[&>div]:bg-danger' : '[&>div]:bg-success'}`}
                 />
                 <p className="text-body-sm">
                   {dashboard.goalProgress.sessionsToday} / {dashboard.goalProgress.maxSessionsPerDay} {t('health.sessions')}
@@ -332,7 +344,7 @@ export default function Health() {
                 <p className="mb-1 text-body-sm text-text-secondary">{t('health.hoursThisWeek')}</p>
                 <Progress
                   value={Math.min(100, (dashboard.goalProgress.hoursThisWeek / dashboard.goalProgress.maxHoursPerWeek) * 100)}
-                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursThisWeek > dashboard.goalProgress.maxHoursPerWeek ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursThisWeek > dashboard.goalProgress.maxHoursPerWeek ? '[&>div]:bg-danger' : '[&>div]:bg-success'}`}
                 />
                 <p className="text-body-sm">
                   {dashboard.goalProgress.hoursThisWeek.toFixed(1)} / {dashboard.goalProgress.maxHoursPerWeek} {t('health.hours')}
@@ -364,13 +376,13 @@ export default function Health() {
                   <Badge
                     style={{
                       backgroundColor:
-                        session.moodRating >= 4 ? '#4caf5020' :
-                        session.moodRating >= 3 ? '#ff980020' :
-                        '#ef535020',
+                        session.moodRating >= 4 ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' :
+                        session.moodRating >= 3 ? 'color-mix(in srgb, var(--color-warning) 15%, transparent)' :
+                        'color-mix(in srgb, var(--color-danger) 15%, transparent)',
                       color:
-                        session.moodRating >= 4 ? '#4caf50' :
-                        session.moodRating >= 3 ? '#ff9800' :
-                        '#ef5350',
+                        session.moodRating >= 4 ? 'var(--color-success)' :
+                        session.moodRating >= 3 ? 'var(--color-warning)' :
+                        'var(--color-danger)',
                     }}
                   >
                     {t('health.mood')}: {session.moodRating}/5

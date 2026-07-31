@@ -21,12 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const palette = {
-  primary: 'var(--color-accent)',
-  secondary: '#6c757d',
-  success: 'var(--color-success)',
-  info: '#0288d1',
-  warning: '#ed6c02',
-  error: 'var(--color-danger)',
+  secondary: 'var(--color-text-secondary)',
 }
 
 function Statistics() {
@@ -120,43 +115,41 @@ function Statistics() {
         </Alert>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8">
         <StatCard
+          hero
           title={t('statistics.userStats.totalPlaytime')}
           value={formatTime(statistics.totalPlaytimeSeconds)}
-          icon={<Timer className="size-5" />}
-          color={palette.primary}
+          icon={<Timer className="size-6" />}
         />
-        <StatCard
-          title={t('statistics.userStats.totalGames')}
-          value={statistics.totalGamesCount}
-          icon={<Gamepad2 className="size-5" />}
-          color={palette.secondary}
-        />
-        <StatCard
-          title={t('statistics.userStats.completed')}
-          value={statistics.gamesCompleted}
-          icon={<CircleCheck className="size-5" />}
-          color={palette.success}
-        />
-        <StatCard
-          title={t('statistics.userStats.inProgress')}
-          value={statistics.gamesInProgress}
-          icon={<CirclePlay className="size-5" />}
-          color={palette.info}
-        />
-        <StatCard
-          title={t('statistics.userStats.totalSessions')}
-          value={statistics.totalSessionCount}
-          icon={<CalendarDays className="size-5" />}
-          color={palette.warning}
-        />
-        <StatCard
-          title={t('statistics.userStats.avgSession')}
-          value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
-          icon={<Clock className="size-5" />}
-          color={palette.error}
-        />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 sm:gap-5">
+          <StatCard
+            title={t('statistics.userStats.totalGames')}
+            value={statistics.totalGamesCount}
+            icon={<Gamepad2 className="size-5" />}
+          />
+          <StatCard
+            title={t('statistics.userStats.completed')}
+            value={statistics.gamesCompleted}
+            icon={<CircleCheck className="size-5" />}
+          />
+          <StatCard
+            title={t('statistics.userStats.inProgress')}
+            value={statistics.gamesInProgress}
+            icon={<CirclePlay className="size-5" />}
+          />
+          <StatCard
+            title={t('statistics.userStats.totalSessions')}
+            value={statistics.totalSessionCount}
+            icon={<CalendarDays className="size-5" />}
+          />
+          <StatCard
+            className="col-span-2 sm:col-span-1"
+            title={t('statistics.userStats.avgSession')}
+            value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
+            icon={<Clock className="size-5" />}
+          />
+        </div>
       </div>
 
       {hasData && (
@@ -164,11 +157,11 @@ function Statistics() {
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
             <div className={cardClass}>
               <div className="mb-2 flex items-center">
-                <CircleCheck className="mr-2 size-5 text-success" />
+                <CircleCheck className="mr-2 size-5 text-text-primary" />
                 <p className="text-h4 font-bold">{t('statistics.userStats.libraryCompletion')}</p>
               </div>
               <div className="mb-2">
-                <p className="text-h1 font-bold text-success">
+                <p className="text-h1 font-bold text-text-primary">
                   {statistics.libraryCompletionPercentage.toFixed(1)}%
                 </p>
                 <p className="text-body-sm text-text-secondary">
@@ -180,7 +173,7 @@ function Statistics() {
               </div>
               <div className="h-3 w-full rounded-md bg-border/30">
                 <div
-                  className="h-full rounded-md bg-success transition-[width] duration-500 ease-in-out"
+                  className="h-full rounded-md bg-text-primary transition-[width] duration-500 ease-in-out"
                   style={{ width: `${Math.min(statistics.libraryCompletionPercentage, 100)}%` }}
                 />
               </div>
@@ -199,7 +192,7 @@ function Statistics() {
             {statistics.favoritePublisher && (
               <InfoCard
                 icon={<Building2 className="size-5" />}
-                iconColor={palette.warning}
+                iconColor={palette.secondary}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -289,7 +282,7 @@ function Statistics() {
               <p className="mb-1 text-body-sm font-medium text-text-secondary">
                 {t('statistics.userStats.longestSession')}
               </p>
-              <p className="text-h2 font-bold" style={{ color: palette.warning }}>
+              <p className="text-h2 font-bold text-text-primary">
                 {formatTimeDetailed(statistics.longestSessionSeconds)}
               </p>
             </div>

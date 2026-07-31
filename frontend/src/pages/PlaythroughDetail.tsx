@@ -473,7 +473,7 @@ function PlaythroughDetail() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="overflow-visible rounded-xl">
             <div className="flex justify-center pb-2 pt-2">
-              <div className="flex size-20 items-center justify-center rounded-full border-2 border-blue-500/20 bg-blue-500/10 text-blue-500">
+              <div className="flex size-20 items-center justify-center rounded-full border-2 border-accent/20 bg-accent/10 text-accent">
                 <Clock className="size-12" />
               </div>
             </div>
@@ -578,8 +578,8 @@ function PlaythroughDetail() {
             <p className="text-body-sm text-text-secondary">
               Import the playtime from another playthrough of the same game. Only the total time will be added to this 100% playthrough, without duplicating individual sessions.
             </p>
-            <p className="font-semibold text-amber-500">
-              ⚠️ Note: You can only import once per 100% playthrough. Choose carefully!
+            <p className="font-semibold text-warning">
+              Note: You can only import once per 100% playthrough. Choose carefully!
             </p>
             <Select
               value={selectedImportPlaythrough ? String(selectedImportPlaythrough) : undefined}

@@ -27,9 +27,9 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   const getErrorIcon = () => {
     switch (errorCode) {
       case 401:
-        return <Lock className="size-20 text-amber-500" />
+        return <Lock className="size-20 text-accent" />
       case 404:
-        return <SearchX className="size-20 text-amber-500" />
+        return <SearchX className="size-20 text-accent" />
       case 500:
       default:
         return <CircleAlert className="size-20 text-destructive" />

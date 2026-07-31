@@ -137,33 +137,33 @@
   color: inherit;
   padding: 2px 4px;
   border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: color-mix(in srgb, currentColor 6%, transparent);
 }
 
 .fc-daygrid-more-link:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: color-mix(in srgb, currentColor 12%, transparent);
   text-decoration: none;
 }
 
 /* Popover styling for "more" events */
 .fc-popover {
-  background-color: #ffffff !important;
-  border: 1px solid rgba(102, 126, 234, 0.2) !important;
+  background-color: var(--color-surface-raised) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
   overflow: hidden;
 }
 
 .fc-popover-header {
-  background-color: rgba(102, 126, 234, 0.08) !important;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.15) !important;
+  background-color: var(--color-accent-subtle) !important;
+  border-bottom: 1px solid var(--color-border) !important;
   padding: 12px 16px !important;
   font-weight: 600 !important;
-  color: #212529 !important;
+  color: var(--color-text-primary) !important;
 }
 
 .fc-popover-body {
-  background-color: #ffffff !important;
+  background-color: var(--color-surface-raised) !important;
   padding: 8px !important;
   max-height: 300px;
   overflow-y: auto;
@@ -176,25 +176,6 @@
 
 .fc-popover-close:hover {
   opacity: 1;
-}
-
-/* Dark mode support for popover */
-@media (prefers-color-scheme: dark) {
-  .fc-popover {
-    background-color: #1a1d23 !important;
-    border-color: rgba(139, 154, 247, 0.2) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3) !important;
-  }
-
-  .fc-popover-header {
-    background-color: rgba(139, 154, 247, 0.1) !important;
-    border-bottom-color: rgba(139, 154, 247, 0.2) !important;
-    color: #ffffff !important;
-  }
-
-  .fc-popover-body {
-    background-color: #1a1d23 !important;
-  }
 }
 
 /* Smooth scrolling for calendar */
@@ -215,17 +196,17 @@
 }
 
 .fc-scroller::-webkit-scrollbar-track {
-  background: rgba(102, 126, 234, 0.05);
+  background: var(--color-accent-subtle);
   border-radius: 4px;
 }
 
 .fc-scroller::-webkit-scrollbar-thumb {
-  background: rgba(102, 126, 234, 0.3);
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
   border-radius: 4px;
 }
 
 .fc-scroller::-webkit-scrollbar-thumb:hover {
-  background: rgba(102, 126, 234, 0.5);
+  background: color-mix(in srgb, var(--color-accent) 50%, transparent);
 }
 
 /* Mobile: Hide scrollbar but keep functionality */
@@ -268,8 +249,8 @@
 /* Popover styling */
 .fc-popover {
   border-radius: 12px !important;
-  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2) !important;
-  border: 1px solid rgba(102, 126, 234, 0.15) !important;
+  box-shadow: 0 10px 40px color-mix(in srgb, var(--color-accent) 20%, transparent) !important;
+  border: 1px solid var(--color-border) !important;
   max-width: 90vw !important;
 }
 

@@ -18,7 +18,7 @@ function Calendar() {
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
 
-  const { events, loading, error, refetch } = usePlaythroughEvents(mode)
+  const { events, loading, error, refetch } = usePlaythroughEvents()
   const { viewMode, setViewMode, isMobile } = useCalendarView()
   const {
     statusFilter,
@@ -90,23 +90,11 @@ function Calendar() {
       )}
 
       {events.length === 0 && !loading && (
-        <div
-          className="mt-12 rounded-xl border-2 border-dashed p-12 text-center"
-          style={{
-            backgroundColor: mode === 'light' ? 'rgba(102, 126, 234, 0.03)' : 'rgba(139, 154, 247, 0.03)',
-            borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.2)' : 'rgba(139, 154, 247, 0.2)',
-          }}
-        >
-          <p
-            className="mb-2 text-h3 font-semibold"
-            style={{ color: mode === 'light' ? '#495057' : '#adb5bd' }}
-          >
-            📅 {t('calendar.noEvents')}
+        <div className="mt-12 rounded-xl border-2 border-dashed border-accent/20 bg-accent/5 p-12 text-center">
+          <p className="mb-2 text-h3 font-semibold text-text-primary">
+            {t('calendar.noEvents')}
           </p>
-          <p
-            className="mx-auto max-w-125"
-            style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}
-          >
+          <p className="mx-auto max-w-125 text-text-secondary">
             {t('calendar.noEventsDescription')}
           </p>
         </div>

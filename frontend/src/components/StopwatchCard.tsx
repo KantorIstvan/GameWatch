@@ -109,7 +109,7 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
             </Badge>
           )}
           {localPlaythrough.isCompleted && (
-            <Badge className="h-6 bg-success text-caption font-semibold text-white">
+            <Badge className="h-6 bg-text-primary text-caption font-semibold text-bg">
               {t('playthrough.completed')}
             </Badge>
           )}
@@ -119,13 +119,13 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
             </Badge>
           )}
           {localPlaythrough.isActive && (
-            <Badge className="h-6 gap-1.5 bg-amber-500/15 text-caption font-semibold text-amber-500">
+            <Badge className="h-6 gap-1.5 bg-text-primary/10 text-caption font-semibold text-text-primary">
               <span className="size-2 animate-pulse rounded-full bg-current" />
               {t('playthrough.active')}
             </Badge>
           )}
           {localPlaythrough.isPaused && (
-            <Badge className="h-6 bg-gray-400/15 text-caption font-semibold text-gray-400">
+            <Badge className="h-6 bg-text-secondary/15 text-caption font-semibold text-text-secondary">
               {t('playthrough.paused')}
             </Badge>
           )}

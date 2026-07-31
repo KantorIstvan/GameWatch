@@ -29,6 +29,7 @@ function TimerControls({
   t
 }: TimerControlsProps) {
   const buttonClass = 'text-[0.8125rem] px-4 border-none text-white'
+  const secondaryButtonClass = 'border border-white/30 bg-white/15 text-white hover:bg-white/25'
 
   return (
     <>
@@ -59,7 +60,7 @@ function TimerControls({
         {(playthrough.isActive || playthrough.isPaused) && (
           <Button
             onClick={onEndSession}
-            className={cn(buttonClass, 'min-w-auto bg-amber-500 hover:bg-amber-600 sm:min-w-30')}
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] sm:min-w-30')}
           >
             <Clock className="size-4" />
             {t('playthrough.endSession')}
@@ -70,7 +71,7 @@ function TimerControls({
           <Button
             onClick={onFinish}
             disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
-            className={cn(buttonClass, 'min-w-auto bg-green-600 hover:bg-green-700 disabled:bg-green-600/30 sm:min-w-25')}
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] disabled:opacity-30 sm:min-w-25')}
           >
             <Square className="size-4" />
             {t('playthrough.finish')}
@@ -107,7 +108,7 @@ function TimerControls({
         <div className="mt-2 flex justify-center px-4 sm:px-0">
           <Button
             onClick={onPickup}
-            className="min-w-auto bg-blue-500 px-4 text-[0.8125rem] text-white hover:bg-blue-600 sm:min-w-45"
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] sm:min-w-45')}
           >
             <Play className="size-4" />
             {t('playthrough.pickup')}

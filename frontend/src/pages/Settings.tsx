@@ -352,7 +352,7 @@ function Settings() {
               onClick={() => setHealthExpanded(!healthExpanded)}
               className="mb-2 flex w-full items-center text-left hover:opacity-80"
             >
-              <Heart className="mr-3 size-5 text-pink-500" />
+              <Heart className="mr-3 size-5 text-accent" />
               <p className="flex-1 text-h4 font-medium">{t('settings.healthWellness')}</p>
               {healthExpanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
             </button>
@@ -571,7 +571,7 @@ function Settings() {
               <Button
                 onClick={handleExportBackup}
                 disabled={exportingBackup}
-                className="bg-linear-to-br from-[#667eea] to-[#764ba2] px-6 hover:from-[#5568d3] hover:to-[#663a8e]"
+                className="bg-linear-to-br from-brand-start to-brand-end px-6 transition-[filter] duration-150 ease-standard hover:brightness-90"
               >
                 <HardDriveUpload className="size-4" />
                 {exportingBackup ? t('settings.exportingBackup') : t('settings.saveBackup')}
