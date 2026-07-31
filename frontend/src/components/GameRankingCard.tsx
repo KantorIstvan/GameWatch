@@ -1,6 +1,5 @@
 import React from 'react'
-import { Box, CardMedia, Typography, alpha, useTheme } from '@mui/material'
-import { Timer, CalendarMonth } from '@mui/icons-material'
+import { Timer, CalendarDays } from 'lucide-react'
 import { formatTime } from '../utils/formatters'
 import { GameRanking } from '../types'
 
@@ -12,104 +11,39 @@ interface GameRankingCardProps {
 }
 
 const GameRankingCard = React.memo(({ game, showDaysToComplete = false, t }: GameRankingCardProps) => {
-  const theme = useTheme()
-  
   return (
-    <Box 
-      sx={{ 
-        position: 'relative',
-        borderRadius: 3,
-        overflow: 'hidden',
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
-        border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 12px 24px ${alpha(theme.palette.primary.main, 0.15)}`,
-          borderColor: alpha(theme.palette.primary.main, 0.4),
-        },
-      }}
-    >
-      <Box sx={{ position: 'relative', height: 180 }}>
-        <CardMedia
-          component="img"
-          sx={{ 
-            width: '100%', 
-            height: '100%', 
-            objectFit: 'cover',
-            filter: 'brightness(0.85)',
-          }}
-          image={game.bannerImageUrl || '/placeholder-game.png'}
+    <div className="relative overflow-hidden rounded-xl border-2 border-accent/20 bg-linear-to-br from-accent/5 to-accent-hover/5 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-3">
+      <div className="relative h-45">
+        <img
+          src={game.bannerImageUrl || '/placeholder-game.png'}
           alt={game.gameName}
+          className="size-full object-cover brightness-90"
         />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: `linear-gradient(to top, ${alpha(theme.palette.background.paper, 0.95)} 0%, transparent 100%)`,
-            p: 2,
-          }}
-        >
-          <Typography 
-            variant="h6" 
-            fontWeight="bold" 
-            sx={{ 
-              mb: 0.5,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              lineHeight: 1.2,
-            }}
-          >
+        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-surface-raised/95 to-transparent p-4">
+          <h3 className="line-clamp-2 text-h4 font-bold leading-tight">
             {game.gameName}
-          </Typography>
-        </Box>
-      </Box>
-      <Box sx={{ p: 2.5, pt: 1.5 }}>
-        <Box display="flex" alignItems="center" gap={1.5} flexWrap="wrap">
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 0.75,
-              px: 1.5,
-              py: 0.75,
-              borderRadius: 2,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-            }}
-          >
-            <Timer sx={{ fontSize: 18, color: theme.palette.primary.main }} />
-            <Typography variant="body2" fontWeight="600" color="primary">
+          </h3>
+        </div>
+      </div>
+      <div className="px-5 pb-5 pt-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-md border border-accent/20 bg-accent/10 px-3 py-1.5">
+            <Timer className="size-4.5 text-accent" />
+            <span className="text-body-sm font-semibold text-accent">
               {formatTime(game.playtimeSeconds)}
-            </Typography>
-          </Box>
+            </span>
+          </div>
           {showDaysToComplete && game.daysToComplete !== undefined && t && (
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 0.75,
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.secondary.main, 0.1),
-                border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
-              }}
-            >
-              <CalendarMonth sx={{ fontSize: 18, color: theme.palette.secondary.main }} />
-              <Typography variant="body2" fontWeight="600" color="secondary">
+            <div className="flex items-center gap-1.5 rounded-md border border-text-tertiary/20 bg-text-tertiary/10 px-3 py-1.5">
+              <CalendarDays className="size-4.5 text-text-secondary" />
+              <span className="text-body-sm font-semibold text-text-secondary">
                 {t('statistics.userStats.daysToComplete', { days: game.daysToComplete })}
-              </Typography>
-            </Box>
+              </span>
+            </div>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   )
 })
 
