@@ -1,6 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material'
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
-import { alpha } from '@mui/material'
 import { useTimeFormat } from '../../contexts/TimeFormatContext'
 
 interface BarChartData {
@@ -26,9 +24,9 @@ interface ReusableBarChartProps {
   highlightCurrentHour?: boolean
 }
 
-function ReusableBarChart({ 
-  data, 
-  title, 
+function ReusableBarChart({
+  data,
+  title,
   xAxisKey,
   yAxisLabel,
   bars,
@@ -38,17 +36,15 @@ function ReusableBarChart({
   isHourlyChart = false,
   highlightCurrentHour = false
 }: ReusableBarChartProps) {
-  const theme = useTheme()
   const { timeFormat } = useTimeFormat()
-  
-  const hasData = data.length > 0 && data.some(item => 
+
+  const hasData = data.length > 0 && data.some(item =>
     bars.some(bar => (item[bar.dataKey] as number) > 0)
   )
 
-  // Format hour labels based on time format preference
   const formatHourLabel = (hourNum: number): string => {
     if (!isHourlyChart) return hourNum.toString()
-    
+
     if (timeFormat === '12h') {
       if (hourNum === 0) return '12AM'
       if (hourNum < 12) return `${hourNum}AM`
@@ -58,67 +54,45 @@ function ReusableBarChart({
     return `${hourNum.toString().padStart(2, '0')}:00`
   }
 
-  // Prepare chart data with formatted labels for hourly charts
   const chartData = isHourlyChart ? data.map(item => ({
     ...item,
     hour: formatHourLabel(item.hourNum as number),
     hourNum: item.hourNum
   })) : data
 
-  // Get current hour for highlighting
   const currentHour = new Date().getHours()
   const highlightColor = '#FF6B35'
 
   return (
     <>
-      <Typography 
-        variant="h6" 
-        gutterBottom 
-        fontWeight="bold"
-        sx={{
-          fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
-        }}
-      >
-        {title}
-      </Typography>
+      <p className="mb-2 text-body-sm font-bold sm:text-body-lg">{title}</p>
       {hasData ? (
-        <Box
-          sx={{
-            width: '100%',
-            height,
-            '& .recharts-cartesian-axis-tick-value': {
-              fontSize: { xs: '0.65rem', sm: '0.75rem' }
-            },
-            '& .recharts-label': {
-              fontSize: { xs: '0.7rem', sm: '0.75rem' }
-            }
-          }}
-        >
+        <div style={{ width: '100%', height }}>
           <ResponsiveContainer width="100%" height="100%">
-            <RechartsBarChart 
+            <RechartsBarChart
               data={chartData}
-              margin={{ 
-                top: 10, 
-                right: window.innerWidth < 600 ? 5 : 30, 
-                left: window.innerWidth < 600 ? -20 : 0, 
-                bottom: 0 
+              margin={{
+                top: 10,
+                right: window.innerWidth < 600 ? 5 : 30,
+                left: window.innerWidth < 600 ? -20 : 0,
+                bottom: 0
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.5)} />
-              <XAxis 
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis
                 dataKey={xAxisKey}
-                stroke={theme.palette.text.secondary}
+                stroke="var(--color-text-secondary)"
                 tick={isHourlyChart && highlightCurrentHour ? (props: any) => {
                   const { x, y, payload } = props
                   const hourData = chartData.find((d: any) => d[xAxisKey] === payload.value)
                   const isCurrentHour = hourData?.hourNum === currentHour
-                  
+
                   return (
                     <text
                       x={x}
                       y={y + 10}
                       textAnchor="middle"
-                      fill={isCurrentHour ? highlightColor : theme.palette.text.secondary}
+                      fill={isCurrentHour ? highlightColor : 'var(--color-text-secondary)'}
                       fontSize={window.innerWidth < 600 ? 9 : 12}
                       fontWeight={isCurrentHour ? 700 : 500}
                     >
@@ -128,27 +102,27 @@ function ReusableBarChart({
                 } : { fontSize: window.innerWidth < 600 ? 9 : 12 }}
                 interval={window.innerWidth < 600 ? 2 : 0}
               />
-              <YAxis 
-                label={window.innerWidth >= 600 && yAxisLabel ? { 
-                  value: yAxisLabel, 
-                  angle: -90, 
+              <YAxis
+                label={window.innerWidth >= 600 && yAxisLabel ? {
+                  value: yAxisLabel,
+                  angle: -90,
                   position: 'insideLeft',
-                  style: { fill: theme.palette.text.secondary }
+                  style: { fill: 'var(--color-text-secondary)' }
                 } : undefined}
-                stroke={theme.palette.text.secondary}
+                stroke="var(--color-text-secondary)"
                 tick={{ fontSize: window.innerWidth < 600 ? 10 : 12 }}
                 width={window.innerWidth < 600 ? 35 : 60}
               />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  border: `1px solid ${theme.palette.divider}`,
+                  backgroundColor: 'var(--color-surface-raised)',
+                  border: '1px solid var(--color-border)',
                   borderRadius: 8,
                 }}
               />
               {showLegend && <Legend />}
               {bars.map((bar, index) => (
-                <Bar 
+                <Bar
                   key={index}
                   dataKey={bar.dataKey}
                   fill={bar.fill}
@@ -156,8 +130,8 @@ function ReusableBarChart({
                   radius={[8, 8, 0, 0]}
                 >
                   {isHourlyChart && highlightCurrentHour && chartData.map((entry: any, idx: number) => (
-                    <Cell 
-                      key={`cell-${idx}`} 
+                    <Cell
+                      key={`cell-${idx}`}
                       fill={entry.hourNum === currentHour ? highlightColor : bar.fill}
                     />
                   ))}
@@ -165,19 +139,11 @@ function ReusableBarChart({
               ))}
             </RechartsBarChart>
           </ResponsiveContainer>
-        </Box>
+        </div>
       ) : (
-        <Box
-          sx={{
-            height,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'text.secondary',
-          }}
-        >
-          <Typography variant="body2">{noDataMessage}</Typography>
-        </Box>
+        <div style={{ height }} className="flex items-center justify-center text-text-secondary">
+          <p className="text-body-sm">{noDataMessage}</p>
+        </div>
       )}
     </>
   )
