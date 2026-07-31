@@ -1,28 +1,12 @@
 import { useState, useMemo } from 'react'
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  InputAdornment,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button,
-  Chip,
-  Paper,
-  Divider,
-  useMediaQuery,
-} from '@mui/material'
-import {
-  Search,
-  ExpandMore,
-  HelpOutline,
-  Email,
-  KeyboardArrowUp,
-} from '@mui/icons-material'
-import { useTheme } from '../contexts/ThemeContext'
+import { Search, CircleHelp, Mail, ChevronUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 interface FAQ {
   question: string
@@ -31,7 +15,6 @@ interface FAQ {
 }
 
 function Help() {
-  const { mode } = useTheme()
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -47,11 +30,9 @@ function Help() {
     { id: 'troubleshooting', label: t('faq.categories.troubleshooting'), icon: '🔧' },
   ]
 
-  // Build FAQ data from translations
   const faqData: FAQ[] = useMemo(() => {
     const faqs: FAQ[] = []
-    
-    // Getting Started
+
     for (let i = 1; i <= 3; i++) {
       const question = t(`faq.gettingStarted.q${i}`)
       const answer = t(`faq.gettingStarted.a${i}`)
@@ -59,8 +40,7 @@ function Help() {
         faqs.push({ question, answer, category: 'gettingStarted' })
       }
     }
-    
-    // Session Tracking
+
     for (let i = 1; i <= 4; i++) {
       const question = t(`faq.sessionTracking.q${i}`)
       const answer = t(`faq.sessionTracking.a${i}`)
@@ -68,8 +48,7 @@ function Help() {
         faqs.push({ question, answer, category: 'sessionTracking' })
       }
     }
-    
-    // Statistics
+
     for (let i = 1; i <= 4; i++) {
       const question = t(`faq.statistics.q${i}`)
       const answer = t(`faq.statistics.a${i}`)
@@ -77,8 +56,7 @@ function Help() {
         faqs.push({ question, answer, category: 'statistics' })
       }
     }
-    
-    // Account Settings
+
     for (let i = 1; i <= 4; i++) {
       const question = t(`faq.accountSettings.q${i}`)
       const answer = t(`faq.accountSettings.a${i}`)
@@ -86,8 +64,7 @@ function Help() {
         faqs.push({ question, answer, category: 'accountSettings' })
       }
     }
-    
-    // Troubleshooting
+
     for (let i = 1; i <= 4; i++) {
       const question = t(`faq.troubleshooting.q${i}`)
       const answer = t(`faq.troubleshooting.a${i}`)
@@ -95,11 +72,10 @@ function Help() {
         faqs.push({ question, answer, category: 'troubleshooting' })
       }
     }
-    
+
     return faqs
   }, [t])
 
-  // Filter FAQs based on search and category
   const filteredFAQs = useMemo(() => {
     return faqData.filter((faq) => {
       const matchesSearch =
@@ -113,17 +89,6 @@ function Help() {
       return matchesSearch && matchesCategory
     })
   }, [faqData, searchQuery, selectedCategory])
-
-  const handleAccordionChange = (index: string) => (
-    _event: React.SyntheticEvent,
-    isExpanded: boolean
-  ) => {
-    if (isExpanded) {
-      setExpanded([...expanded, index])
-    } else {
-      setExpanded(expanded.filter((item) => item !== index))
-    }
-  }
 
   const handleExpandAll = () => {
     if (expandedAll) {
@@ -139,265 +104,100 @@ function Help() {
   }
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ py: { xs: 2, sm: 4 } }}>
-        {/* Header */}
-        <Box
-          sx={{
-            textAlign: 'center',
-            mb: 4,
-          }}
+    <div className="mx-auto max-w-4xl py-4 sm:py-8">
+      <div className="mb-8 text-center">
+        <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-accent/10">
+          <CircleHelp className="size-8 text-accent" />
+        </div>
+        <h1 className="mb-2 text-h1 font-semibold">{t('faq.title')}</h1>
+        <p className="mx-auto max-w-150 text-body text-text-secondary">
+          Find answers to common questions about GameWatch
+        </p>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-tertiary" />
+        <Input
+          placeholder={t('faq.searchPlaceholder')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-12 border-none bg-surface pl-9"
+        />
+      </div>
+
+      <div className="mb-6 flex flex-wrap justify-center gap-2">
+        <Badge
+          onClick={() => setSelectedCategory('all')}
+          variant={selectedCategory === 'all' ? 'default' : 'outline'}
+          className="cursor-pointer px-3 py-1.5"
         >
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              backgroundColor: mode === 'light' ? 'rgba(102, 126, 234, 0.1)' : 'rgba(139, 154, 247, 0.1)',
-              mb: 2,
-            }}
+          All
+        </Badge>
+        {categories.slice(1).map((category) => (
+          <Badge
+            key={category.id}
+            onClick={() => setSelectedCategory(category.id)}
+            variant={selectedCategory === category.id ? 'default' : 'outline'}
+            className="cursor-pointer px-3 py-1.5"
           >
-            <HelpOutline sx={{ fontSize: 32, color: mode === 'light' ? '#667eea' : '#8b9af7' }} />
-          </Box>
-          <Typography
-            variant="h3"
-            component="h1"
-            sx={{
-              fontWeight: 600,
-              mb: 1,
-              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-            }}
-          >
-            {t('faq.title')}
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
-              maxWidth: 600,
-              mx: 'auto',
-            }}
-          >
-            Find answers to common questions about GameWatch
-          </Typography>
-        </Box>
+            {category.icon} {category.label}
+          </Badge>
+        ))}
+      </div>
 
-        {/* Search Bar */}
-        <Paper
-          elevation={0}
-          sx={{
-            mb: 3,
-            backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid',
-            borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder={t('faq.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: mode === 'light' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)' }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  border: 'none',
-                },
-              },
-            }}
-          />
-        </Paper>
+      <div className="mb-3 flex justify-end">
+        <Button variant="ghost" size="sm" onClick={handleExpandAll} className="text-accent">
+          {expandedAll ? t('faq.collapseAll') : t('faq.expandAll')}
+        </Button>
+      </div>
 
-        {/* Category Filters */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            mb: 3,
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-          }}
-        >
-          <Chip
-            label="All"
-            onClick={() => setSelectedCategory('all')}
-            color={selectedCategory === 'all' ? 'primary' : 'default'}
-            sx={{
-              fontWeight: selectedCategory === 'all' ? 600 : 400,
-              cursor: 'pointer',
-            }}
-          />
-          {categories.slice(1).map((category) => (
-            <Chip
-              key={category.id}
-              label={`${category.icon} ${category.label}`}
-              onClick={() => setSelectedCategory(category.id)}
-              color={selectedCategory === category.id ? 'primary' : 'default'}
-              sx={{
-                fontWeight: selectedCategory === category.id ? 600 : 400,
-                cursor: 'pointer',
-              }}
-            />
-          ))}
-        </Box>
-
-        {/* Expand/Collapse All */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button
-            size="small"
-            onClick={handleExpandAll}
-            sx={{
-              textTransform: 'none',
-              color: mode === 'light' ? '#667eea' : '#8b9af7',
-            }}
-          >
-            {expandedAll ? t('faq.collapseAll') : t('faq.expandAll')}
-          </Button>
-        </Box>
-
-        {/* FAQ Accordions */}
-        <Box sx={{ mb: 4 }}>
-          {filteredFAQs.length === 0 ? (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid',
-                borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-              }}
-            >
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                {t('faq.noResults')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('faq.noResultsDescription')}
-              </Typography>
-            </Paper>
-          ) : (
-            filteredFAQs.map((faq, index) => (
-              <Accordion
+      <div className="mb-8">
+        {filteredFAQs.length === 0 ? (
+          <div className="rounded-lg border border-border bg-surface p-8 text-center">
+            <p className="mb-1 text-h4 font-semibold">{t('faq.noResults')}</p>
+            <p className="text-body-sm text-text-secondary">{t('faq.noResultsDescription')}</p>
+          </div>
+        ) : (
+          <Accordion type="multiple" value={expanded} onValueChange={setExpanded} className="flex flex-col gap-2">
+            {filteredFAQs.map((faq, index) => (
+              <AccordionItem
                 key={`faq-${index}`}
-                expanded={expanded.includes(`faq-${index}`)}
-                onChange={handleAccordionChange(`faq-${index}`)}
-                elevation={0}
-                sx={{
-                  mb: 1,
-                  backgroundColor: mode === 'light' ? '#ffffff' : 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid',
-                  borderColor: mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)',
-                  '&:before': {
-                    display: 'none',
-                  },
-                  borderRadius: '8px !important',
-                }}
+                value={`faq-${index}`}
+                className="rounded-md border border-border bg-surface px-4"
               >
-                <AccordionSummary
-                  expandIcon={<ExpandMore />}
-                  sx={{
-                    '& .MuiAccordionSummary-content': {
-                      my: 1.5,
-                    },
-                  }}
-                >
-                  <Typography sx={{ fontWeight: 500 }}>{faq.question}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    {faq.answer}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))
-          )}
-        </Box>
-
-        <Divider sx={{ my: 4 }} />
-
-        {/* Contact Support Section */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            backgroundColor: mode === 'light' ? 'rgba(102, 126, 234, 0.05)' : 'rgba(139, 154, 247, 0.05)',
-            border: '1px solid',
-            borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.2)' : 'rgba(139, 154, 247, 0.2)',
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-            {t('faq.stillNeedHelp')}
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-            {t('faq.responseTime')}
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Email />}
-            href="mailto:kantoristvan13@gmail.com"
-            sx={{
-              backgroundColor: mode === 'light' ? '#667eea' : '#8b9af7',
-              color: '#ffffff',
-              textTransform: 'none',
-              px: 4,
-              py: 1.5,
-              '&:hover': {
-                backgroundColor: mode === 'light' ? '#5568d3' : '#7a8ae6',
-              },
-            }}
-          >
-            {t('faq.contactSupport')}
-          </Button>
-        </Paper>
-
-        {/* Scroll to Top Button */}
-        {!isMobile && (
-          <Box
-            sx={{
-              position: 'fixed',
-              bottom: 80,
-              right: 32,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={scrollToTop}
-              sx={{
-                minWidth: 48,
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                backgroundColor: mode === 'light' ? '#667eea' : '#8b9af7',
-                color: '#ffffff',
-                '&:hover': {
-                  backgroundColor: mode === 'light' ? '#5568d3' : '#7a8ae6',
-                },
-              }}
-            >
-              <KeyboardArrowUp />
-            </Button>
-          </Box>
+                <AccordionTrigger className="font-medium hover:no-underline">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="leading-7 text-text-secondary">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         )}
-      </Box>
-    </Container>
+      </div>
+
+      <Separator className="my-8" />
+
+      <div className="rounded-md border border-accent/20 bg-accent/5 p-8 text-center">
+        <p className="mb-2 text-h3 font-semibold">{t('faq.stillNeedHelp')}</p>
+        <p className="mb-6 text-body-sm text-text-secondary">{t('faq.responseTime')}</p>
+        <Button asChild size="lg" className="px-8">
+          <a href="mailto:kantoristvan13@gmail.com">
+            <Mail className="size-4" />
+            {t('faq.contactSupport')}
+          </a>
+        </Button>
+      </div>
+
+      {!isMobile && (
+        <div className="fixed bottom-20 right-8">
+          <Button size="icon" onClick={scrollToTop} className="size-12 rounded-full">
+            <ChevronUp className="size-5" />
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }
 
