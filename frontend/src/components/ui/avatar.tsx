@@ -5,15 +5,15 @@ import { Avatar as AvatarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
-function Avatar({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
-  size?: "default" | "sm" | "lg"
-}) {
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentProps<typeof AvatarPrimitive.Root> & {
+    size?: "default" | "sm" | "lg"
+  }
+>(({ className, size = "default", ...props }, ref) => {
   return (
     <AvatarPrimitive.Root
+      ref={ref}
       data-slot="avatar"
       data-size={size}
       className={cn(
@@ -23,27 +23,31 @@ function Avatar({
       {...props}
     />
   )
-}
+})
+Avatar.displayName = "Avatar"
 
-function AvatarImage({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentProps<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => {
   return (
     <AvatarPrimitive.Image
+      ref={ref}
       data-slot="avatar-image"
       className={cn("aspect-square size-full", className)}
       {...props}
     />
   )
-}
+})
+AvatarImage.displayName = "AvatarImage"
 
-function AvatarFallback({
-  className,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentProps<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => {
   return (
     <AvatarPrimitive.Fallback
+      ref={ref}
       data-slot="avatar-fallback"
       className={cn(
         "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
@@ -52,7 +56,8 @@ function AvatarFallback({
       {...props}
     />
   )
-}
+})
+AvatarFallback.displayName = "AvatarFallback"
 
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
