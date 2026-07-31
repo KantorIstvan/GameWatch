@@ -1,29 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Snackbar,
-  Alert,
-  Stack,
-  Typography,
-  IconButton,
-  alpha,
-  useTheme,
-  Chip,
-  Tooltip,
-  Grid,
-} from '@mui/material'
-import { ArrowBack, Schedule, Close, Edit } from '@mui/icons-material'
+import { toast } from 'react-toastify'
+import { ArrowLeft, Clock, Pencil } from 'lucide-react'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import Loading from '../components/Loading'
@@ -34,19 +12,28 @@ import TimerControls from '../components/TimerControls'
 import TimerDisplay from '../components/playthrough/TimerDisplay'
 import MoodPromptModal from '../components/MoodPromptModal'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { usePlaythrough } from '../hooks/usePlaythrough'
 import { useMoodPrompt } from '../hooks/useHealth'
 import { formatTime } from '../utils/formatters'
 import { formatPlaythroughType, formatDescription, getPlaythroughTypeColor } from '../utils/playthroughUtils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function PlaythroughDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
-  const theme = useTheme()
-  
+  const { mode } = useTheme()
+
   const {
     playthrough,
     game,
@@ -66,9 +53,6 @@ function PlaythroughDetail() {
   const [dropModalOpen, setDropModalOpen] = useState(false)
   const [pickupModalOpen, setPickupModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'info' | 'success'>('error')
   const [platformDialogOpen, setPlatformDialogOpen] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState('')
   const [manualSessionDialogOpen, setManualSessionDialogOpen] = useState(false)
@@ -78,25 +62,16 @@ function PlaythroughDetail() {
   const [availablePlaythroughs, setAvailablePlaythroughs] = useState<Playthrough[]>([])
   const [selectedImportPlaythrough, setSelectedImportPlaythrough] = useState<number | ''>('')
 
-  // Mood prompt
   const { showMoodPrompt, lastSessionId, promptForMood, closeMoodPrompt, required } = useMoodPrompt()
 
-  const showSnackbar = useCallback((message: string, severity: 'error' | 'warning' | 'info' | 'success' = 'error') => {
-    setSnackbarMessage(message)
-    setSnackbarSeverity(severity)
-    setSnackbarOpen(true)
-  }, [])
-
-  // Wrapper for handleEndSession to trigger mood prompt
   const handleEndSessionWithMood = useCallback(async () => {
     try {
       const sessionHistoryId = await handlers.handleEndSession()
-      // Trigger mood prompt after successful session end with the session ID
       promptForMood(sessionHistoryId)
     } catch (error) {
-      showSnackbar('Failed to end session', 'error')
+      toast.error('Failed to end session')
     }
-  }, [handlers, promptForMood, showSnackbar])
+  }, [handlers, promptForMood])
 
   const handleOpenEditDialog = useCallback(() => {
     const hrs = Math.floor(elapsedTime / 3600)
@@ -110,32 +85,32 @@ function PlaythroughDetail() {
 
   const handleSaveTime = useCallback(async () => {
     const totalSeconds = (Number(editHours) || 0) * 3600 + (Number(editMinutes) || 0) * 60 + (Number(editSeconds) || 0)
-    
+
     if (totalSeconds > elapsedTime) {
-      showSnackbar(t('playthrough.cannotIncreaseTimeManually'), 'warning')
+      toast.warning(t('playthrough.cannotIncreaseTimeManually'))
       return
     }
-    
+
     try {
       await handlers.updateDuration(totalSeconds)
       setEditDialogOpen(false)
-      showSnackbar(t('common.success'), 'success')
+      toast.success(t('common.success'))
     } catch (err: any) {
-      showSnackbar('Failed to update time.', 'error')
+      toast.error('Failed to update time.')
     }
-  }, [editHours, editMinutes, editSeconds, elapsedTime, handlers, showSnackbar, t])
+  }, [editHours, editMinutes, editSeconds, elapsedTime, handlers, t])
 
   const handleUpdatePlatform = useCallback(async () => {
     if (!selectedPlatform) return
-    
+
     try {
       await handlers.updatePlatform(selectedPlatform)
       setPlatformDialogOpen(false)
-      showSnackbar(t('common.success'), 'success')
+      toast.success(t('common.success'))
     } catch (err: any) {
-      showSnackbar('Failed to update platform.', 'error')
+      toast.error('Failed to update platform.')
     }
-  }, [selectedPlatform, handlers, showSnackbar, t])
+  }, [selectedPlatform, handlers, t])
 
   const handleOpenTitleDialog = useCallback(() => {
     setEditedTitle(playthrough?.title || '')
@@ -146,29 +121,29 @@ function PlaythroughDetail() {
     try {
       await handlers.updateTitle(editedTitle)
       setTitleDialogOpen(false)
-      showSnackbar(t('common.success'), 'success')
+      toast.success(t('common.success'))
     } catch (err: any) {
-      showSnackbar('Failed to update title.', 'error')
+      toast.error('Failed to update title.')
     }
-  }, [editedTitle, handlers, showSnackbar, t])
+  }, [editedTitle, handlers, t])
 
   const handleLogManualSession = useCallback(async (startedAt: string, endedAt: string) => {
     try {
       await handlers.logManualSession(startedAt, endedAt)
       setManualSessionDialogOpen(false)
-      showSnackbar('Session logged successfully!', 'success')
+      toast.success('Session logged successfully!')
     } catch (err: any) {
-      showSnackbar(err.response?.data?.message || 'Failed to log manual session.', 'error')
+      toast.error(err.response?.data?.message || 'Failed to log manual session.')
     }
-  }, [handlers, showSnackbar])
+  }, [handlers])
 
   const handleOpenImportDialog = useCallback(async () => {
     if (!playthrough || !game) return
-    
+
     try {
       const response = await playthroughsApi.getAll()
-      const filteredPlaythroughs = response.data.filter((pt: Playthrough) => 
-        pt.gameId === game.id && 
+      const filteredPlaythroughs = response.data.filter((pt: Playthrough) =>
+        pt.gameId === game.id &&
         pt.id !== playthrough.id &&
         pt.playthroughType !== '100%' &&
         pt.sessionCount > 0
@@ -176,13 +151,13 @@ function PlaythroughDetail() {
       setAvailablePlaythroughs(filteredPlaythroughs)
       setImportDialogOpen(true)
     } catch (err: any) {
-      showSnackbar('Failed to load available playthroughs.', 'error')
+      toast.error('Failed to load available playthroughs.')
     }
-  }, [playthrough, game, showSnackbar])
+  }, [playthrough, game])
 
   const handleImportSessions = useCallback(async () => {
     if (!selectedImportPlaythrough) {
-      showSnackbar('Please select a playthrough to import from.', 'warning')
+      toast.warning('Please select a playthrough to import from.')
       return
     }
 
@@ -190,11 +165,11 @@ function PlaythroughDetail() {
       await handlers.importSessions(Number(selectedImportPlaythrough))
       setImportDialogOpen(false)
       setSelectedImportPlaythrough('')
-      showSnackbar('Sessions imported successfully!', 'success')
+      toast.success('Sessions imported successfully!')
     } catch (err: any) {
-      showSnackbar(err.response?.data?.message || 'Failed to import sessions.', 'error')
+      toast.error(err.response?.data?.message || 'Failed to import sessions.')
     }
-  }, [selectedImportPlaythrough, handlers, showSnackbar])
+  }, [selectedImportPlaythrough, handlers])
 
   if (loading) {
     return <Loading />
@@ -202,14 +177,13 @@ function PlaythroughDetail() {
 
   if (error || !playthrough || !game) {
     return (
-      <Box>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/')}>
+      <div>
+        <Button variant="ghost" onClick={() => navigate('/')}>
+          <ArrowLeft className="size-4" />
           {t('common.backToTimers')}
         </Button>
-        <Typography color="error" sx={{ mt: 2 }}>
-          {error || t('playthrough.notFound')}
-        </Typography>
-      </Box>
+        <p className="mt-4 text-destructive">{error || t('playthrough.notFound')}</p>
+      </div>
     )
   }
 
@@ -220,48 +194,34 @@ function PlaythroughDetail() {
     t('playthrough.statusPaused')
   }`
 
+  const alreadyImported = playthrough.importedFromPlaythroughId !== null && playthrough.importedFromPlaythroughId !== undefined
+
   return (
-    <Box sx={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Banner Background */}
+    <div className="relative min-h-screen">
       {game.bannerImageUrl && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '100vh',
+        <div
+          className="fixed inset-x-0 top-0 -z-10 h-screen bg-cover bg-center opacity-60 after:absolute after:inset-0"
+          style={{
             backgroundImage: `url(${game.bannerImageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.6,
-            zIndex: -1,
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: theme.palette.mode === 'dark'
+          }}
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              background: mode === 'dark'
                 ? 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.9) 100%)'
                 : 'linear-gradient(to bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.9) 100%)',
-            },
-          }}
-        />
+            }}
+          />
+        </div>
       )}
 
-      {/* Content */}
-      <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={() => navigate('/')}
-          sx={{ mb: 3 }}
-        >
+      <div className="relative z-10">
+        <Button variant="ghost" onClick={() => navigate('/')} className="mb-6">
+          <ArrowLeft className="size-4" />
           {t('common.backToTimers')}
         </Button>
 
-        {/* Timer Section */}
         <TimerDisplay
           playthrough={playthrough}
           elapsedTime={elapsedTime}
@@ -285,621 +245,370 @@ function PlaythroughDetail() {
           />
         </TimerDisplay>
 
-        {/* Game Details Section */}
-        <Card 
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            overflow: 'hidden',
-            boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-            {/* 1. TITLE - Highest Priority */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                <Typography 
-                  variant="h3" 
-                  component="h1"
-                  sx={{ 
-                    fontWeight: 700,
-                    fontSize: { xs: '2rem', md: '2.75rem' },
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.02em',
-                    flex: 1,
-                  }}
+        <div className="overflow-hidden rounded-lg bg-surface shadow-3">
+          <div className="p-6 md:p-8">
+            <div className="mb-8">
+              <h1 className="mb-3 text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+                {game.name}
+              </h1>
+
+              <div className="mb-3">
+                <Badge
+                  className="px-2.5 py-1 text-body-sm font-semibold text-white"
+                  style={{ backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType) }}
                 >
-                  {game.name}
-                </Typography>
-              </Box>
-              
-              {/* Playthrough Type Chip */}
-              <Box sx={{ mb: 2 }}>
-                <Chip 
-                  label={formatPlaythroughType(playthrough.playthroughType)} 
-                  size="medium"
-                  sx={{
-                    backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType),
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    px: 1,
-                  }}
-                />
-              </Box>
+                  {formatPlaythroughType(playthrough.playthroughType)}
+                </Badge>
+              </div>
 
-              {/* Custom Title */}
-              {playthrough.title && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                  <Typography 
-                    variant="h6" 
-                    color="text.secondary"
-                    sx={{ 
-                      fontWeight: 500,
-                      fontSize: '1.125rem',
-                    }}
-                  >
-                    {playthrough.title}
-                  </Typography>
-                  <Tooltip title={t('playthrough.editTitle')} arrow>
-                    <IconButton
-                      size="small"
+              <div className="mt-3 flex items-center gap-1">
+                {playthrough.title ? (
+                  <p className="text-h4 font-medium text-text-secondary">{playthrough.title}</p>
+                ) : (
+                  <p className="text-body-sm italic text-text-secondary">{t('playthrough.noTitle')}</p>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={handleOpenTitleDialog}
-                      sx={{
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'primary.main',
-                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                        },
-                      }}
+                      className="text-text-secondary hover:bg-accent/10 hover:text-accent"
                     >
-                      <Edit sx={{ fontSize: '1rem' }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
-              {!playthrough.title && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    {t('playthrough.noTitle')}
-                  </Typography>
-                  <Tooltip title={t('playthrough.editTitle')} arrow>
-                    <IconButton
-                      size="small"
-                      onClick={handleOpenTitleDialog}
-                      sx={{
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'primary.main',
-                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                        },
-                      }}
-                    >
-                      <Edit sx={{ fontSize: '1rem' }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )}
+                      <Pencil className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('playthrough.editTitle')}</TooltipContent>
+                </Tooltip>
+              </div>
 
-              {/* Import Button */}
               {playthrough.playthroughType === '100%' && (
-                <Box sx={{ mt: 2 }}>
-                  <Tooltip 
-                    title={playthrough.importedFromPlaythroughId 
-                      ? "Already imported from another playthrough (one-time only)" 
-                      : "Import playtime from another playthrough"
-                    } 
-                    arrow
-                  >
-                    <span>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={handleOpenImportDialog}
-                        disabled={playthrough.importedFromPlaythroughId !== null && playthrough.importedFromPlaythroughId !== undefined}
-                        sx={{
-                          fontSize: '0.75rem',
-                          py: 0.5,
-                          px: 1.5,
-                          borderRadius: 1.5,
-                          textTransform: 'none',
-                          borderWidth: 1.5,
-                          '&:hover': {
-                            borderWidth: 1.5,
-                          },
-                          '&:disabled': {
-                            borderColor: 'success.main',
-                            color: 'success.main',
-                            opacity: 0.7,
-                          }
-                        }}
-                      >
-                        {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
-                      </Button>
-                    </span>
+                <div className="mt-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleOpenImportDialog}
+                          disabled={alreadyImported}
+                          className="text-caption disabled:border-success disabled:text-success disabled:opacity-70"
+                        >
+                          {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {alreadyImported
+                        ? 'Already imported from another playthrough (one-time only)'
+                        : 'Import playtime from another playthrough'}
+                    </TooltipContent>
                   </Tooltip>
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
 
-            {/* 2. RATINGS - Secondary Priority */}
-            {(game.rating || game.metacritic) && (
-              <Box sx={{ mb: 3 }}>
-                <Stack direction="row" spacing={3} flexWrap="wrap" sx={{ gap: 2 }}>
-                  {game.rating && (
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography 
-                          variant="h5" 
-                          component="span"
-                          sx={{ 
-                            fontWeight: 700,
-                            fontSize: '1.5rem',
-                          }}
-                        >
-                          {game.rating}/5
-                        </Typography>
-                        <Typography variant="h5" component="span">⭐</Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                        {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
-                        {(game.ratingTop ?? 0) > 0 && ` • ${t('game.top')}: ${game.ratingTop}`}
-                      </Typography>
-                    </Box>
-                  )}
-                  {(game.metacritic ?? 0) > 0 && (
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                        {/* Metacritic Score Badge */}
-                        <Box
-                          component={game.metacriticUrl ? 'a' : 'div'}
-                          href={game.metacriticUrl || undefined}
-                          target={game.metacriticUrl ? '_blank' : undefined}
-                          rel={game.metacriticUrl ? 'noopener noreferrer' : undefined}
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 0.5,
-                            fontWeight: 700,
-                            fontSize: '1.5rem',
-                            backgroundColor: (game.metacritic ?? 0) >= 75 ? '#66cc33' : (game.metacritic ?? 0) >= 50 ? '#ffcc33' : '#ff6666',
-                            color: '#fff',
-                            textDecoration: 'none',
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            border: '2px solid',
-                            borderColor: (game.metacritic ?? 0) >= 75 ? '#66cc33' : (game.metacritic ?? 0) >= 50 ? '#ffcc33' : '#ff6666',
-                            '&:hover': game.metacriticUrl ? {
-                              transform: 'scale(1.05)',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            } : {},
-                          }}
-                        >
-                          {game.metacritic}
-                        </Box>
-                        <Box>
-                          <Typography 
-                            variant="h6" 
-                            sx={{ 
-                              fontWeight: 600,
-                              fontSize: '1.125rem',
-                              lineHeight: 1.2,
-                            }}
+            {(game.rating || (game.metacritic ?? 0) > 0) && (
+              <div className="mb-6 flex flex-row flex-wrap gap-6">
+                {game.rating && (
+                  <div>
+                    <div className="mb-1 flex items-center gap-1">
+                      <span className="text-h4 font-bold">{game.rating}/5</span>
+                      <span className="text-h4">⭐</span>
+                    </div>
+                    <p className="text-body-sm text-text-secondary">
+                      {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
+                      {(game.ratingTop ?? 0) > 0 && ` • ${t('game.top')}: ${game.ratingTop}`}
+                    </p>
+                  </div>
+                )}
+                {(game.metacritic ?? 0) > 0 && (
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const score = game.metacritic ?? 0
+                      const color = score >= 75 ? '#66cc33' : score >= 50 ? '#ffcc33' : '#ff6666'
+                      const label = score >= 75 ? 'Generally favorable' : score >= 50 ? 'Mixed or average' : 'Generally unfavorable'
+                      const Comp = game.metacriticUrl ? 'a' : 'div'
+                      return (
+                        <>
+                          <Comp
+                            href={game.metacriticUrl || undefined}
+                            target={game.metacriticUrl ? '_blank' : undefined}
+                            rel={game.metacriticUrl ? 'noopener noreferrer' : undefined}
+                            className="flex size-12 items-center justify-center rounded border-2 text-h4 font-bold text-white no-underline transition-transform hover:scale-105"
+                            style={{ backgroundColor: color, borderColor: color }}
                           >
-                            Metacritic
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8125rem' }}>
-                            {(game.metacritic ?? 0) >= 75 ? 'Generally favorable' : (game.metacritic ?? 0) >= 50 ? 'Mixed or average' : 'Generally unfavorable'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
-                </Stack>
-              </Box>
+                            {score}
+                          </Comp>
+                          <div>
+                            <p className="text-h4 font-semibold leading-tight">Metacritic</p>
+                            <p className="text-caption text-text-secondary">{label}</p>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* 3. DEVELOPERS & PUBLISHERS - Tertiary Priority */}
             {(game.developers || game.publishers) && (
-              <Box sx={{ mb: 2.5 }}>
-                <Stack direction="row" spacing={1} divider={<Typography color="text.secondary">•</Typography>}>
-                  {game.developers && (
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        fontWeight: 500,
-                        fontSize: '1rem',
-                      }}
-                    >
-                      {game.developers}
-                    </Typography>
-                  )}
-                  {game.publishers && (
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontWeight: 500,
-                        fontSize: '1rem',
-                      }}
-                    >
-                      {game.publishers}
-                    </Typography>
-                  )}
-                </Stack>
-              </Box>
+              <div className="mb-4 flex items-center gap-2">
+                {game.developers && <span className="font-medium">{game.developers}</span>}
+                {game.developers && game.publishers && <span className="text-text-secondary">•</span>}
+                {game.publishers && <span className="font-medium text-text-secondary">{game.publishers}</span>}
+              </div>
             )}
 
-            {/* 4. PLATFORMS - Supporting Information */}
             {game.platforms && (
-              <Box sx={{ mb: 2.5 }}>
-                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                  {game.platforms.split(',').map((platform, idx) => (
-                    <Chip
-                      key={idx}
-                      label={platform.trim()}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 1,
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        borderWidth: 1.5,
-                        '&:hover': {
-                          backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                        }
-                      }}
-                    />
-                  ))}
-                </Stack>
-              </Box>
+              <div className="mb-4 flex flex-row flex-wrap gap-2">
+                {game.platforms.split(',').map((platform, idx) => (
+                  <Badge key={idx} variant="outline" className="text-caption font-medium">
+                    {platform.trim()}
+                  </Badge>
+                ))}
+              </div>
             )}
 
-            <Divider sx={{ my: 3 }} />
+            <Separator className="my-6" />
 
-            {/* 5. REST - Remaining Content */}
-            <Box>
-              {/* Release Date and ESRB */}
-              <Grid container spacing={3} sx={{ mb: 2 }}>
+            <div>
+              <div className="mb-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {game.releaseDate && (
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-                      {t('game.released')}
-                    </Typography>
-                    <Typography variant="body1" sx={{ mt: 0.5, fontSize: '0.9375rem' }}>
-                      {game.releaseDate}
-                    </Typography>
-                  </Grid>
+                  <div>
+                    <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.released')}</p>
+                    <p className="mt-0.5 text-body-sm">{game.releaseDate}</p>
+                  </div>
                 )}
                 {game.esrbRating && (
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-                      {t('game.esrbRating')}
-                    </Typography>
-                    <Typography variant="body1" sx={{ mt: 0.5, fontSize: '0.9375rem' }}>
-                      {game.esrbRating}
-                    </Typography>
-                  </Grid>
+                  <div>
+                    <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.esrbRating')}</p>
+                    <p className="mt-0.5 text-body-sm">{game.esrbRating}</p>
+                  </div>
                 )}
-              </Grid>
+              </div>
 
-              {/* Genres and Tags */}
               {game.genres && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em', mb: 1, display: 'block' }}>
-                    {t('game.genres')}
-                  </Typography>
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 1 }}>
+                <div className="mb-4">
+                  <p className="mb-1 block text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.genres')}</p>
+                  <div className="flex flex-row flex-wrap gap-2">
                     {game.genres.split(', ').filter((g: string) => g).map((genre: string, idx: number) => (
-                      <Chip 
-                        key={idx} 
-                        label={genre} 
-                        size="small" 
-                        sx={{
-                          borderRadius: 1,
-                          backgroundColor: alpha(theme.palette.secondary.main, 0.1),
-                          color: 'text.primary',
-                          fontWeight: 500,
-                        }}
-                      />
+                      <Badge key={idx} className="bg-text-tertiary/10 font-medium text-text-primary">{genre}</Badge>
                     ))}
-                  </Stack>
-                </Box>
+                  </div>
+                </div>
               )}
 
               {game.tags && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em', mb: 1, display: 'block' }}>
-                    {t('game.tags')}
-                  </Typography>
-                  <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 1 }}>
-                    {game.tags.split(', ').filter((t: string) => t).slice(0, 10).map((tag: string, idx: number) => (
-                      <Chip 
-                        key={idx} 
-                        label={tag} 
-                        size="small" 
-                        sx={{
-                          borderRadius: 1,
-                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                          color: 'primary.main',
-                          fontWeight: 500,
-                        }}
-                      />
+                <div className="mb-4">
+                  <p className="mb-1 block text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.tags')}</p>
+                  <div className="flex flex-row flex-wrap gap-2">
+                    {game.tags.split(', ').filter((tag: string) => tag).slice(0, 10).map((tag: string, idx: number) => (
+                      <Badge key={idx} className="bg-accent/8 font-medium text-accent">{tag}</Badge>
                     ))}
-                  </Stack>
-                </Box>
+                  </div>
+                </div>
               )}
 
-              {/* Website */}
               {game.website && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-                    {t('game.officialWebsite')}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5 }}>
-                    <a 
-                      href={game.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ 
-                        color: theme.palette.primary.main, 
-                        textDecoration: 'none',
-                        fontWeight: 500,
-                        transition: 'opacity 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                    >
+                <div className="mb-4">
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.officialWebsite')}</p>
+                  <p className="mt-0.5">
+                    <a href={game.website} target="_blank" rel="noopener noreferrer" className="font-medium text-accent no-underline transition-opacity hover:opacity-70">
                       {t('game.visitWebsite')}
                     </a>
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               )}
 
-              {/* Reddit Community */}
               {(game.redditUrl || game.redditName) && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-                    {t('game.redditCommunity')}
-                  </Typography>
+                <div className="mb-4">
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.redditCommunity')}</p>
                   {game.redditUrl && (
-                    <Typography variant="body1" sx={{ mt: 0.5 }}>
-                      <a 
-                        href={game.redditUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        style={{ 
-                          color: theme.palette.primary.main, 
-                          textDecoration: 'none',
-                          fontWeight: 500,
-                          transition: 'opacity 0.2s',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                      >
+                    <p className="mt-0.5">
+                      <a href={game.redditUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-accent no-underline transition-opacity hover:opacity-70">
                         r/{game.redditName || t('game.visitSubreddit')}
                       </a>
                       {game.redditCount && ` • ${game.redditCount.toLocaleString()} ${t('game.members')}`}
-                    </Typography>
+                    </p>
                   )}
                   {game.redditDescription && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.875rem', lineHeight: 1.6 }}>
-                      {game.redditDescription}
-                    </Typography>
+                    <p className="mt-1 text-body-sm leading-7 text-text-secondary">{game.redditDescription}</p>
                   )}
-                </Box>
+                </div>
               )}
 
-              {/* Alternative Names */}
               {game.alternativeNames && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.75rem', letterSpacing: '0.08em' }}>
-                    {t('game.alsoKnownAs')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontSize: '0.875rem' }}>
-                    {game.alternativeNames}
-                  </Typography>
-                </Box>
+                <div className="mb-4">
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.alsoKnownAs')}</p>
+                  <p className="mt-0.5 text-body-sm text-text-secondary">{game.alternativeNames}</p>
+                </div>
               )}
 
-              {/* Description */}
               {game.description && (
                 <>
-                  <Divider sx={{ my: 3 }} />
-                  <Box>
-                    <Typography 
-                      variant="h6" 
-                      gutterBottom
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: '1.125rem',
-                        mb: 1.5,
-                      }}
-                    >
-                      {t('game.aboutThisGame')}
-                    </Typography>
-                    <Box sx={{ 
-                      fontSize: '0.9375rem', 
-                      lineHeight: 1.7,
-                      color: 'text.secondary',
-                    }}>
+                  <Separator className="my-6" />
+                  <div>
+                    <p className="mb-2 text-h4 font-semibold">{t('game.aboutThisGame')}</p>
+                    <div className="text-body-sm leading-7 text-text-secondary">
                       {formatDescription(game.description)}
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 </>
               )}
 
-              {/* Metadata Footer */}
               {game.slug && (
                 <>
-                  <Divider sx={{ my: 3 }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {t('game.slug')}: {game.slug}
-                      {game.updated && ` • ${t('game.lastUpdated')}: ${new Date(game.updated).toLocaleDateString()}`}
-                    </Typography>
-                  </Box>
+                  <Separator className="my-6" />
+                  <p className="text-caption text-text-secondary">
+                    {t('game.slug')}: {game.slug}
+                    {game.updated && ` • ${t('game.lastUpdated')}: ${new Date(game.updated).toLocaleDateString()}`}
+                  </p>
                 </>
               )}
-            </Box>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
 
-        {/* Dialogs */}
-        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-          <IconButton onClick={() => setEditDialogOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}>
-            <Close />
-          </IconButton>
-          <Box sx={{ display: 'flex', justifyContent: 'center', pt: 4, pb: 2 }}>
-            <Box sx={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
-              border: `2px solid ${alpha(theme.palette.info.main, 0.2)}`,
-              color: theme.palette.info.main,
-            }}>
-              <Schedule sx={{ fontSize: 48 }} />
-            </Box>
-          </Box>
-          <DialogTitle sx={{ textAlign: 'center', pt: 2, pb: 1, px: 4, fontSize: '1.5rem', fontWeight: 600 }}>
-            {t('playthrough.editTimeManually')}
-          </DialogTitle>
-          <DialogContent sx={{ px: 4, pb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center', lineHeight: 1.6 }}>
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="overflow-visible rounded-xl">
+            <div className="flex justify-center pb-2 pt-2">
+              <div className="flex size-20 items-center justify-center rounded-full border-2 border-blue-500/20 bg-blue-500/10 text-blue-500">
+                <Clock className="size-12" />
+              </div>
+            </div>
+            <DialogTitle className="pb-1 text-center text-h3 font-semibold">
+              {t('playthrough.editTimeManually')}
+            </DialogTitle>
+            <p className="text-center text-body-sm leading-7 text-text-secondary">
               {t('playthrough.editTimeDescription')}
-            </Typography>
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-              <TextField
-                label={t('playthrough.hours')}
-                type="number"
-                value={editHours}
-                onChange={(e) => setEditHours(Math.max(0, parseInt(e.target.value) || 0))}
-                inputProps={{ min: 0 }}
-                fullWidth
-              />
-              <TextField
-                label={t('playthrough.minutes')}
-                type="number"
-                value={editMinutes}
-                onChange={(e) => setEditMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                inputProps={{ min: 0, max: 59 }}
-                fullWidth
-              />
-              <TextField
-                label={t('playthrough.seconds')}
-                type="number"
-                value={editSeconds}
-                onChange={(e) => setEditSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                inputProps={{ min: 0, max: 59 }}
-                fullWidth
-              />
-            </Stack>
+            </p>
+            <div className="mt-2 flex gap-4">
+              <div className="flex-1">
+                <Label className="mb-1.5 block">{t('playthrough.hours')}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editHours}
+                  onChange={(e) => setEditHours(Math.max(0, parseInt(e.target.value) || 0))}
+                />
+              </div>
+              <div className="flex-1">
+                <Label className="mb-1.5 block">{t('playthrough.minutes')}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={editMinutes}
+                  onChange={(e) => setEditMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                />
+              </div>
+              <div className="flex-1">
+                <Label className="mb-1.5 block">{t('playthrough.seconds')}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={editSeconds}
+                  onChange={(e) => setEditSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button onClick={() => setEditDialogOpen(false)} variant="outline" size="lg" className="flex-1">
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleSaveTime} size="lg" className="flex-1">
+                {t('common.save')}
+              </Button>
+            </div>
           </DialogContent>
-          <DialogActions sx={{ px: 4, pb: 3, pt: 2, gap: 1.5 }}>
-            <Button onClick={() => setEditDialogOpen(false)} variant="outlined" size="large" fullWidth>
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleSaveTime} variant="contained" size="large" fullWidth>
-              {t('common.save')}
-            </Button>
-          </DialogActions>
         </Dialog>
 
-        <Dialog open={platformDialogOpen} onClose={() => {}} maxWidth="sm" fullWidth>
-          <DialogTitle>{t('playthrough.selectPlatform') || 'Select Platform'}</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Dialog open={platformDialogOpen} onOpenChange={() => {}}>
+          <DialogContent showCloseButton={false}>
+            <DialogTitle>{t('playthrough.selectPlatform') || 'Select Platform'}</DialogTitle>
+            <p className="text-body-sm text-text-secondary">
               This playthrough doesn't have a platform set. Please select which platform you're playing on.
-            </Typography>
-            <TextField
-              select
-              fullWidth
-              label={t('playthrough.platform')}
-              value={selectedPlatform}
-              onChange={(e) => setSelectedPlatform(e.target.value)}
-            >
-              {game?.platforms?.split(',').map((platform) => (
-                <MenuItem key={platform.trim()} value={platform.trim()}>
-                  {platform.trim()}
-                </MenuItem>
-              ))}
-            </TextField>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
-            <Button onClick={handleUpdatePlatform} variant="contained" disabled={!selectedPlatform} fullWidth>
+            </p>
+            <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('playthrough.platform')} />
+              </SelectTrigger>
+              <SelectContent>
+                {game?.platforms?.split(',').map((platform) => (
+                  <SelectItem key={platform.trim()} value={platform.trim()}>
+                    {platform.trim()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleUpdatePlatform} disabled={!selectedPlatform} className="w-full">
               {t('common.save')}
             </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={titleDialogOpen} onClose={() => setTitleDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>{t('playthrough.editTitle')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              fullWidth
-              label={t('playthrough.playthroughTitle')}
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              placeholder={game ? `${game.name} playthrough` : ''}
-              margin="normal"
-            />
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
-            <Button onClick={() => setTitleDialogOpen(false)} variant="outlined">
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleUpdateTitle} variant="contained">
-              {t('common.save')}
-            </Button>
-          </DialogActions>
         </Dialog>
 
-        <Dialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Import Time from Another Playthrough</DialogTitle>
+        <Dialog open={titleDialogOpen} onOpenChange={setTitleDialogOpen}>
           <DialogContent>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <DialogTitle>{t('playthrough.editTitle')}</DialogTitle>
+            <div className="flex flex-col gap-1.5">
+              <Label>{t('playthrough.playthroughTitle')}</Label>
+              <Input
+                autoFocus
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder={game ? `${game.name} playthrough` : ''}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button onClick={() => setTitleDialogOpen(false)} variant="outline">
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleUpdateTitle}>
+                {t('common.save')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+          <DialogContent>
+            <DialogTitle>Import Time from Another Playthrough</DialogTitle>
+            <p className="text-body-sm text-text-secondary">
               Import the playtime from another playthrough of the same game. Only the total time will be added to this 100% playthrough, without duplicating individual sessions.
-            </Typography>
-            <Typography variant="body2" color="warning.main" sx={{ mb: 3, fontWeight: 600 }}>
+            </p>
+            <p className="font-semibold text-amber-500">
               ⚠️ Note: You can only import once per 100% playthrough. Choose carefully!
-            </Typography>
-            <TextField
-              select
-              fullWidth
-              label="Select Playthrough"
-              value={selectedImportPlaythrough}
-              onChange={(e) => setSelectedImportPlaythrough(Number(e.target.value))}
-              margin="normal"
+            </p>
+            <Select
+              value={selectedImportPlaythrough ? String(selectedImportPlaythrough) : undefined}
+              onValueChange={(v) => setSelectedImportPlaythrough(Number(v))}
+              disabled={availablePlaythroughs.length === 0}
             >
-              {availablePlaythroughs.length === 0 ? (
-                <MenuItem disabled value="">No playthroughs available</MenuItem>
-              ) : (
-                availablePlaythroughs.map((pt) => (
-                  <MenuItem key={pt.id} value={pt.id}>
-                    {pt.title || pt.gameName} - {formatPlaythroughType(pt.playthroughType)} 
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Playthrough" />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePlaythroughs.map((pt) => (
+                  <SelectItem key={pt.id} value={String(pt.id)}>
+                    {pt.title || pt.gameName} - {formatPlaythroughType(pt.playthroughType)}
                     {pt.startDate && ` (${new Date(pt.startDate).toLocaleDateString()})`}
                     {pt.endDate && ` - ${new Date(pt.endDate).toLocaleDateString()}`}
                     {` - ${formatTime(pt.durationSeconds || 0)}`}
-                  </MenuItem>
-                ))
-              )}
-            </TextField>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button onClick={() => setImportDialogOpen(false)} variant="outline">
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough}>
+                Import
+              </Button>
+            </div>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, pt: 2 }}>
-            <Button onClick={() => setImportDialogOpen(false)} variant="outlined">
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleImportSessions} variant="contained" disabled={!selectedImportPlaythrough}>
-              Import
-            </Button>
-          </DialogActions>
         </Dialog>
 
         <TypedConfirmDialog
@@ -957,17 +666,6 @@ function PlaythroughDetail() {
           destructive
         />
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} variant="filled">
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-
         <LogManualSessionDialog
           open={manualSessionDialogOpen}
           onClose={() => setManualSessionDialogOpen(false)}
@@ -983,8 +681,8 @@ function PlaythroughDetail() {
           sessionHistoryId={lastSessionId}
           required={required}
         />
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }
 
