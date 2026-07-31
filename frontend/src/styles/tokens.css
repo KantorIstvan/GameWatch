@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/* PRIMITIVES — plain vars, outside @theme, never exposed as Tailwind utilities */
+:root {
+  --color-white: #ffffff;
+  --bright-snow: #f8f9fa;
+  --platinum: #e9ecef;
+  --alabaster-grey: #dee2e6;
+  --pale-slate: #ced4da;
+  --pale-slate-2: #adb5bd;
+  --slate-grey: #6c757d;
+  --iron-grey: #495057;
+  --gunmetal: #343a40;
+  --carbon-black: #212529;
+  --near-black: #0a0c0e;
+
+  --accent-500: #1976d2;
+  --accent-600: #1565c0;
+  --accent-100: rgba(25, 118, 210, 0.08);
+
+  --accent-500-dark: #90caf9;
+  --accent-600-dark: #64b5f6;
+  --accent-100-dark: rgba(144, 202, 249, 0.12);
+}
+
+@theme {
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+  /* semantic color — light defaults */
+  --color-bg: var(--bright-snow);
+  --color-surface: var(--color-white);
+  --color-surface-raised: var(--color-white);
+  --color-border: var(--alabaster-grey);
+  --color-border-strong: var(--pale-slate);
+  --color-text-primary: var(--carbon-black);
+  --color-text-secondary: var(--iron-grey);
+  --color-text-tertiary: var(--slate-grey);
+  --color-text-disabled: var(--pale-slate-2);
+  --color-accent: var(--accent-500);
+  --color-accent-hover: var(--accent-600);
+  --color-accent-subtle: var(--accent-100);
+  --color-danger: #f44336;
+  --color-success: #2e7d32;
+
+  /* radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* shadow */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 2px 16px rgba(0, 0, 0, 0.04);
+  --shadow-3: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 24px 48px rgba(0, 0, 0, 0.16);
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* type scale */
+  --text-display: 3.5rem;
+  --text-display--line-height: 4rem;
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 3rem;
+  --text-h2: 2rem;
+  --text-h2--line-height: 2.5rem;
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 2rem;
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.75rem;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.25rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+}
+
+[data-theme='dark'] {
+  --color-bg: var(--near-black);
+  --color-surface: var(--carbon-black);
+  --color-surface-raised: var(--gunmetal);
+  --color-border: var(--gunmetal);
+  --color-border-strong: var(--iron-grey);
+  --color-text-primary: var(--bright-snow);
+  --color-text-secondary: var(--pale-slate-2);
+  --color-text-tertiary: var(--slate-grey);
+  --color-text-disabled: var(--iron-grey);
+  --color-accent: var(--accent-500-dark);
+  --color-accent-hover: var(--accent-600-dark);
+  --color-accent-subtle: var(--accent-100-dark);
+  --color-danger: #f44336;
+  --color-success: #66bb6a;
+}
+
+/* shadcn's generated component source expects these role names — alias them to the
+   semantic tokens above so no per-component overrides are needed */
+@theme inline {
+  --radius: var(--radius-md);
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-surface-raised);
+  --color-secondary-foreground: var(--color-text-primary);
+  --color-muted: var(--color-surface-raised);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: #ffffff;
+  --color-border-shadcn: var(--color-border);
+  --color-input: var(--color-border);
+  --color-ring: var(--color-accent);
+}
+
+/* Base practical rules — not tokens, ported from the previous index.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 600px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+[dir='rtl'] {
+  direction: rtl;
+}
+
+[dir='ltr'] {
+  direction: ltr;
+}
+
+[dir='rtl'] .flip-rtl {
+  transform: scaleX(-1);
+}
+
+button,
+a[role='button'],
+input[type='button'],
+input[type='submit'] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (max-width: 600px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* prevents zoom on iOS */
+  }
+}
+
+@media (min-width: 600px) and (max-width: 900px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .full-height {
+    min-height: -webkit-fill-available;
+  }
+}
+
+@keyframes progress-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress-slide {
+  animation: progress-slide 2s ease-in-out infinite;
+}

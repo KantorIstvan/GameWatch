@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Grid, Alert, alpha } from '@mui/material'
-import { Add, VideogameAsset } from '@mui/icons-material'
+import { Plus, Gamepad2, X } from 'lucide-react'
 import { gamesApi } from '../services/api'
 import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
@@ -12,6 +11,14 @@ import SearchFilterBar from '../components/SearchFilterBar'
 import StyledDialog from '../components/StyledDialog'
 import { useTranslation } from 'react-i18next'
 import type { Game } from '../types'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+
+const gridClassBySize: Record<number, string> = {
+  1: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7',
+  2: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
+  3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4',
+}
 
 function Games() {
   const navigate = useNavigate()
@@ -85,7 +92,7 @@ function Games() {
       setError('This game is already in your library!')
       return
     }
-    
+
     setSelectedGame({
       name: game.name,
       bannerImageUrl: game.bannerImageUrl,
@@ -141,7 +148,7 @@ function Games() {
 
   const handleConfirmDeleteGame = useCallback(async () => {
     if (!gameToDelete) return
-    
+
     setDeleteModalOpen(false)
     try {
       await gamesApi.delete(gameToDelete.id)
@@ -291,72 +298,29 @@ function Games() {
     return result
   }, [games, searchQuery, sortBy, filterGenre, filterPlatform, filterYear])
 
-  const hasActiveFilters = useMemo(() => 
+  const hasActiveFilters = useMemo(() =>
     searchQuery || filterGenre || filterPlatform || filterYear || sortBy !== 'name-asc',
     [searchQuery, filterGenre, filterPlatform, filterYear, sortBy]
   )
 
-  const getGridBreakpoints = useCallback(() => {
-    switch(cardSize) {
-      case 1:
-        return { xs: 6, sm: 4, md: 3, lg: 2.4, xl: 1.71 }
-      case 2:
-        return { xs: 6, sm: 4, md: 3, lg: 3, xl: 2.4 }
-      case 3:
-        return { xs: 12, sm: 6, md: 4, lg: 4, xl: 3 }
-      default:
-        return { xs: 6, sm: 4, md: 3, lg: 3, xl: 2.4 }
+  const cardScale = useMemo(() => {
+    switch (cardSize) {
+      case 1: return 0.7
+      case 3: return 1.3
+      default: return 1
     }
   }, [cardSize])
-
-  const getCardScale = useCallback(() => {
-    switch(cardSize) {
-      case 1:
-        return 0.7
-      case 2:
-        return 1
-      case 3:
-        return 1.3
-      default:
-        return 1
-    }
-  }, [cardSize])
-
-  const gridBreakpoints = useMemo(() => getGridBreakpoints(), [getGridBreakpoints])
-  const cardScale = useMemo(() => getCardScale(), [getCardScale])
 
   const dialogActions = useMemo(() => (
     <>
-      <Button 
-        onClick={handleCloseDialog}
-        variant="outlined"
-        size="large"
-        fullWidth
-        sx={{
-          borderRadius: 2,
-          textTransform: 'none',
-          fontWeight: 600,
-          borderWidth: 2,
-          '&:hover': {
-            borderWidth: 2,
-          }
-        }}
-      >
+      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="flex-1">
         {t('common.cancel')}
       </Button>
-      <Button 
-        onClick={handleCreateGame} 
-        variant="contained" 
-        color="success"
-        size="large"
-        fullWidth
+      <Button
+        onClick={handleCreateGame}
+        size="lg"
+        className="flex-1 bg-success text-white hover:bg-success/90"
         disabled={!selectedGame}
-        sx={{
-          borderRadius: 2,
-          textTransform: 'none',
-          fontWeight: 600,
-          transition: 'all 0.2s ease-in-out',
-        }}
       >
         {t('games.addGame')}
       </Button>
@@ -368,45 +332,20 @@ function Games() {
   }
 
   return (
-    <Box sx={{ maxWidth: '100%', width: '100%' }}>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        mb: 3,
-        gap: { xs: 2, sm: 0 },
-      }}>
-        <Box>
-          <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-            }}
-          >
-            {t('games.title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+    <div className="w-full max-w-full">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-h2">{t('games.title')}</h1>
+          <p className="mt-1 text-body-sm text-text-secondary">
             {filteredAndSortedGames.length} {filteredAndSortedGames.length === 1 ? t('games.game') : t('games.games')}
             {games.length !== filteredAndSortedGames.length && ` (${games.length} ${t('games.total')})`}
-          </Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<Add />} 
-          onClick={() => setDialogOpen(true)}
-          fullWidth={false}
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            minHeight: 48,
-            textTransform: 'none',
-            fontWeight: 600,
-          }}
-        >
+          </p>
+        </div>
+        <Button onClick={() => setDialogOpen(true)} className="h-12 w-full sm:w-auto">
+          <Plus className="size-4" />
           {t('games.addGame')}
         </Button>
-      </Box>
+      </div>
 
       <SearchFilterBar
         searchQuery={searchQuery}
@@ -429,87 +368,69 @@ function Games() {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            <div className="flex w-full items-center justify-between gap-2">
+              <span>{error}</span>
+              <Button variant="ghost" size="icon-sm" onClick={() => setError(null)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
       {filteredAndSortedGames.length === 0 ? (
-        <Box sx={{ 
-          textAlign: 'center', 
-          mt: { xs: 6, sm: 8 },
-          py: { xs: 4, sm: 6 },
-          px: { xs: 2, sm: 3 },
-        }}>
-          <Typography 
-            variant="h6" 
-            color="text.secondary"
-            sx={{
-              fontSize: { xs: '1rem', sm: '1.25rem' },
-            }}
-          >
+        <div className="mt-12 px-4 py-8 text-center sm:mt-16 sm:px-6">
+          <p className="text-body sm:text-h4 text-text-secondary">
             {games.length === 0 ? t('games.noGames') : t('games.noMatchingGames')}
-          </Typography>
+          </p>
           {games.length > 0 && (
-            <Button 
-              onClick={clearFilters} 
-              sx={{ 
-                mt: 2,
-                minHeight: 44,
-              }}
-            >
+            <Button variant="ghost" onClick={clearFilters} className="mt-4">
               {t('games.clearFilters')}
             </Button>
           )}
-        </Box>
+        </div>
       ) : (
-        <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+        <div className={`grid gap-3 sm:gap-4 ${gridClassBySize[cardSize]}`}>
           {filteredAndSortedGames.map((game) => (
-            <Grid item {...gridBreakpoints} key={game.id}>
-              <GameCard 
-                game={game} 
-                cardScale={cardScale} 
-                onDelete={(id) => {
-                  const gameToDelete = games.find((g: Game) => g.id === id)
-                  if (gameToDelete) handleDeleteGame(gameToDelete)
-                }}
-                onClick={(id) => navigate(`/games/${id}/statistics`)}
-              />
-            </Grid>
+            <GameCard
+              key={game.id}
+              game={game}
+              cardScale={cardScale}
+              onDelete={(id) => {
+                const gameToDelete = games.find((g: Game) => g.id === id)
+                if (gameToDelete) handleDeleteGame(gameToDelete)
+              }}
+              onClick={(id) => navigate(`/games/${id}/statistics`)}
+            />
           ))}
-        </Grid>
+        </div>
       )}
 
       <StyledDialog
         open={dialogOpen}
         onClose={handleCloseDialog}
         title={t('games.addGame')}
-        icon={<VideogameAsset sx={{ fontSize: 48 }} />}
+        icon={<Gamepad2 className="size-12" />}
         iconColor="#10b981"
         actions={dialogActions}
       >
-        <Box sx={{ mt: 1 }}>
+        <div className="mt-1">
           <GameSearchAutocomplete onGameSelect={handleGameSelect} disabled={false} />
           {selectedGame && (
-            <Box sx={{ 
-              mt: 2, 
-              p: 2.5, 
-              bgcolor: alpha('#10b981', 0.08),
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: alpha('#10b981', 0.2),
-            }}>
-              <Typography variant="subtitle2" gutterBottom color="text.secondary">{t('games.selectedGame')}:</Typography>
-              <Typography variant="body1" fontWeight="bold" sx={{ mb: 0.5 }}>{selectedGame.name}</Typography>
+            <div className="mt-4 rounded-md border border-[#10b981]/20 bg-[#10b981]/8 p-5">
+              <p className="mb-1 text-body-sm text-text-secondary">{t('games.selectedGame')}:</p>
+              <p className="mb-1 font-bold">{selectedGame.name}</p>
               {selectedGame.genres && (
-                <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: 0.5 }}>{selectedGame.genres}</Typography>
+                <p className="mb-1 block text-caption text-text-secondary">{selectedGame.genres}</p>
               )}
               {selectedGame.platforms && (
-                <Typography variant="caption" display="block" color="text.secondary">{t('games.platforms')}: {selectedGame.platforms}</Typography>
+                <p className="block text-caption text-text-secondary">{t('games.platforms')}: {selectedGame.platforms}</p>
               )}
-            </Box>
+            </div>
           )}
-        </Box>
+        </div>
       </StyledDialog>
 
       <TypedConfirmDialog
@@ -522,7 +443,7 @@ function Games() {
         requiredText="Delete"
         destructive
       />
-    </Box>
+    </div>
   )
 }
 

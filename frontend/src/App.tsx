@@ -15,6 +15,7 @@ import Health from './pages/Health'
 import Settings from './pages/Settings'
 import Help from './pages/Help'
 import Loading from './components/Loading'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { TimeFormatProvider } from './contexts/TimeFormatContext'
@@ -79,15 +80,17 @@ function App() {
   return (
     <Suspense fallback={<Loading />}>
       <ThemeProvider>
-        <AuthProvider>
-          <SessionTimerProvider>
-            <TimeFormatProvider>
-              <WeekStartProvider>
-                <AppContent />
-              </WeekStartProvider>
-            </TimeFormatProvider>
-          </SessionTimerProvider>
-        </AuthProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <SessionTimerProvider>
+              <TimeFormatProvider>
+                <WeekStartProvider>
+                  <AppContent />
+                </WeekStartProvider>
+              </TimeFormatProvider>
+            </SessionTimerProvider>
+          </AuthProvider>
+        </TooltipProvider>
       </ThemeProvider>
     </Suspense>
   )

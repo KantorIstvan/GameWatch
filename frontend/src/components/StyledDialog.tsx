@@ -1,17 +1,6 @@
 import React, { useMemo } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Box,
-  alpha,
-  useTheme,
-} from '@mui/material'
-import { TransitionProps } from '@mui/material/transitions'
-import { Slide } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 interface StyledDialogProps {
   open: boolean
@@ -25,134 +14,52 @@ interface StyledDialogProps {
   fullWidth?: boolean
 }
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />
-})
+const maxWidthClass: Record<NonNullable<StyledDialogProps['maxWidth']>, string> = {
+  xs: 'sm:max-w-xs',
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-lg',
+  xl: 'sm:max-w-xl',
+}
 
-const StyledDialog = React.memo(({ 
-  open, 
-  onClose, 
-  title, 
-  icon, 
+const StyledDialog = React.memo(({
+  open,
+  onClose,
+  title,
+  icon,
   iconColor,
-  children, 
+  children,
   actions,
   maxWidth = 'sm',
-  fullWidth = true 
 }: StyledDialogProps) => {
-  const theme = useTheme()
-  
-  const computedIconColor = useMemo(() => 
-    iconColor || theme.palette.primary.main, 
-    [iconColor, theme.palette.primary.main]
-  )
-  
-  const paperSx = useMemo(() => ({
-    borderRadius: { xs: 2, sm: 3 },
-    boxShadow: theme.palette.mode === 'dark' 
-      ? `0 8px 32px ${alpha('#000000', 0.6)}` 
-      : `0 8px 32px ${alpha('#000000', 0.15)}`,
-    overflow: 'visible',
-    m: { xs: 2, sm: 3 },
-    maxHeight: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 64px)' },
-    background: theme.palette.mode === 'dark'
-      ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-      : theme.palette.background.paper,
-  }), [theme.palette.mode, theme.palette.background.paper])
-  
-  const iconBoxSx = useMemo(() => ({
-    width: { xs: 64, sm: 80 },
-    height: { xs: 64, sm: 80 },
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: `linear-gradient(135deg, ${alpha(computedIconColor, 0.1)} 0%, ${alpha(computedIconColor, 0.05)} 100%)`,
-    border: `2px solid ${alpha(computedIconColor, 0.2)}`,
-    color: computedIconColor,
-    animation: 'pulse 2s ease-in-out infinite',
-    '@keyframes pulse': {
-      '0%, 100%': {
-        boxShadow: `0 0 0 0 ${alpha(computedIconColor, 0.4)}`,
-      },
-      '50%': {
-        boxShadow: `0 0 0 10px ${alpha(computedIconColor, 0)}`,
-      },
-    },
-  }), [computedIconColor])
-  
+  const computedIconColor = useMemo(() => iconColor || 'var(--color-accent)', [iconColor])
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth={maxWidth} 
-      fullWidth={fullWidth}
-      fullScreen={false}
-      TransitionComponent={Transition}
-      PaperProps={{ sx: paperSx }}
-    >
-      {/* Close Button */}
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: { xs: 4, sm: 8 },
-          top: { xs: 4, sm: 8 },
-          color: theme.palette.text.secondary,
-          transition: 'all 0.2s ease-in-out',
-          minWidth: 44,
-          minHeight: 44,
-          '&:hover': {
-            color: theme.palette.text.primary,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            transform: 'rotate(90deg)',
-          }
-        }}
-      >
-        <Close />
-      </IconButton>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className={cn('overflow-visible rounded-xl sm:rounded-xl', maxWidthClass[maxWidth])}>
+        <div className="flex justify-center pb-2 pt-2">
+          <div
+            className="flex size-16 items-center justify-center rounded-full border-2 sm:size-20"
+            style={{
+              color: computedIconColor,
+              borderColor: `color-mix(in srgb, ${computedIconColor} 20%, transparent)`,
+              background: `linear-gradient(135deg, color-mix(in srgb, ${computedIconColor} 10%, transparent) 0%, color-mix(in srgb, ${computedIconColor} 5%, transparent) 100%)`,
+            }}
+          >
+            {icon}
+          </div>
+        </div>
 
-      {/* Icon Section */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          pt: { xs: 3, sm: 4 },
-          pb: 2,
-        }}
-      >
-        <Box sx={iconBoxSx}>
-          {icon}
-        </Box>
-      </Box>
+        <DialogTitle className="pb-1 text-center text-h4 font-semibold sm:text-h3">
+          {title}
+        </DialogTitle>
 
-      <DialogTitle 
-        sx={{ 
-          textAlign: 'center',
-          pt: 2,
-          pb: 1,
-          px: { xs: 2, sm: 3, md: 4 },
-          fontSize: { xs: '1.25rem', sm: '1.5rem' },
-          fontWeight: 600,
-        }}
-      >
-        {title}
-      </DialogTitle>
-      
-      <DialogContent sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 2 }}>
-        {children}
+        <div className="px-0 pb-2">{children}</div>
+
+        {actions && (
+          <div className="flex flex-col gap-3 pb-1 pt-2 sm:flex-row">{actions}</div>
+        )}
       </DialogContent>
-      
-      {actions && (
-        <DialogActions sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 3, pt: 2, gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-          {actions}
-        </DialogActions>
-      )}
     </Dialog>
   )
 })

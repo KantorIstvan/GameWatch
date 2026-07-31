@@ -1,17 +1,10 @@
-import { Box, CircularProgress } from '@mui/material'
+import { Loader2 } from 'lucide-react'
 
 function Loading() {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-      }}
-    >
-      <CircularProgress />
-    </Box>
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="size-8 animate-spin text-accent" />
+    </div>
   )
 }
 

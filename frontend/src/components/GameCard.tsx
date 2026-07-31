@@ -1,6 +1,8 @@
-import { Card, CardContent, Box, Typography, IconButton, Chip } from '@mui/material'
-import { Delete, Schedule, PlayArrow } from '@mui/icons-material'
+import { Trash2, Clock, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Game } from '../types'
 
 interface GameCardProps {
@@ -22,11 +24,11 @@ function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
   }
 
   const getStatusInfo = (status: string) => {
-    const statusConfig: Record<string, { color: 'success' | 'primary' | 'error' | 'warning', label: string }> = {
-      active: { color: 'success', label: t('games.statusActive') },
-      completed: { color: 'success', label: t('games.statusCompleted') },
-      dropped: { color: 'error', label: t('games.statusDropped') },
-      started: { color: 'warning', label: t('games.statusStarted') },
+    const statusConfig: Record<string, { variant: 'default' | 'destructive' | 'secondary', label: string }> = {
+      active: { variant: 'default', label: t('games.statusActive') },
+      completed: { variant: 'default', label: t('games.statusCompleted') },
+      dropped: { variant: 'destructive', label: t('games.statusDropped') },
+      started: { variant: 'secondary', label: t('games.statusStarted') },
     }
     return statusConfig[status] || null
   }
@@ -34,208 +36,103 @@ function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
   const statusInfo = game.status ? getStatusInfo(game.status) : null
 
   return (
-    <Card 
+    <div
       onClick={() => onClick?.(game.id)}
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column',
-        position: 'relative',
-        borderRadius: 3, // Unified card border radius (24px)
-        overflow: 'visible',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: onClick ? 'pointer' : 'default',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
-        },
-        '&:hover .delete-button': {
-          opacity: 1,
-        },
-        '&:hover .card-overlay': {
-          opacity: 1,
-        },
-      }}
+      className={cn(
+        'group relative flex h-full flex-col overflow-visible rounded-xl bg-surface shadow-2 transition-all duration-300 ease-standard hover:-translate-y-1 hover:shadow-3',
+        onClick ? 'cursor-pointer' : 'cursor-default'
+      )}
     >
-      {/* Banner Image Container */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', display: 'block', lineHeight: 0, fontSize: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}> {/* Updated to match unified border radius */}
+      <div className="relative block overflow-hidden rounded-t-xl leading-none">
         {game.bannerImageUrl && (
           <>
-            <Box
-              component="img"
+            <img
               src={game.bannerImageUrl}
               alt={game.name}
-              sx={{
-                width: '100%',
-                aspectRatio: '16/9',
-                objectFit: 'cover',
-                display: 'block',
-                transition: 'transform 0.3s ease',
-                '.MuiCard-root:hover &': {
-                  transform: 'scale(1.05)',
-                },
-              }}
+              className="block aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
-            {/* Gradient Overlay */}
-            <Box
-              className="card-overlay"
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%)',
-                opacity: 0,
-                transition: 'opacity 0.3s ease',
-              }}
-            />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           </>
         )}
-        
-        {/* Status Chip Overlay */}
+
         {statusInfo && (
-          <Chip
-            label={statusInfo.label}
-            color={statusInfo.color}
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 8 * cardScale,
-              left: 8 * cardScale,
-              fontWeight: 600,
-              '& .MuiChip-label': {
-                paddingLeft: '12px',
-                paddingRight: '12px',
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                fontSize: `${0.75 * cardScale}rem`,
-              },
-            }}
-          />
+          <Badge
+            variant={statusInfo.variant}
+            className="absolute font-semibold"
+            style={{ top: 8 * cardScale, left: 8 * cardScale, fontSize: `${0.75 * cardScale}rem` }}
+          >
+            {statusInfo.label}
+          </Badge>
         )}
-        
-        {/* Delete Button Overlay */}
-        <IconButton
-          className="delete-button"
-          size="small"
-          color="error"
+
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('common.delete', 'Delete')}
           onClick={(e) => {
             e.stopPropagation()
             onDelete(game.id)
           }}
-          sx={{
-            position: 'absolute',
-            top: 8 * cardScale,
-            right: 8 * cardScale,
-            bgcolor: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(4px)',
-            opacity: 0,
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              bgcolor: 'error.main',
-              transform: 'scale(1.1)',
-            },
-          }}
+          className="absolute bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-200 hover:scale-110 hover:bg-destructive hover:text-white group-hover:opacity-100"
+          style={{ top: 8 * cardScale, right: 8 * cardScale }}
         >
-          <Delete fontSize="small" sx={{ color: 'white' }} />
-        </IconButton>
-      </Box>
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
 
-      <CardContent sx={{ 
-        flexGrow: 1, 
-        py: 1.5 * cardScale, 
-        px: 2 * cardScale, 
-        '&:last-child': { pb: 1.5 * cardScale },
-        background: 'linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 100%)',
-      }}>
-        {/* Title */}
-        <Typography 
-          variant="subtitle1" 
-          component="div" 
-          sx={{ 
-            fontWeight: 700,
-            fontSize: `${1 * cardScale}rem`,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            mb: 0.5 * cardScale,
-            lineHeight: 1.3,
-            letterSpacing: '0.01em',
-          }}
+      <div
+        className="grow bg-linear-to-b from-white/5 to-transparent"
+        style={{ paddingTop: 12 * cardScale, paddingBottom: 12 * cardScale, paddingLeft: 16 * cardScale, paddingRight: 16 * cardScale }}
+      >
+        <p
+          className="line-clamp-2 font-bold leading-tight tracking-wide"
+          style={{ fontSize: `${1 * cardScale}rem`, marginBottom: 4 * cardScale }}
         >
           {game.name}
-        </Typography>
-        
-        {/* Statistics Row */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 * cardScale, mb: 0.5 * cardScale }}>
-          {/* Total Playtime */}
+        </p>
+
+        <div className="mb-1 flex flex-col gap-1">
           {game.totalPlaytimeSeconds != null && game.totalPlaytimeSeconds > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Schedule sx={{ fontSize: `${0.9 * cardScale}rem`, color: 'primary.main', opacity: 0.7 }} />
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                sx={{ 
-                  fontSize: `${0.75 * cardScale}rem`,
-                  fontWeight: 600,
-                  letterSpacing: '0.02em',
-                }}
+            <div className="flex items-center gap-1">
+              <Clock className="text-accent/70" style={{ width: `${0.9 * cardScale}rem`, height: `${0.9 * cardScale}rem` }} />
+              <span
+                className="font-semibold tracking-wide text-text-secondary"
+                style={{ fontSize: `${0.75 * cardScale}rem` }}
               >
                 {formatPlaytime(game.totalPlaytimeSeconds)}
-              </Typography>
-            </Box>
+              </span>
+            </div>
           )}
-          
-          {/* Session Count */}
+
           {(game.sessionCount ?? 0) > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <PlayArrow sx={{ fontSize: `${0.9 * cardScale}rem`, color: 'secondary.main', opacity: 0.7 }} />
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                sx={{ 
-                  fontSize: `${0.75 * cardScale}rem`,
-                  fontWeight: 600,
-                  letterSpacing: '0.02em',
-                }}
+            <div className="flex items-center gap-1">
+              <Play className="text-text-tertiary/70" style={{ width: `${0.9 * cardScale}rem`, height: `${0.9 * cardScale}rem` }} />
+              <span
+                className="font-semibold tracking-wide text-text-secondary"
+                style={{ fontSize: `${0.75 * cardScale}rem` }}
               >
                 {game.sessionCount} {game.sessionCount === 1 ? t('games.session') : t('games.sessions')}
-              </Typography>
-            </Box>
+              </span>
+            </div>
           )}
-        </Box>
-        
-        {/* Last Played Date */}
+        </div>
+
         {game.lastPlayedDate && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 4 * cardScale,
-                height: 4 * cardScale,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                opacity: 0.7,
-              }}
+          <div className="flex items-center gap-1">
+            <span
+              className="rounded-full bg-accent/70"
+              style={{ width: 4 * cardScale, height: 4 * cardScale }}
             />
-            <Typography 
-              variant="caption" 
-              color="text.secondary" 
-              sx={{ 
-                fontSize: `${0.75 * cardScale}rem`,
-                fontWeight: 500,
-                letterSpacing: '0.02em',
-              }}
+            <span
+              className="font-medium tracking-wide text-text-secondary"
+              style={{ fontSize: `${0.75 * cardScale}rem` }}
             >
               {t('games.lastPlayed')}: {game.lastPlayedDate}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

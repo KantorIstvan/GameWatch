@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Box, Typography, Paper, alpha, useTheme } from '@mui/material'
+import { cn } from '@/lib/utils'
 
 interface InfoCardProps {
   icon: ReactNode
@@ -10,48 +10,24 @@ interface InfoCardProps {
 }
 
 function InfoCard({ icon, iconColor, title, value, subtitle }: InfoCardProps) {
-  const theme = useTheme()
-
   return (
-    <Paper 
-      elevation={0}
-      sx={{ 
-        p: 4, // Using consistent card padding (32px)
-        height: '100%',
-        borderRadius: 3, // Using consistent card border radius (24px)
-        background: alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: 'blur(20px)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-      }}
-    >
-      <Box display="flex" alignItems="center" mb={2}>
-        <Box sx={{ mr: 1, color: iconColor }}>
+    <div className="h-full rounded-xl border border-border bg-surface/60 p-8 backdrop-blur-xl">
+      <div className="mb-2 flex items-center">
+        <div className="mr-2" style={{ color: iconColor }}>
           {icon}
-        </Box>
-        <Typography variant="h6" fontWeight="bold">
-          {title}
-        </Typography>
-      </Box>
-      <Typography 
-        variant="h5" 
-        fontWeight="bold" 
-        color={iconColor}
-        sx={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-        }}
+        </div>
+        <h3 className="text-h4 font-bold">{title}</h3>
+      </div>
+      <p
+        className={cn('line-clamp-2 text-h3 font-bold')}
+        style={{ color: iconColor }}
       >
         {value}
-      </Typography>
+      </p>
       {subtitle && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {subtitle}
-        </Typography>
+        <p className="mt-2 text-body-sm text-text-secondary">{subtitle}</p>
       )}
-    </Paper>
+    </div>
   )
 }
 

@@ -1,17 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  Box,
-  Chip,
-  Stack,
-  alpha,
-  useTheme,
-} from '@mui/material'
 import { useTranslation } from 'react-i18next'
+import { Badge } from '@/components/ui/badge'
 import { Playthrough, getPlatformColor } from '../types'
 import { formatTimeHMS, formatDate, formatPlaythroughType, getPlaythroughTypeColor } from '../utils/formatters'
 import { useSessionTimer } from '../contexts/SessionTimerContext'
@@ -25,13 +15,11 @@ interface StopwatchCardProps {
 function StopwatchCard({ playthrough }: StopwatchCardProps) {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const theme = useTheme()
   const sessionTimer = useSessionTimer()
   const [localPlaythrough, setLocalPlaythrough] = useState<Playthrough>(playthrough)
   const [elapsedTime, setElapsedTime] = useState<number>(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Calculate currentSessionTime dynamically from playthrough data
+
   const currentSessionTime = (localPlaythrough.isActive || localPlaythrough.isPaused) && localPlaythrough.sessionStartTime
     ? sessionTimer.getSessionTime(
         localPlaythrough.id,
@@ -43,7 +31,6 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
 
   useEffect(() => {
     setLocalPlaythrough(playthrough)
-    // Always set elapsed time from playthrough data
     setElapsedTime(playthrough.durationSeconds || 0)
   }, [playthrough])
 
@@ -52,9 +39,8 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
-    
+
     if (localPlaythrough.isActive) {
-      // Force re-render every second to update the calculated time
       intervalRef.current = setInterval(() => {
         setLocalPlaythrough(prev => ({ ...prev }))
       }, 1000)
@@ -76,346 +62,138 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
     () => getPlaythroughTypeColor(localPlaythrough.playthroughType),
     [localPlaythrough.playthroughType]
   )
-  
+
   const formattedTime = useMemo(() => formatTimeHMS(elapsedTime), [elapsedTime])
   const formattedDate = useMemo(() => formatDate(localPlaythrough.startDate), [localPlaythrough.startDate])
   const formattedType = useMemo(() => formatPlaythroughType(localPlaythrough.playthroughType), [localPlaythrough.playthroughType])
 
   return (
-    <Card 
-      sx={{ 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: 'pointer',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        borderRadius: 3,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        background: theme.palette.mode === 'dark' 
-          ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-          : theme.palette.background.paper,
-        '&:hover': {
-          transform: 'translateY(-8px)',
-          boxShadow: theme.palette.mode === 'dark'
-            ? `0 12px 40px ${alpha('#000', 0.4)}, 0 0 0 1px ${alpha(playthroughColor, 0.2)}`
-            : `0 12px 40px ${alpha(playthroughColor, 0.15)}, 0 0 0 1px ${alpha(playthroughColor, 0.1)}`,
-        },
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: `linear-gradient(90deg, ${playthroughColor} 0%, ${alpha(playthroughColor, 0.6)} 100%)`,
-        }
-      }}
+    <div
       onClick={handleCardClick}
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border/10 bg-surface transition-all duration-300 ease-standard hover:-translate-y-2 hover:shadow-3"
     >
+      <div
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ background: `linear-gradient(90deg, ${playthroughColor} 0%, color-mix(in srgb, ${playthroughColor} 60%, transparent) 100%)` }}
+      />
+
       {localPlaythrough.gameBannerImageUrl && (
-        <Box sx={{ position: 'relative', overflow: 'hidden', height: 140 }}>
-          <CardMedia
-            component="img"
-            height="140"
-            image={localPlaythrough.gameBannerImageUrl}
+        <div className="relative h-35 overflow-hidden">
+          <img
+            src={localPlaythrough.gameBannerImageUrl}
             alt={localPlaythrough.gameName}
-            sx={{ 
-              objectFit: 'cover',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'scale(1.05)',
-              }
-            }}
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: `linear-gradient(180deg, ${alpha('#000', 0)} 0%, ${alpha('#000', 0.7)} 100%)`,
-            }}
-          />
-        </Box>
+          <div className="absolute inset-0 bg-linear-to-b from-black/0 to-black/70" />
+        </div>
       )}
-      
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
-        <Typography 
-          variant="h6" 
-          component="div" 
-          gutterBottom 
-          noWrap
-          sx={{
-            fontWeight: 600,
-            background: theme.palette.mode === 'dark'
-              ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.text.primary, 0.8)} 100%)`
-              : theme.palette.text.primary,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: theme.palette.mode === 'dark' ? 'transparent' : 'inherit',
-          }}
-        >
+
+      <div className="flex grow flex-col p-6">
+        <p className="mb-1 truncate text-h4 font-semibold text-text-primary">
           {localPlaythrough.gameName}
-        </Typography>
-        
+        </p>
+
         {localPlaythrough.title && (
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            gutterBottom 
-            noWrap
-            sx={{ mb: 2, fontStyle: 'italic' }}
-          >
+          <p className="mb-4 truncate text-body-sm italic text-text-secondary">
             {localPlaythrough.title}
-          </Typography>
+          </p>
         )}
-        
-        <Stack direction="row" spacing={1} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
-          <Chip
-            label={formattedType}
-            size="small"
-            sx={{
-              backgroundColor: playthroughColor,
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              height: 24,
-              '&:hover': {
-                backgroundColor: playthroughColor,
-                filter: 'brightness(1.1)'
-              }
-            }}
-          />
+
+        <div className="mb-6 flex flex-row flex-wrap gap-2">
+          <Badge className="h-6 text-caption font-semibold text-white" style={{ backgroundColor: playthroughColor }}>
+            {formattedType}
+          </Badge>
           {localPlaythrough.platform && (
-            <Chip
-              label={localPlaythrough.platform}
-              size="small"
-              sx={{
-                backgroundColor: getPlatformColor(localPlaythrough.platform),
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '0.75rem',
-                height: 24,
-                '&:hover': {
-                  backgroundColor: getPlatformColor(localPlaythrough.platform),
-                  filter: 'brightness(1.1)'
-                }
-              }}
-            />
+            <Badge className="h-6 text-caption font-semibold text-white" style={{ backgroundColor: getPlatformColor(localPlaythrough.platform) }}>
+              {localPlaythrough.platform}
+            </Badge>
           )}
           {localPlaythrough.isCompleted && (
-            <Chip
-              label={t('playthrough.completed')}
-              color="success"
-              size="small"
-              sx={{ height: 24, fontSize: '0.75rem' }}
-            />
+            <Badge className="h-6 bg-success text-caption font-semibold text-white">
+              {t('playthrough.completed')}
+            </Badge>
           )}
           {localPlaythrough.isDropped && (
-            <Chip
-              label={t('playthrough.dropped')}
-              color="error"
-              size="small"
-              sx={{ height: 24, fontSize: '0.75rem' }}
-            />
+            <Badge variant="destructive" className="h-6 text-caption font-semibold">
+              {t('playthrough.dropped')}
+            </Badge>
           )}
           {localPlaythrough.isActive && (
-            <Chip
-              icon={<Box 
-                sx={{ 
-                  width: 8, 
-                  height: 8, 
-                  borderRadius: '50%', 
-                  backgroundColor: 'currentColor',
-                  animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                  '@keyframes pulse': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0.5 },
-                  }
-                }} 
-              />}
-              label={t('playthrough.active')}
-              size="small"
-              sx={{ 
-                height: 24, 
-                fontSize: '0.75rem',
-                backgroundColor: alpha('#ff9800', 0.15),
-                color: '#ff9800',
-                fontWeight: 600,
-                '& .MuiChip-icon': {
-                  marginLeft: '8px'
-                }
-              }}
-            />
+            <Badge className="h-6 gap-1.5 bg-amber-500/15 text-caption font-semibold text-amber-500">
+              <span className="size-2 animate-pulse rounded-full bg-current" />
+              {t('playthrough.active')}
+            </Badge>
           )}
           {localPlaythrough.isPaused && (
-            <Chip
-              label={t('playthrough.paused')}
-              size="small"
-              sx={{ 
-                height: 24, 
-                fontSize: '0.75rem',
-                backgroundColor: alpha('#9e9e9e', 0.15),
-                color: '#9e9e9e',
-                fontWeight: 600,
-              }}
-            />
+            <Badge className="h-6 bg-gray-400/15 text-caption font-semibold text-gray-400">
+              {t('playthrough.paused')}
+            </Badge>
           )}
-        </Stack>
+        </div>
 
-        <Box
-          sx={{
-            mt: 'auto',
-            p: 2.5,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark'
-              ? `linear-gradient(135deg, ${alpha(playthroughColor, 0.08)} 0%, ${alpha(playthroughColor, 0.04)} 100%)`
-              : `linear-gradient(135deg, ${alpha(playthroughColor, 0.05)} 0%, ${alpha(playthroughColor, 0.02)} 100%)`,
-            border: `1px solid ${alpha(playthroughColor, 0.1)}`,
-            position: 'relative',
-            overflow: 'hidden',
+        <div
+          className="relative mt-auto overflow-hidden rounded-md border p-5"
+          style={{
+            background: `linear-gradient(135deg, color-mix(in srgb, ${playthroughColor} 5%, transparent) 0%, color-mix(in srgb, ${playthroughColor} 2%, transparent) 100%)`,
+            borderColor: `color-mix(in srgb, ${playthroughColor} 10%, transparent)`,
           }}
         >
           {localPlaythrough.isActive || localPlaythrough.isPaused ? (
-            // Active/Paused Session: Show dual timers
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: 1,
-              animation: 'cardSlideIn 0.4s ease-out',
-              '@keyframes cardSlideIn': {
-                from: { opacity: 0, transform: 'translateY(15px)' },
-                to: { opacity: 1, transform: 'translateY(0)' }
-              }
-            }}>
-              {/* Primary: Current Session Timer */}
-              <Box>
-                <Typography
-                  variant="caption"
-                  sx={{ 
-                    display: 'block',
-                    textAlign: 'center',
-                    fontSize: '0.65rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    opacity: 0.7,
-                    mb: 0.5,
-                  }}
-                >
+            <div className="flex flex-col gap-2">
+              <div>
+                <p className="mb-1 text-center text-[0.65rem] uppercase tracking-wide opacity-70">
                   Current Session
-                </Typography>
-                <Typography
-                  variant="h4"
-                  component="div"
-                  sx={{ 
-                    fontFamily: 'monospace', 
-                    textAlign: 'center',
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                    color: playthroughColor,
-                    textShadow: theme.palette.mode === 'dark' 
-                      ? `0 0 20px ${alpha(playthroughColor, 0.3)}`
-                      : 'none',
-                  }}
+                </p>
+                <p
+                  className="text-center font-mono text-h2 font-bold tracking-wide"
+                  style={{ color: playthroughColor }}
                 >
                   {formatTimeHMS(currentSessionTime)}
-                </Typography>
-              </Box>
-              
-              {/* Secondary: Overall Timer */}
-              <Box sx={{ 
-                opacity: 0.6,
-                animation: 'cardFadeIn 0.5s ease-out 0.1s both',
-                '@keyframes cardFadeIn': {
-                  from: { opacity: 0, transform: 'scale(0.98)' },
-                  to: { opacity: 0.6, transform: 'scale(1)' }
-                }
-              }}>
-                <Typography
-                  variant="caption"
-                  sx={{ 
-                    display: 'block',
-                    textAlign: 'center',
-                    fontSize: '0.6rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
-                  }}
-                >
+                </p>
+              </div>
+
+              <div className="opacity-60">
+                <p className="mb-0.5 text-center text-[0.6rem] uppercase tracking-wide">
                   Total
-                </Typography>
-                <Typography
-                  variant="body2"
-                  component="div"
-                  sx={{ 
-                    fontFamily: 'monospace', 
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    letterSpacing: '0.05em',
-                  }}
-                >
+                </p>
+                <p className="text-center font-mono text-body-sm font-semibold tracking-wide">
                   {formatTimeHMS(elapsedTime)}
-                </Typography>
-              </Box>
-            </Box>
+                </p>
+              </div>
+            </div>
           ) : (
-            // Idle State: Show only overall timer
-            <Typography
-              variant="h4"
-              component="div"
-              sx={{ 
-                fontFamily: 'monospace', 
-                textAlign: 'center',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                color: playthroughColor,
-                textShadow: theme.palette.mode === 'dark' 
-                  ? `0 0 20px ${alpha(playthroughColor, 0.3)}`
-                  : 'none',
-              }}
+            <p
+              className="text-center font-mono text-h2 font-bold tracking-wide"
+              style={{ color: playthroughColor }}
             >
               {formattedTime}
-            </Typography>
+            </p>
           )}
-          
+
           {localPlaythrough.isActive && (
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 2,
-                background: playthroughColor,
-                animation: 'progress 2s ease-in-out infinite',
-                '@keyframes progress': {
-                  '0%': { transform: 'translateX(-100%)' },
-                  '100%': { transform: 'translateX(100%)' },
-                }
-              }}
+            <div
+              className="animate-progress-slide absolute inset-x-0 bottom-0 h-0.5"
+              style={{ background: playthroughColor }}
             />
           )}
-        </Box>
+        </div>
 
         {(formattedDate || localPlaythrough.endDate) && (
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <div className="mt-4 text-center">
             {formattedDate && (
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ opacity: 0.7 }}>
+              <p className="block text-caption text-text-secondary opacity-70">
                 {t('playthrough.started')}: {formattedDate}
-              </Typography>
+              </p>
             )}
             {localPlaythrough.endDate && (
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ opacity: 0.7 }}>
+              <p className="block text-caption text-text-secondary opacity-70">
                 {localPlaythrough.isDropped ? t('playthrough.dropped') : t('playthrough.ended')}: {formatDate(localPlaythrough.endDate)}
-              </Typography>
+              </p>
             )}
-          </Box>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

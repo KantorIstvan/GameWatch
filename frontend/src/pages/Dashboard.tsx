@@ -1,15 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Alert,
-  MenuItem,
-  TextField,
-} from '@mui/material'
-import { Add } from '@mui/icons-material'
-import { PlaylistAdd } from '@mui/icons-material'
+import { Plus, ListPlus, X } from 'lucide-react'
+import dayjs from 'dayjs'
 import { playthroughsApi, gamesApi } from '../services/api'
 import StopwatchCard from '../components/StopwatchCard'
 import Loading from '../components/Loading'
@@ -18,7 +9,9 @@ import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Playthrough, Game } from '../types'
 import DatePicker from '../components/DatePicker'
-import dayjs from 'dayjs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 function Dashboard() {
   const { isAuthReady } = useAuthContext()
@@ -78,36 +71,14 @@ function Dashboard() {
 
   const dialogActions = useMemo(() => (
     <>
-      <Button 
-        onClick={handleCloseDialog}
-        variant="outlined"
-        size="large"
-        fullWidth
-        sx={{
-          borderRadius: 2,
-          textTransform: 'none',
-          fontWeight: 600,
-          borderWidth: 2,
-          '&:hover': {
-            borderWidth: 2,
-          }
-        }}
-      >
+      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="flex-1">
         {t('common.cancel')}
       </Button>
-      <Button 
-        onClick={handleCreatePlaythrough} 
-        variant="contained" 
-        color="primary"
-        size="large"
-        fullWidth
+      <Button
+        onClick={handleCreatePlaythrough}
+        size="lg"
+        className="flex-1"
         disabled={!selectedGameId}
-        sx={{
-          borderRadius: 2,
-          textTransform: 'none',
-          fontWeight: 600,
-          transition: 'all 0.2s ease-in-out',
-        }}
       >
         {t('playthrough.create')}
       </Button>
@@ -119,103 +90,86 @@ function Dashboard() {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1">
-          {t('dashboard.title')}
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setDialogOpen(true)}
-          disabled={games.length === 0}
-        >
+    <div>
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-h2">{t('dashboard.title')}</h1>
+        <Button onClick={() => setDialogOpen(true)} disabled={games.length === 0}>
+          <Plus className="size-4" />
           {t('dashboard.newPlaythrough')}
         </Button>
-      </Box>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            <div className="flex w-full items-center justify-between gap-2">
+              <span>{error}</span>
+              <Button variant="ghost" size="icon-sm" onClick={() => setError(null)}>
+                <X className="size-4" />
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
       {games.length === 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No games found. Please add games first in the Games page.
+        <Alert variant="info" className="mb-4">
+          <AlertDescription>No games found. Please add games first in the Games page.</AlertDescription>
         </Alert>
       )}
 
       {playthroughs.length === 0 ? (
-        <Box sx={{ textAlign: 'center', mt: 8 }}>
-          <Typography variant="h6" color="text.secondary">
-            {t('dashboard.noPlaythroughsMessage')}
-          </Typography>
-        </Box>
+        <div className="mt-16 text-center">
+          <p className="text-h4 text-text-secondary">{t('dashboard.noPlaythroughsMessage')}</p>
+        </div>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
           {playthroughs.map((playthrough) => (
-            <Grid item xs={12} sm={6} md={4} key={playthrough.id}>
-              <StopwatchCard
-                playthrough={playthrough}
-              />
-            </Grid>
+            <StopwatchCard key={playthrough.id} playthrough={playthrough} />
           ))}
-        </Grid>
+        </div>
       )}
 
       <StyledDialog
         open={dialogOpen}
         onClose={handleCloseDialog}
         title={t('playthrough.create')}
-        icon={<PlaylistAdd sx={{ fontSize: 48 }} />}
+        icon={<ListPlus className="size-12" />}
         actions={dialogActions}
       >
-        <TextField
-          select
-          fullWidth
-          label={t('playthrough.selectGame')}
-          value={selectedGameId}
-          onChange={(e) => setSelectedGameId(e.target.value)}
-          margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
-        >
-          {games.map((game) => (
-            <MenuItem key={game.id} value={game.id}>
-              {game.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          fullWidth
-          label={t('playthrough.type')}
-          value={playthroughType}
-          onChange={(e) => setPlaythroughType(e.target.value)}
-          margin="normal"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
-        >
-          <MenuItem value="story">Story</MenuItem>
-          <MenuItem value="100%">100%</MenuItem>
-          <MenuItem value="speedrun">Speedrun</MenuItem>
-          <MenuItem value="casual">Casual</MenuItem>
-        </TextField>
-        <DatePicker
-          label={t('playthrough.startDate')}
-          value={startDate}
-          onChange={setStartDate}
-          maxDate={dayjs()}
-        />
+        <div className="flex flex-col gap-4">
+          <Select value={selectedGameId} onValueChange={setSelectedGameId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('playthrough.selectGame')} />
+            </SelectTrigger>
+            <SelectContent>
+              {games.map((game) => (
+                <SelectItem key={game.id} value={String(game.id)}>{game.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={playthroughType} onValueChange={setPlaythroughType}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('playthrough.type')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="story">Story</SelectItem>
+              <SelectItem value="100%">100%</SelectItem>
+              <SelectItem value="speedrun">Speedrun</SelectItem>
+              <SelectItem value="casual">Casual</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <DatePicker
+            label={t('playthrough.startDate')}
+            value={startDate}
+            onChange={setStartDate}
+            maxDate={dayjs()}
+          />
+        </div>
       </StyledDialog>
-    </Box>
+    </div>
   )
 }
 

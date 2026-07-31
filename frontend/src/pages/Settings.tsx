@@ -1,10 +1,8 @@
-import { Container, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, Divider, Button, TextField, Switch, FormControlLabel, Collapse, Autocomplete } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { useTheme } from '../contexts/ThemeContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
-import { Language, Schedule, DeleteForever, Favorite, ExpandMore, ExpandLess, Public, Backup, Upload, CalendarToday } from '@mui/icons-material'
+import { Languages, Clock, Trash2, Heart, ChevronDown, ChevronUp, Globe, HardDriveUpload, Upload, CalendarDays, ChevronsUpDown } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { userApi } from '../services/api'
 import healthApi, { HealthSettings as HealthSettingsType } from '../services/healthApi'
@@ -14,10 +12,51 @@ import { useAuthContext } from '../contexts/AuthContext'
 import { toast } from 'react-toastify'
 import { User } from '../types'
 import { COMMON_TIMEZONES } from '../utils/timezones'
+import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
+
+const LANGUAGES: { code: string; flag: string; key: string }[] = [
+  { code: 'af', flag: '🇿🇦', key: 'afrikaans' }, { code: 'ar', flag: '🇸🇦', key: 'arabic' },
+  { code: 'bn', flag: '🇧🇩', key: 'bengali' }, { code: 'bg', flag: '🇧🇬', key: 'bulgarian' },
+  { code: 'zh', flag: '🇨🇳', key: 'chinese' }, { code: 'hr', flag: '🇭🇷', key: 'croatian' },
+  { code: 'cs', flag: '🇨🇿', key: 'czech' }, { code: 'da', flag: '🇩🇰', key: 'danish' },
+  { code: 'nl', flag: '🇳🇱', key: 'dutch' }, { code: 'en', flag: '🇬🇧', key: 'english' },
+  { code: 'et', flag: '🇪🇪', key: 'estonian' }, { code: 'fi', flag: '🇫🇮', key: 'finnish' },
+  { code: 'fr', flag: '🇫🇷', key: 'french' }, { code: 'de', flag: '🇩🇪', key: 'german' },
+  { code: 'el', flag: '🇬🇷', key: 'greek' }, { code: 'hu', flag: '🇭🇺', key: 'hungarian' },
+  { code: 'hi', flag: '🇮🇳', key: 'hindi' }, { code: 'is', flag: '🇮🇸', key: 'icelandic' },
+  { code: 'id', flag: '🇮🇩', key: 'indonesian' }, { code: 'it', flag: '🇮🇹', key: 'italian' },
+  { code: 'ja', flag: '🇯🇵', key: 'japanese' }, { code: 'ko', flag: '🇰🇷', key: 'korean' },
+  { code: 'lv', flag: '🇱🇻', key: 'latvian' }, { code: 'lt', flag: '🇱🇹', key: 'lithuanian' },
+  { code: 'ml', flag: '🇮🇳', key: 'malayalam' }, { code: 'no', flag: '🇳🇴', key: 'norwegian' },
+  { code: 'fa', flag: '🇮🇷', key: 'persian' }, { code: 'pl', flag: '🇵🇱', key: 'polish' },
+  { code: 'pt', flag: '🇵🇹', key: 'portuguese' }, { code: 'ro', flag: '🇷🇴', key: 'romanian' },
+  { code: 'ru', flag: '🇷🇺', key: 'russian' }, { code: 'sr', flag: '🇷🇸', key: 'serbian' },
+  { code: 'sk', flag: '🇸🇰', key: 'slovak' }, { code: 'sl', flag: '🇸🇮', key: 'slovenian' },
+  { code: 'es', flag: '🇪🇸', key: 'spanish' }, { code: 'sv', flag: '🇸🇪', key: 'swedish' },
+  { code: 'th', flag: '🇹🇭', key: 'thai' }, { code: 'tr', flag: '🇹🇷', key: 'turkish' },
+  { code: 'uk', flag: '🇺🇦', key: 'ukrainian' }, { code: 'ur', flag: '🇵🇰', key: 'urdu' },
+  { code: 'vi', flag: '🇻🇳', key: 'vietnamese' },
+]
+
+function SectionHeader({ icon, title, color }: { icon: React.ReactNode; title: string; color?: string }) {
+  return (
+    <div className="mb-2 flex items-center">
+      <span className="mr-3" style={{ color: color ?? 'var(--color-accent)' }}>{icon}</span>
+      <p className="text-h4 font-medium" style={{ color: color }}>{title}</p>
+    </div>
+  )
+}
 
 function Settings() {
   const { t, i18n } = useTranslation()
-  const { mode } = useTheme()
   const { timeFormat, setTimeFormat: setTimeFormatContext, timezone: contextTimezone, setTimezone: setTimezoneContext } = useTimeFormat()
   const { weekStart, setWeekStart: setWeekStartContext } = useWeekStart()
   const { logout, isAuthReady, isAuthenticated } = useAuthContext()
@@ -26,9 +65,9 @@ function Settings() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Health settings state
   const [age, setAge] = useState<number | ''>('')
   const [timezone, setTimezone] = useState<string>('')
+  const [timezonePickerOpen, setTimezonePickerOpen] = useState(false)
   const [healthSettings, setHealthSettings] = useState<HealthSettingsType | null>(null)
   const [healthExpanded, setHealthExpanded] = useState(false)
   const [loadingHealth, setLoadingHealth] = useState(true)
@@ -44,7 +83,6 @@ function Settings() {
     }
   }, [isAuthReady, isAuthenticated])
 
-  // Initialize timezone from context
   useEffect(() => {
     if (contextTimezone && !timezone) {
       setTimezone(contextTimezone)
@@ -89,7 +127,7 @@ function Settings() {
   const handleSaveTimezone = async () => {
     try {
       await userApi.updateTimezone(timezone)
-      setTimezoneContext(timezone) // Update context with new timezone
+      setTimezoneContext(timezone)
       toast.success(t('settings.timezoneUpdated'))
     } catch (error) {
       toast.error(t('settings.timezoneUpdateFailed'))
@@ -98,7 +136,7 @@ function Settings() {
 
   const handleSaveHealthSettings = async () => {
     if (!healthSettings) return
-    
+
     try {
       setSavingHealth(true)
       await healthApi.updateHealthSettings(healthSettings)
@@ -115,19 +153,10 @@ function Settings() {
     setHealthSettings({ ...healthSettings, [key]: value })
   }
 
-  const handleLanguageChange = (event: any) => {
-    i18n.changeLanguage(event.target.value)
-  }
-
-  const handleTimeFormatChange = (event: any) => {
-    setTimeFormatContext(event.target.value)
-  }
-
-  const handleWeekStartChange = async (event: any) => {
-    const newWeekStart = event.target.value as 'MONDAY' | 'SUNDAY'
+  const handleWeekStartChange = async (newWeekStart: string) => {
     try {
-      await userApi.updateFirstDayOfWeek(newWeekStart)
-      setWeekStartContext(newWeekStart)
+      await userApi.updateFirstDayOfWeek(newWeekStart as 'MONDAY' | 'SUNDAY')
+      setWeekStartContext(newWeekStart as 'MONDAY' | 'SUNDAY')
       toast.success(t('settings.firstDayUpdated'))
     } catch (error) {
       toast.error(t('settings.firstDayUpdateFailed'))
@@ -153,12 +182,10 @@ function Settings() {
       const response = await backupApi.exportBackup()
       const backup = response.data
 
-      // Create a blob and download
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      
-      // Generate filename with timestamp
+
       const timestamp = new Date(backup.timestamp).toISOString().replace(/[:.]/g, '-').slice(0, -5)
       link.href = url
       link.download = `backup_${timestamp}.json`
@@ -182,22 +209,18 @@ function Settings() {
 
     try {
       setImportingBackup(true)
-      
-      // Read the file
+
       const text = await file.text()
       const backup: BackupData = JSON.parse(text)
 
-      // Validate backup structure
       if (!backup.version || !backup.data) {
         throw new Error('Invalid backup file format')
       }
 
-      // Import the backup
       await backupApi.importBackup(backup)
-      
+
       toast.success(t('settings.backupImported'))
-      
-      // Refresh the page after a short delay to show all imported data
+
       setTimeout(() => {
         window.location.reload()
       }, 2000)
@@ -212,7 +235,6 @@ function Settings() {
       }
     } finally {
       setImportingBackup(false)
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -224,688 +246,334 @@ function Settings() {
   }
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{
-            fontWeight: 500,
-            mb: 4,
-            color: mode === 'light' ? '#212529' : '#ffffff'
-          }}
-        >
-          {t('settings.title')}
-        </Typography>
+    <div className="mx-auto max-w-3xl">
+      <div className="my-8">
+        <h1 className="mb-8 text-h2 font-medium text-text-primary">{t('settings.title')}</h1>
 
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            backgroundColor: mode === 'light' 
-              ? 'rgba(255, 255, 255, 0.9)' 
-              : 'rgba(33, 37, 41, 0.5)',
-            border: '1px solid',
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(20px)',
-          }}
-        >
-          {/* Language Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Language sx={{ mr: 1.5, color: '#667eea' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff'
-                }}
-              >
-                {t('settings.language')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.languageDescription')}
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="language-select-label">{t('settings.language')}</InputLabel>
-              <Select
-                labelId="language-select-label"
-                id="language-select"
-                value={i18n.language}
-                label={t('settings.language')}
-                onChange={handleLanguageChange}
-                MenuProps={{
-                  PaperProps: {
-                    style: {
-                      maxHeight: 48 * 5 + 8,
-                    },
-                  },
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(0, 0, 0, 0.12)' 
-                      : 'rgba(255, 255, 255, 0.12)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(102, 126, 234, 0.5)' 
-                      : 'rgba(139, 154, 247, 0.5)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#667eea',
-                  },
-                }}
-              >
-                <MenuItem value="af">🇿🇦 {t('settings.afrikaans')}</MenuItem>
-                <MenuItem value="ar">🇸🇦 {t('settings.arabic')}</MenuItem>
-                <MenuItem value="bn">🇧🇩 {t('settings.bengali')}</MenuItem>
-                <MenuItem value="bg">🇧🇬 {t('settings.bulgarian')}</MenuItem>
-                <MenuItem value="zh">🇨🇳 {t('settings.chinese')}</MenuItem>
-                <MenuItem value="hr">🇭🇷 {t('settings.croatian')}</MenuItem>
-                <MenuItem value="cs">🇨🇿 {t('settings.czech')}</MenuItem>
-                <MenuItem value="da">🇩🇰 {t('settings.danish')}</MenuItem>
-                <MenuItem value="nl">🇳🇱 {t('settings.dutch')}</MenuItem>
-                <MenuItem value="en">🇬🇧 {t('settings.english')}</MenuItem>
-                <MenuItem value="et">🇪🇪 {t('settings.estonian')}</MenuItem>
-                <MenuItem value="fi">🇫🇮 {t('settings.finnish')}</MenuItem>
-                <MenuItem value="fr">🇫🇷 {t('settings.french')}</MenuItem>
-                <MenuItem value="de">🇩🇪 {t('settings.german')}</MenuItem>
-                <MenuItem value="el">🇬🇷 {t('settings.greek')}</MenuItem>
-                <MenuItem value="hu">🇭🇺 {t('settings.hungarian')}</MenuItem>
-                <MenuItem value="hi">🇮🇳 {t('settings.hindi')}</MenuItem>
-                <MenuItem value="is">🇮🇸 {t('settings.icelandic')}</MenuItem>
-                <MenuItem value="id">🇮🇩 {t('settings.indonesian')}</MenuItem>
-                <MenuItem value="it">🇮🇹 {t('settings.italian')}</MenuItem>
-                <MenuItem value="ja">🇯🇵 {t('settings.japanese')}</MenuItem>
-                <MenuItem value="ko">🇰🇷 {t('settings.korean')}</MenuItem>
-                <MenuItem value="lv">🇱🇻 {t('settings.latvian')}</MenuItem>
-                <MenuItem value="lt">🇱🇹 {t('settings.lithuanian')}</MenuItem>
-                <MenuItem value="ml">🇮🇳 {t('settings.malayalam')}</MenuItem>
-                <MenuItem value="no">🇳🇴 {t('settings.norwegian')}</MenuItem>
-                <MenuItem value="fa">🇮🇷 {t('settings.persian')}</MenuItem>
-                <MenuItem value="pl">🇵🇱 {t('settings.polish')}</MenuItem>
-                <MenuItem value="pt">🇵🇹 {t('settings.portuguese')}</MenuItem>
-                <MenuItem value="ro">🇷🇴 {t('settings.romanian')}</MenuItem>
-                <MenuItem value="ru">🇷🇺 {t('settings.russian')}</MenuItem>
-                <MenuItem value="sr">🇷🇸 {t('settings.serbian')}</MenuItem>
-                <MenuItem value="sk">🇸🇰 {t('settings.slovak')}</MenuItem>
-                <MenuItem value="sl">🇸🇮 {t('settings.slovenian')}</MenuItem>
-                <MenuItem value="es">🇪🇸 {t('settings.spanish')}</MenuItem>
-                <MenuItem value="sv">🇸🇪 {t('settings.swedish')}</MenuItem>
-                <MenuItem value="th">🇹🇭 {t('settings.thai')}</MenuItem>
-                <MenuItem value="tr">🇹🇷 {t('settings.turkish')}</MenuItem>
-                <MenuItem value="uk">🇺🇦 {t('settings.ukrainian')}</MenuItem>
-                <MenuItem value="ur">🇵🇰 {t('settings.urdu')}</MenuItem>
-                <MenuItem value="vi">🇻🇳 {t('settings.vietnamese')}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+        <div className="rounded-xl border border-border bg-surface/90 p-8 backdrop-blur-xl">
+          <div className="mb-8">
+            <SectionHeader icon={<Languages className="size-5" />} title={t('settings.language')} />
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.languageDescription')}</p>
+            <Select value={i18n.language} onValueChange={(v) => i18n.changeLanguage(v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('settings.language')} />
+              </SelectTrigger>
+              <SelectContent className="max-h-62.5">
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    {lang.flag} {t(`settings.${lang.key}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* Time Format Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Schedule sx={{ mr: 1.5, color: '#667eea' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff'
-                }}
-              >
-                {t('settings.timeFormat')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.timeFormatDescription')}
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="time-format-select-label">{t('settings.timeFormat')}</InputLabel>
-              <Select
-                labelId="time-format-select-label"
-                id="time-format-select"
-                value={timeFormat}
-                label={t('settings.timeFormat')}
-                onChange={handleTimeFormatChange}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(0, 0, 0, 0.12)' 
-                      : 'rgba(255, 255, 255, 0.12)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(102, 126, 234, 0.5)' 
-                      : 'rgba(139, 154, 247, 0.5)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#667eea',
-                  },
-                }}
-              >
-                <MenuItem value="24h">{t('settings.format24h')}</MenuItem>
-                <MenuItem value="12h">{t('settings.format12h')}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <div className="mb-8">
+            <SectionHeader icon={<Clock className="size-5" />} title={t('settings.timeFormat')} />
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.timeFormatDescription')}</p>
+            <Select value={timeFormat} onValueChange={(v) => setTimeFormatContext(v as '12h' | '24h')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('settings.timeFormat')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">{t('settings.format24h')}</SelectItem>
+                <SelectItem value="12h">{t('settings.format12h')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* First Day of Week Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CalendarToday sx={{ mr: 1.5, color: '#667eea' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff'
-                }}
-              >
-                {t('settings.firstDayOfWeek')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.firstDayOfWeekDescription')}
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="week-start-select-label">{t('settings.firstDayOfWeek')}</InputLabel>
-              <Select
-                labelId="week-start-select-label"
-                id="week-start-select"
-                value={weekStart}
-                label={t('settings.firstDayOfWeek')}
-                onChange={handleWeekStartChange}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(0, 0, 0, 0.12)' 
-                      : 'rgba(255, 255, 255, 0.12)',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: mode === 'light' 
-                      ? 'rgba(102, 126, 234, 0.5)' 
-                      : 'rgba(139, 154, 247, 0.5)',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#667eea',
-                  },
-                }}
-              >
-                <MenuItem value="MONDAY">{t('settings.monday')}</MenuItem>
-                <MenuItem value="SUNDAY">{t('settings.sunday')}</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <div className="mb-8">
+            <SectionHeader icon={<CalendarDays className="size-5" />} title={t('settings.firstDayOfWeek')} />
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.firstDayOfWeekDescription')}</p>
+            <Select value={weekStart} onValueChange={handleWeekStartChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('settings.firstDayOfWeek')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MONDAY">{t('settings.monday')}</SelectItem>
+                <SelectItem value="SUNDAY">{t('settings.sunday')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* Time Zone Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Public sx={{ mr: 1.5, color: '#667eea' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff'
-                }}
-              >
-                {t('settings.timezone')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.timezoneDescription')}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Autocomplete
-                value={timezone}
-                onChange={(_, newValue) => setTimezone(newValue || '')}
-                options={COMMON_TIMEZONES}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={t('settings.timezone')}
-                    placeholder={t('settings.selectTimezone')}
-                  />
-                )}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: mode === 'light' 
-                        ? 'rgba(0, 0, 0, 0.12)' 
-                        : 'rgba(255, 255, 255, 0.12)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: mode === 'light' 
-                        ? 'rgba(102, 126, 234, 0.5)' 
-                        : 'rgba(139, 154, 247, 0.5)',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#667eea',
-                    },
-                  },
-                }}
-              />
-              <Button 
-                variant="contained" 
-                onClick={handleSaveTimezone}
-                disabled={!timezone}
-                sx={{
-                  px: 3,
-                  height: 56,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  whiteSpace: 'nowrap',
-                }}
-              >
+          <div className="mb-8">
+            <SectionHeader icon={<Globe className="size-5" />} title={t('settings.timezone')} />
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.timezoneDescription')}</p>
+            <div className="flex items-start gap-2">
+              <Popover open={timezonePickerOpen} onOpenChange={setTimezonePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="h-14 flex-1 justify-between font-normal">
+                    <span className={cn(!timezone && 'text-muted-foreground')}>
+                      {timezone || t('settings.selectTimezone')}
+                    </span>
+                    <ChevronsUpDown className="size-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('settings.selectTimezone')} />
+                    <CommandList className="max-h-75">
+                      <CommandEmpty>No timezone found.</CommandEmpty>
+                      <CommandGroup>
+                        {COMMON_TIMEZONES.map((tz) => (
+                          <CommandItem
+                            key={tz}
+                            value={tz}
+                            onSelect={() => {
+                              setTimezone(tz)
+                              setTimezonePickerOpen(false)
+                            }}
+                          >
+                            {tz}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <Button onClick={handleSaveTimezone} disabled={!timezone} className="h-14 whitespace-nowrap px-6">
                 {t('settings.save')}
               </Button>
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* Health Settings Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                mb: 2, 
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.8 }
-              }}
+          <div className="mb-8">
+            <button
+              type="button"
               onClick={() => setHealthExpanded(!healthExpanded)}
+              className="mb-2 flex w-full items-center text-left hover:opacity-80"
             >
-              <Favorite sx={{ mr: 1.5, color: '#e91e63' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff',
-                  flexGrow: 1
-                }}
-              >
-                {t('settings.healthWellness')}
-              </Typography>
-              {healthExpanded ? <ExpandLess /> : <ExpandMore />}
-            </Box>
-            
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.healthDescription')}
-            </Typography>
+              <Heart className="mr-3 size-5 text-pink-500" />
+              <p className="flex-1 text-h4 font-medium">{t('settings.healthWellness')}</p>
+              {healthExpanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
+            </button>
 
-            <Collapse in={healthExpanded}>
-              <Box sx={{ mt: 3 }}>
-                {/* Age Setting */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                    {t('settings.yourAge')}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {t('settings.ageDescription')}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <TextField
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder={t('settings.enterAge')}
-                      size="small"
-                      inputProps={{ min: 0, max: 150 }}
-                      sx={{ width: 150 }}
-                    />
-                    <Button 
-                      variant="outlined" 
-                      size="small"
-                      onClick={handleSaveAge}
-                    >
-                      {t('settings.saveAge')}
-                    </Button>
-                  </Box>
-                </Box>
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.healthDescription')}</p>
 
-                <Divider sx={{ my: 3 }} />
+            <Collapsible open={healthExpanded}>
+              <CollapsibleContent>
+                <div className="mt-4">
+                  <div className="mb-6">
+                    <p className="mb-1 text-body-sm font-semibold">{t('settings.yourAge')}</p>
+                    <p className="mb-3 text-body-sm text-text-secondary">{t('settings.ageDescription')}</p>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={150}
+                        value={age}
+                        onChange={(e) => setAge(e.target.value === '' ? '' : Number(e.target.value))}
+                        placeholder={t('settings.enterAge')}
+                        className="w-37.5"
+                      />
+                      <Button variant="outline" size="sm" onClick={handleSaveAge}>
+                        {t('settings.saveAge')}
+                      </Button>
+                    </div>
+                  </div>
 
-                {healthSettings && (
-                  <>
-                    {/* Notifications */}
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        {t('settings.notificationsReminders')}
-                      </Typography>
-                      
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                  <Separator className="my-6" />
+
+                  {healthSettings && (
+                    <>
+                      <div className="mb-6">
+                        <p className="mb-3 text-body-sm font-semibold">{t('settings.notificationsReminders')}</p>
+
+                        <label className="mb-2 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.notificationsEnabled}
-                            onChange={(e) => handleHealthSettingChange('notificationsEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('notificationsEnabled', checked)}
                           />
-                        }
-                        label={t('settings.enableNotifications')}
-                        sx={{ mb: 1, display: 'block' }}
-                      />
+                          <span className="text-body-sm">{t('settings.enableNotifications')}</span>
+                        </label>
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="mb-2 ml-6 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.soundsEnabled}
-                            onChange={(e) => handleHealthSettingChange('soundsEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('soundsEnabled', checked)}
                             disabled={!healthSettings.notificationsEnabled}
                           />
-                        }
-                        label={t('settings.enableSounds')}
-                        sx={{ mb: 1, display: 'block', ml: 3 }}
-                      />
+                          <span className="text-body-sm">{t('settings.enableSounds')}</span>
+                        </label>
 
-                      <Divider sx={{ my: 2 }} />
+                        <Separator className="my-4" />
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="mb-2 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.breakReminderEnabled}
-                            onChange={(e) => handleHealthSettingChange('breakReminderEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('breakReminderEnabled', checked)}
                             disabled={!healthSettings.notificationsEnabled}
                           />
-                        }
-                        label={t('settings.breakReminder', { minutes: healthSettings.breakIntervalMinutes })}
-                        sx={{ mb: 1, display: 'block' }}
-                      />
+                          <span className="text-body-sm">{t('settings.breakReminder', { minutes: healthSettings.breakIntervalMinutes })}</span>
+                        </label>
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="mb-2 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.hydrationReminderEnabled}
-                            onChange={(e) => handleHealthSettingChange('hydrationReminderEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('hydrationReminderEnabled', checked)}
                             disabled={!healthSettings.notificationsEnabled}
                           />
-                        }
-                        label={t('settings.hydrationReminder', { minutes: healthSettings.hydrationIntervalMinutes })}
-                        sx={{ mb: 1, display: 'block' }}
-                      />
+                          <span className="text-body-sm">{t('settings.hydrationReminder', { minutes: healthSettings.hydrationIntervalMinutes })}</span>
+                        </label>
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.standReminderEnabled}
-                            onChange={(e) => handleHealthSettingChange('standReminderEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('standReminderEnabled', checked)}
                             disabled={!healthSettings.notificationsEnabled}
                           />
-                        }
-                        label={t('settings.standReminder', { minutes: healthSettings.standIntervalMinutes })}
-                        sx={{ display: 'block' }}
-                      />
-                    </Box>
+                          <span className="text-body-sm">{t('settings.standReminder', { minutes: healthSettings.standIntervalMinutes })}</span>
+                        </label>
+                      </div>
 
-                    <Divider sx={{ my: 3 }} />
+                      <Separator className="my-6" />
 
-                    {/* Goals */}
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        {t('settings.gamingGoals')}
-                      </Typography>
+                      <div className="mb-6">
+                        <p className="mb-3 text-body-sm font-semibold">{t('settings.gamingGoals')}</p>
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="mb-3 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.goalsEnabled}
-                            onChange={(e) => handleHealthSettingChange('goalsEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('goalsEnabled', checked)}
                           />
-                        }
-                        label={t('settings.enableGoals')}
-                        sx={{ mb: 2, display: 'block' }}
-                      />
+                          <span className="text-body-sm">{t('settings.enableGoals')}</span>
+                        </label>
 
-                      {healthSettings.goalsEnabled && (
-                        <Box sx={{ ml: 3 }}>
-                          <Box sx={{ mb: 2 }}>
-                            <FormControlLabel
-                              control={
-                                <Switch 
+                        {healthSettings.goalsEnabled && (
+                          <div className="ml-6">
+                            <div className="mb-3 flex items-center gap-3">
+                              <label className="flex items-center gap-3">
+                                <Switch
                                   checked={healthSettings.maxHoursPerDayEnabled}
-                                  onChange={(e) => handleHealthSettingChange('maxHoursPerDayEnabled', e.target.checked)}
+                                  onCheckedChange={(checked) => handleHealthSettingChange('maxHoursPerDayEnabled', checked)}
                                 />
-                              }
-                              label={t('settings.maxHoursPerDay')}
-                            />
-                            {healthSettings.maxHoursPerDayEnabled && (
-                              <TextField
-                                type="number"
-                                value={healthSettings.maxHoursPerDay || ''}
-                                onChange={(e) => handleHealthSettingChange('maxHoursPerDay', Number(e.target.value))}
-                                size="small"
-                                inputProps={{ min: 0.5, max: 24, step: 0.5 }}
-                                sx={{ ml: 2, width: 100 }}
-                              />
-                            )}
-                          </Box>
+                                <span className="text-body-sm">{t('settings.maxHoursPerDay')}</span>
+                              </label>
+                              {healthSettings.maxHoursPerDayEnabled && (
+                                <Input
+                                  type="number"
+                                  min={0.5}
+                                  max={24}
+                                  step={0.5}
+                                  value={healthSettings.maxHoursPerDay || ''}
+                                  onChange={(e) => handleHealthSettingChange('maxHoursPerDay', Number(e.target.value))}
+                                  className="w-25"
+                                />
+                              )}
+                            </div>
 
-                          <Box sx={{ mb: 2 }}>
-                            <FormControlLabel
-                              control={
-                                <Switch 
+                            <div className="mb-3 flex items-center gap-3">
+                              <label className="flex items-center gap-3">
+                                <Switch
                                   checked={healthSettings.maxSessionsPerDayEnabled}
-                                  onChange={(e) => handleHealthSettingChange('maxSessionsPerDayEnabled', e.target.checked)}
+                                  onCheckedChange={(checked) => handleHealthSettingChange('maxSessionsPerDayEnabled', checked)}
                                 />
-                              }
-                              label={t('settings.maxSessionsPerDay')}
-                            />
-                            {healthSettings.maxSessionsPerDayEnabled && (
-                              <TextField
-                                type="number"
-                                value={healthSettings.maxSessionsPerDay || ''}
-                                onChange={(e) => handleHealthSettingChange('maxSessionsPerDay', Number(e.target.value))}
-                                size="small"
-                                inputProps={{ min: 1, max: 20 }}
-                                sx={{ ml: 2, width: 100 }}
-                              />
-                            )}
-                          </Box>
+                                <span className="text-body-sm">{t('settings.maxSessionsPerDay')}</span>
+                              </label>
+                              {healthSettings.maxSessionsPerDayEnabled && (
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={20}
+                                  value={healthSettings.maxSessionsPerDay || ''}
+                                  onChange={(e) => handleHealthSettingChange('maxSessionsPerDay', Number(e.target.value))}
+                                  className="w-25"
+                                />
+                              )}
+                            </div>
 
-                          <Box sx={{ mb: 2 }}>
-                            <FormControlLabel
-                              control={
-                                <Switch 
+                            <div className="mb-3 flex items-center gap-3">
+                              <label className="flex items-center gap-3">
+                                <Switch
                                   checked={healthSettings.maxHoursPerWeekEnabled}
-                                  onChange={(e) => handleHealthSettingChange('maxHoursPerWeekEnabled', e.target.checked)}
+                                  onCheckedChange={(checked) => handleHealthSettingChange('maxHoursPerWeekEnabled', checked)}
                                 />
-                              }
-                              label={t('settings.maxHoursPerWeek')}
-                            />
-                            {healthSettings.maxHoursPerWeekEnabled && (
-                              <TextField
-                                type="number"
-                                value={healthSettings.maxHoursPerWeek || ''}
-                                onChange={(e) => handleHealthSettingChange('maxHoursPerWeek', Number(e.target.value))}
-                                size="small"
-                                inputProps={{ min: 1, max: 168, step: 1 }}
-                                sx={{ ml: 2, width: 100 }}
-                              />
-                            )}
-                          </Box>
+                                <span className="text-body-sm">{t('settings.maxHoursPerWeek')}</span>
+                              </label>
+                              {healthSettings.maxHoursPerWeekEnabled && (
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={168}
+                                  step={1}
+                                  value={healthSettings.maxHoursPerWeek || ''}
+                                  onChange={(e) => handleHealthSettingChange('maxHoursPerWeek', Number(e.target.value))}
+                                  className="w-25"
+                                />
+                              )}
+                            </div>
 
-                          <FormControlLabel
-                            control={
-                              <Switch 
+                            <label className="flex items-center gap-3">
+                              <Switch
                                 checked={healthSettings.goalNotificationsEnabled}
-                                onChange={(e) => handleHealthSettingChange('goalNotificationsEnabled', e.target.checked)}
+                                onCheckedChange={(checked) => handleHealthSettingChange('goalNotificationsEnabled', checked)}
                               />
-                            }
-                            label={t('settings.showGoalNotifications')}
-                          />
-                        </Box>
-                      )}
-                    </Box>
+                              <span className="text-body-sm">{t('settings.showGoalNotifications')}</span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
 
-                    <Divider sx={{ my: 3 }} />
+                      <Separator className="my-6" />
 
-                    {/* Mood Tracking */}
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                        {t('settings.moodTracking')}
-                      </Typography>
+                      <div className="mb-6">
+                        <p className="mb-3 text-body-sm font-semibold">{t('settings.moodTracking')}</p>
 
-                      <FormControlLabel
-                        control={
-                          <Switch 
+                        <label className="mb-2 flex items-center gap-3">
+                          <Switch
                             checked={healthSettings.moodPromptEnabled}
-                            onChange={(e) => handleHealthSettingChange('moodPromptEnabled', e.target.checked)}
+                            onCheckedChange={(checked) => handleHealthSettingChange('moodPromptEnabled', checked)}
                           />
-                        }
-                        label={t('settings.promptMoodAfterSession')}
-                        sx={{ mb: 1, display: 'block' }}
-                      />
+                          <span className="text-body-sm">{t('settings.promptMoodAfterSession')}</span>
+                        </label>
 
-                      {healthSettings.moodPromptEnabled && (
-                        <FormControlLabel
-                          control={
-                            <Switch 
+                        {healthSettings.moodPromptEnabled && (
+                          <label className="ml-6 flex items-center gap-3">
+                            <Switch
                               checked={healthSettings.moodPromptRequired}
-                              onChange={(e) => handleHealthSettingChange('moodPromptRequired', e.target.checked)}
+                              onCheckedChange={(checked) => handleHealthSettingChange('moodPromptRequired', checked)}
                             />
-                          }
-                          label={t('settings.moodRequired')}
-                          sx={{ display: 'block', ml: 3 }}
-                        />
-                      )}
-                    </Box>
+                            <span className="text-body-sm">{t('settings.moodRequired')}</span>
+                          </label>
+                        )}
+                      </div>
 
-                    {/* Save Button */}
-                    <Box sx={{ mt: 3 }}>
-                      <Button
-                        variant="contained"
-                        onClick={handleSaveHealthSettings}
-                        disabled={savingHealth}
-                        sx={{
-                          px: 4,
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontWeight: 600,
-                        }}
-                      >
+                      <Button onClick={handleSaveHealthSettings} disabled={savingHealth} className="px-8">
                         {savingHealth ? t('settings.savingHealthSettings') : t('settings.saveHealthSettings')}
                       </Button>
-                    </Box>
-                  </>
-                )}
+                    </>
+                  )}
 
-                {loadingHealth && (
-                  <Box sx={{ textAlign: 'center', py: 3 }}>
-                    <Typography color="text.secondary">{t('settings.loadingHealthSettings')}</Typography>
-                  </Box>
-                )}
-              </Box>
-            </Collapse>
-          </Box>
+                  {loadingHealth && (
+                    <p className="py-6 text-center text-text-secondary">{t('settings.loadingHealthSettings')}</p>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* Backup & Restore Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Backup sx={{ mr: 1.5, color: '#667eea' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: mode === 'light' ? '#212529' : '#ffffff'
-                }}
-              >
-                {t('settings.dataBackup')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 3,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.backupDescription')}
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <div className="mb-8">
+            <SectionHeader icon={<HardDriveUpload className="size-5" />} title={t('settings.dataBackup')} />
+            <p className="mb-6 text-body-sm text-text-secondary">{t('settings.backupDescription')}</p>
+
+            <div className="flex flex-wrap gap-3">
               <Button
-                variant="contained"
-                startIcon={<Backup />}
                 onClick={handleExportBackup}
                 disabled={exportingBackup}
-                sx={{
-                  px: 3,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #5568d3 0%, #663a8e 100%)',
-                  },
-                }}
+                className="bg-linear-to-br from-[#667eea] to-[#764ba2] px-6 hover:from-[#5568d3] hover:to-[#663a8e]"
               >
+                <HardDriveUpload className="size-4" />
                 {exportingBackup ? t('settings.exportingBackup') : t('settings.saveBackup')}
               </Button>
 
@@ -914,144 +582,73 @@ function Settings() {
                 type="file"
                 accept=".json"
                 onChange={handleImportBackup}
-                style={{ display: 'none' }}
+                className="hidden"
               />
 
               <Button
-                variant="outlined"
-                startIcon={<Upload />}
+                variant="outline"
                 onClick={handleImportClick}
                 disabled={importingBackup}
-                sx={{
-                  px: 3,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  borderColor: '#667eea',
-                  color: '#667eea',
-                  '&:hover': {
-                    borderColor: '#5568d3',
-                    backgroundColor: 'rgba(102, 126, 234, 0.08)',
-                  },
-                }}
+                className="border-accent px-6 text-accent hover:bg-accent/8"
               >
+                <Upload className="size-4" />
                 {importingBackup ? t('settings.importingBackup') : t('settings.importBackup')}
               </Button>
-            </Box>
+            </div>
 
-            <Box sx={{ 
-              mt: 2, 
-              p: 2, 
-              borderRadius: 2,
-              backgroundColor: mode === 'light' 
-                ? 'rgba(102, 126, 234, 0.08)' 
-                : 'rgba(102, 126, 234, 0.15)',
-            }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                {t('settings.backupIncludesTitle')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+            <div className="mt-4 rounded-md bg-accent/8 p-4">
+              <p className="mb-1 text-body-sm font-semibold">{t('settings.backupIncludesTitle')}</p>
+              <p className="text-body-sm text-text-secondary">
                 {t('settings.backupIncludesGames')}<br />
                 {t('settings.backupIncludesPlaythroughs')}<br />
                 {t('settings.backupIncludesSessions')}<br />
                 {t('settings.backupIncludesMood')}<br />
                 {t('settings.backupIncludesTimers')}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
 
-          <Divider sx={{ 
-            my: 4,
-            borderColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.08)' 
-              : 'rgba(255, 255, 255, 0.08)'
-          }} />
+          <Separator className="my-8" />
 
-          {/* Danger Zone - Delete Account */}
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <DeleteForever sx={{ mr: 1.5, color: '#d32f2f' }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 500,
-                  color: '#d32f2f'
-                }}
-              >
-                {t('settings.dangerZone')}
-              </Typography>
-            </Box>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 2,
-                color: mode === 'light' ? '#6c757d' : '#a0a0a0'
-              }}
-            >
-              {t('settings.dangerZoneDescription')}
-            </Typography>
+          <div>
+            <SectionHeader icon={<Trash2 className="size-5" />} title={t('settings.dangerZone')} color="var(--color-danger)" />
+            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.dangerZoneDescription')}</p>
             <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteForever />}
+              variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
-              sx={{
-                borderWidth: 2,
-                '&:hover': {
-                  borderWidth: 2,
-                  backgroundColor: 'rgba(211, 47, 47, 0.08)',
-                },
-              }}
+              className="border-destructive text-destructive hover:bg-destructive/8"
             >
+              <Trash2 className="size-4" />
               {t('settings.deleteAccount')}
             </Button>
-          </Box>
-        </Paper>
+          </div>
+        </div>
 
-        {/* Delete Confirmation Dialog */}
         <TypedConfirmDialog
           open={deleteDialogOpen}
           onClose={() => !deleting && setDeleteDialogOpen(false)}
           onConfirm={handleDeleteAccount}
           title={t('settings.deleteAccountTitle')}
           message={
-            <>
-              <Typography sx={{ mb: 2, fontWeight: 600, color: '#667eea' }}>
-                {t('settings.deleteAccountTip')}
-              </Typography>
-              <Typography sx={{ mb: 2 }}>
-                {t('settings.deleteAccountBackupTip')}
-              </Typography>
-              <Typography>
-                {t('settings.deleteAccountConfirm')}
-              </Typography>
-              <Box component="ul" sx={{ mt: 2, pl: 2 }}>
-                <Typography component="li" variant="body2" color="text.secondary">
-                  {t('settings.deleteAccountGames')}
-                </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
-                  {t('settings.deleteAccountPlaythroughs')}
-                </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
-                  {t('settings.deleteAccountStats')}
-                </Typography>
-              </Box>
-              <Typography sx={{ mt: 2, fontWeight: 'bold', color: '#d32f2f' }}>
-                {t('settings.deleteAccountWarning')}
-              </Typography>
-              {deleteError && (
-                <Typography color="error" sx={{ mt: 2 }}>
-                  {deleteError}
-                </Typography>
-              )}
-            </>
+            <div className="text-left">
+              <p className="mb-2 font-semibold text-accent">{t('settings.deleteAccountTip')}</p>
+              <p className="mb-2">{t('settings.deleteAccountBackupTip')}</p>
+              <p>{t('settings.deleteAccountConfirm')}</p>
+              <ul className="mt-2 list-disc pl-5">
+                <li className="text-body-sm text-text-secondary">{t('settings.deleteAccountGames')}</li>
+                <li className="text-body-sm text-text-secondary">{t('settings.deleteAccountPlaythroughs')}</li>
+                <li className="text-body-sm text-text-secondary">{t('settings.deleteAccountStats')}</li>
+              </ul>
+              <p className="mt-2 font-bold text-destructive">{t('settings.deleteAccountWarning')}</p>
+              {deleteError && <p className="mt-2 text-destructive">{deleteError}</p>}
+            </div>
           }
           confirmText={t('settings.deleteAccount')}
           requiredText={t('settings.deleteAccountRequired')}
           destructive
         />
-      </Box>
-    </Container>
+      </div>
+    </div>
   )
 }
 

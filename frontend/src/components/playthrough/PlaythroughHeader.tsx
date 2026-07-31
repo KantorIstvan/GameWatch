@@ -1,5 +1,8 @@
-import { Box, Typography, Stack, Chip, IconButton, Tooltip, Button, alpha, useTheme } from '@mui/material'
-import { Edit } from '@mui/icons-material'
+import { Pencil } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { Playthrough } from '../../types'
 import { formatPlaythroughType, getPlaythroughTypeColor } from '../../utils/playthroughUtils'
 
@@ -12,110 +15,80 @@ interface PlaythroughHeaderProps {
   t: any
 }
 
-function PlaythroughHeader({ 
-  playthrough, 
-  gameName, 
-  onEditTitle, 
+function PlaythroughHeader({
+  playthrough,
+  gameName,
+  onEditTitle,
   onImport,
   showImportButton,
-  t 
+  t
 }: PlaythroughHeaderProps) {
-  const theme = useTheme()
+  const alreadyImported = playthrough.importedFromPlaythroughId !== null && playthrough.importedFromPlaythroughId !== undefined
 
   return (
     <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {gameName}
-      </Typography>
+      <h1 className="mb-1 text-h2 font-normal">{gameName}</h1>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: playthrough.title ? 0 : 2 }}>
+      <div className={cn('flex items-center gap-1', playthrough.title ? 'mb-0' : 'mb-4')}>
         {playthrough.title ? (
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            {playthrough.title}
-          </Typography>
+          <p className="text-h4 text-text-secondary">{playthrough.title}</p>
         ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            {t('playthrough.noTitle')}
-          </Typography>
+          <p className="text-body-sm italic text-text-secondary">{t('playthrough.noTitle')}</p>
         )}
-        <Tooltip title={t('playthrough.editTitle')} arrow>
-          <IconButton
-            size="small"
-            onClick={onEditTitle}
-            sx={{
-              color: 'text.secondary',
-              '&:hover': {
-                color: 'primary.main',
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              },
-            }}
-          >
-            <Edit sx={{ fontSize: '1rem' }} />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onEditTitle}
+              className="text-text-secondary hover:bg-accent/10 hover:text-accent"
+            >
+              <Pencil className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('playthrough.editTitle')}</TooltipContent>
         </Tooltip>
         {showImportButton && onImport && (
-          <Tooltip 
-            title={playthrough.importedFromPlaythroughId 
-              ? "Already imported from another playthrough (one-time only)" 
-              : "Import playtime from another playthrough"
-            } 
-            arrow
-          >
-            <span>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={onImport}
-                disabled={playthrough.importedFromPlaythroughId !== null && playthrough.importedFromPlaythroughId !== undefined}
-                sx={{
-                  ml: 'auto',
-                  fontSize: '0.75rem',
-                  py: 0.5,
-                  px: 1.5,
-                  borderRadius: 1.5,
-                  textTransform: 'none',
-                  borderWidth: 1.5,
-                  '&:hover': {
-                    borderWidth: 1.5,
-                  },
-                  '&:disabled': {
-                    borderColor: 'success.main',
-                    color: 'success.main',
-                    opacity: 0.7,
-                  }
-                }}
-              >
-                {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
-              </Button>
-            </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onImport}
+                  disabled={alreadyImported}
+                  className="text-caption disabled:border-success disabled:text-success disabled:opacity-70"
+                >
+                  {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {alreadyImported
+                ? 'Already imported from another playthrough (one-time only)'
+                : 'Import playtime from another playthrough'}
+            </TooltipContent>
           </Tooltip>
         )}
-      </Box>
+      </div>
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 3, gap: 1 }}>
-        <Chip 
-          label={formatPlaythroughType(playthrough.playthroughType)} 
-          size="medium"
-          sx={{
-            backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType),
-            color: 'white',
-            fontWeight: 600,
-            '&:hover': {
-              backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType),
-              filter: 'brightness(1.1)'
-            }
-          }}
-        />
+      <div className="mb-6 flex flex-row flex-wrap gap-2">
+        <Badge
+          className="font-semibold text-white"
+          style={{ backgroundColor: getPlaythroughTypeColor(playthrough.playthroughType) }}
+        >
+          {formatPlaythroughType(playthrough.playthroughType)}
+        </Badge>
         {playthrough.isCompleted && (
-          <Chip label={t('playthrough.completed')} color="success" size="medium" />
+          <Badge className="bg-success font-semibold text-white">{t('playthrough.completed')}</Badge>
         )}
         {playthrough.isDropped && (
-          <Chip label={t('playthrough.dropped')} color="error" size="medium" />
+          <Badge variant="destructive" className="font-semibold">{t('playthrough.dropped')}</Badge>
         )}
         {playthrough.isActive && (
-          <Chip label={t('playthrough.active')} color="warning" size="medium" />
+          <Badge className="bg-amber-500 font-semibold text-white">{t('playthrough.active')}</Badge>
         )}
-      </Stack>
+      </div>
     </>
   )
 }

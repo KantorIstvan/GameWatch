@@ -1,4 +1,3 @@
-import { Box, Typography, useTheme } from '@mui/material'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface PieChartData {
@@ -18,13 +17,12 @@ interface ReusablePieChartProps {
   noDataMessage?: string
 }
 
-function ReusablePieChart({ 
-  data, 
-  title, 
+function ReusablePieChart({
+  data,
+  title,
   height = 300,
   noDataMessage = 'No data available'
 }: ReusablePieChartProps) {
-  const theme = useTheme()
   const hasData = data.length > 0 && data.some(item => item.value > 0)
   const filteredData = data.filter(item => item.value > 0)
 
@@ -35,31 +33,10 @@ function ReusablePieChart({
 
   return (
     <>
-      <Typography 
-        variant="h6" 
-        gutterBottom 
-        fontWeight="bold"
-        sx={{
-          fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
-        }}
-      >
-        {title}
-      </Typography>
+      <p className="mb-2 text-body-sm font-bold sm:text-body-lg">{title}</p>
       {hasData ? (
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'column', md: 'row' }, 
-          gap: { xs: 2, md: 3 }, 
-          alignItems: 'center',
-          width: '100%' 
-        }}>
-          <Box sx={{ 
-            width: { xs: '100%', md: '60%' },
-            height: { xs: 250, sm: 280, md: 300 },
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center'
-          }}>
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row md:gap-6">
+          <div className="flex h-62.5 w-full items-center justify-center sm:h-70 md:h-75 md:w-3/5">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -77,77 +54,38 @@ function ReusablePieChart({
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={tooltipContent}
                   contentStyle={{
-                    backgroundColor: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: 'var(--color-surface-raised)',
+                    border: '1px solid var(--color-border)',
                     borderRadius: 8,
-                    color: theme.palette.text.primary,
+                    color: 'var(--color-text-primary)',
                   }}
-                  labelStyle={{
-                    color: theme.palette.text.primary,
-                  }}
-                  itemStyle={{
-                    color: theme.palette.text.primary,
-                  }}
+                  labelStyle={{ color: 'var(--color-text-primary)' }}
+                  itemStyle={{ color: 'var(--color-text-primary)' }}
                 />
               </PieChart>
             </ResponsiveContainer>
-          </Box>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: { xs: 1, md: 1.5 },
-              width: { xs: '100%', md: '40%' },
-              justifyContent: 'center',
-            }}
-          >
+          </div>
+          <div className="flex w-full flex-col justify-center gap-2 md:w-2/5 md:gap-3">
             {filteredData.map((entry, index) => (
-              <Box 
-                key={`legend-${index}`}
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1.5,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    backgroundColor: entry.fill,
-                    flexShrink: 0,
-                  }}
+              <div key={`legend-${index}`} className="flex items-center gap-3">
+                <span
+                  className="size-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.fill }}
                 />
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontSize: '0.875rem',
-                    lineHeight: 1.3,
-                    color: theme.palette.text.primary,
-                  }}
-                >
+                <span className="text-body-sm leading-tight text-text-primary">
                   {entry.fullName || entry.name}
-                </Typography>
-              </Box>
+                </span>
+              </div>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
       ) : (
-        <Box
-          sx={{
-            height,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'text.secondary',
-          }}
-        >
-          <Typography variant="body2">{noDataMessage}</Typography>
-        </Box>
+        <div style={{ height }} className="flex items-center justify-center text-text-secondary">
+          <p className="text-body-sm">{noDataMessage}</p>
+        </div>
       )}
     </>
   )

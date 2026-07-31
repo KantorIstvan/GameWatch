@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useMediaQuery } from '@mui/material'
+import { useMediaQuery } from './useMediaQuery'
 
 export const useCalendarView = () => {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')

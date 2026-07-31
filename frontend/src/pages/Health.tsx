@@ -1,25 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  CircularProgress,
-  useTheme,
-  Tooltip as MuiTooltip,
-  LinearProgress,
-  Chip,
-  IconButton,
-} from '@mui/material'
-import {
-  Mood,
-  SelfImprovement,
-  NightsStay,
-  TrendingUp,
-  Info,
-} from '@mui/icons-material'
+import { Loader2, Smile, PersonStanding, MoonStar, TrendingUp, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import CalHeatmap from 'cal-heatmap'
 import 'cal-heatmap/cal-heatmap.css'
@@ -27,8 +7,12 @@ import Tooltip from 'cal-heatmap/plugins/Tooltip'
 import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import healthApi, { HealthDashboard } from '../services/healthApi'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function getScoreColor(score: number | null) {
   if (score === null) return '#9e9e9e'
@@ -43,7 +27,7 @@ function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`
   }
@@ -54,7 +38,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function Health() {
-  const theme = useTheme()
+  const { mode } = useTheme()
   const { t } = useTranslation()
   const { isAuthReady, isAuthenticated } = useAuthContext()
   const { getFirstDayNumber } = useWeekStart()
@@ -80,32 +64,28 @@ export default function Health() {
         calInstanceRef.current.destroy()
       }
     }
-  }, [dashboard, theme.palette.mode])
+  }, [dashboard, mode])
 
   const initializeHeatmap = () => {
     if (!calHeatmapRef.current || !dashboard) return
 
-    // Destroy existing instance
     if (calInstanceRef.current) {
       calInstanceRef.current.destroy()
     }
 
-    // Convert data to array format with proper date parsing
     const heatmapData = Object.entries(dashboard.yearlyHeatmap).map(([dateStr, score]) => {
-      // Parse the date string (YYYY-MM-DD) and create date at noon UTC to avoid timezone issues
       const [year, month, day] = dateStr.split('-').map(Number)
       const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
       const timestamp = date.getTime()
       return { date: timestamp, value: score }
     })
 
-    const isDark = theme.palette.mode === 'dark'
-    
+    const isDark = mode === 'dark'
+
     const cal = new CalHeatmap()
     calInstanceRef.current = cal
 
     const today = new Date()
-    // Set start date to January 1st of the current year at noon to avoid timezone issues
     const startDate = new Date(today.getFullYear(), 0, 1, 12, 0, 0)
 
     cal.paint({
@@ -115,7 +95,7 @@ export default function Health() {
         x: 'date',
         y: (d: any) => d.value,
       },
-      date: { 
+      date: {
         start: startDate,
         locale: { weekStart: getFirstDayNumber() }
       },
@@ -126,7 +106,7 @@ export default function Health() {
           range: [
             isDark ? '#2a2a2a' : '#f0f0f0',
             '#ef5350',
-            '#ff9800', 
+            '#ff9800',
             '#ffeb3b',
             '#81c784',
             '#4caf50',
@@ -137,13 +117,13 @@ export default function Health() {
       domain: {
         type: 'month',
         gutter: 10,
-        label: { 
+        label: {
           text: 'MMM',
           textAlign: 'start',
           position: 'top',
         },
       },
-      subDomain: { 
+      subDomain: {
         type: 'day',
         radius: 4,
         width: 16,
@@ -156,10 +136,10 @@ export default function Health() {
         {
           text: (timestamp: number, value: number | null) => {
             const date = new Date(timestamp)
-            const formattedDate = date.toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric', 
-              year: 'numeric' 
+            const formattedDate = date.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
             })
             return `${formattedDate}: ${value !== null && value !== undefined ? `${t('health.scoreLabel')} ${value}` : t('health.noDataShort')}`
           },
@@ -188,523 +168,221 @@ export default function Health() {
 
   if (!isAuthReady || loading) {
     return (
-      <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress />
-        </Box>
-      </Box>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-accent" />
+      </div>
     )
   }
 
   if (!dashboard) {
     return (
-      <Box>
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h5" color="text.secondary">
-            {t('health.noData')}
-          </Typography>
-        </Box>
-      </Box>
+      <div className="my-8">
+        <p className="text-h3 text-text-secondary">{t('health.noData')}</p>
+      </div>
     )
   }
 
   const currentScore = dashboard.currentHealthScore
   const scoreColor = getScoreColor(currentScore)
+  const cardClass = 'rounded-xl border border-border bg-surface/90 p-8'
 
   return (
-    <Box sx={{ my: 4 }}>
-      <Box sx={{ my: 4 }}>
-        {/* Page Title */}
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            mb: 4,
-            color: theme.palette.mode === 'light' ? '#212529' : '#ffffff'
+    <div className="my-8">
+      <h1 className="mb-8 text-h2 font-semibold text-text-primary">{t('health.title')}</h1>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div
+          className="flex h-full flex-col rounded-xl border-2 p-8"
+          style={{
+            background: `linear-gradient(135deg, ${scoreColor}15, ${scoreColor}05)`,
+            borderColor: `${scoreColor}40`,
           }}
         >
-          {t('health.title')}
-        </Typography>
+          <div className="mb-2 flex items-center">
+            <p className="flex-1 text-h4 font-semibold">{t('health.todaysScore')}</p>
+            <UiTooltip>
+              <TooltipTrigger asChild>
+                <Info className="size-4.5 cursor-help text-text-secondary" />
+              </TooltipTrigger>
+              <TooltipContent>{t('health.scoreTooltip')}</TooltipContent>
+            </UiTooltip>
+          </div>
 
-        {/* Top Section: Health Score Card + Weekly Trend */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          {/* Health Score Card */}
-          <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                height: '100%',
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: `linear-gradient(135deg, ${scoreColor}15, ${scoreColor}05)`,
-                border: `2px solid ${scoreColor}40`,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
-                    {t('health.todaysScore')}
-                  </Typography>
-                  <MuiTooltip title={t('health.scoreTooltip')}>
-                    <IconButton size="small">
-                      <Info />
-                    </IconButton>
-                  </MuiTooltip>
-                </Box>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex items-baseline">
+              <p className="mr-2 text-6xl font-bold" style={{ color: scoreColor }}>
+                {currentScore !== null ? currentScore : '--'}
+              </p>
+              <p className="text-h4 text-text-secondary">{t('health.outOf100')}</p>
+            </div>
+          </div>
+        </div>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
-                    <Typography 
-                      variant="h1" 
-                      sx={{ 
-                        fontWeight: 700, 
-                        color: scoreColor,
-                        fontSize: '4rem',
-                        mr: 2,
-                      }}
-                    >
-                      {currentScore !== null ? currentScore : '--'}
-                    </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                      {t('health.outOf100')}
-                    </Typography>
-                  </Box>
-                </Box>
+        <div className={cardClass}>
+          <div className="mb-2 flex items-center">
+            <TrendingUp className="mr-2 size-5 text-[#667eea]" />
+            <p className="text-h4 font-semibold">{t('health.weeklyTrend')}</p>
+          </div>
 
-              </Box>
-            </Paper>
-          </Grid>
+          {dashboard.weeklyAverageScore !== null ? (
+            <>
+              <p className="mb-1 text-h2 font-bold" style={{ color: getScoreColor(Math.round(dashboard.weeklyAverageScore)) }}>
+                {Math.round(dashboard.weeklyAverageScore)}
+              </p>
+              <p className="mb-6 text-body-sm text-text-secondary">{t('health.averageScoreWeek')}</p>
 
-          {/* Weekly Average & Trend */}
-          <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                height: '100%',
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: theme.palette.mode === 'light' 
-                  ? 'rgba(255, 255, 255, 0.9)' 
-                  : 'rgba(33, 37, 41, 0.5)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'light' 
-                  ? 'rgba(0, 0, 0, 0.1)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-              }}
-            >
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp sx={{ mr: 1, color: '#667eea' }} />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {t('health.weeklyTrend')}
-                </Typography>
-              </Box>
-
-              {dashboard.weeklyAverageScore !== null ? (
-                <>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, color: getScoreColor(Math.round(dashboard.weeklyAverageScore)) }}>
-                    {Math.round(dashboard.weeklyAverageScore)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    {t('health.averageScoreWeek')}
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end', height: 80 }}>
-                    {dashboard.last7DaysScores.map((score, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          flex: 1,
-                          height: `${score}%`,
-                          minHeight: '8px',
-                          bgcolor: getScoreColor(score),
-                          borderRadius: 1,
-                          transition: 'all 0.3s',
-                          '&:hover': {
-                            opacity: 0.8,
-                            transform: 'translateY(-4px)',
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </>
-              ) : (
-                <Typography color="text.secondary">
-                  {t('health.notEnoughData')}
-                </Typography>
-              )}
-              </Box>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Heatmap */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            mb: 3,
-            bgcolor: theme.palette.mode === 'light' 
-              ? 'rgba(255, 255, 255, 0.9)' 
-              : 'rgba(33, 37, 41, 0.5)',
-            border: '1px solid',
-            borderColor: theme.palette.mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.1)' 
-              : 'rgba(255, 255, 255, 0.1)',
-            '& .ch-domain-text': {
-              fill: theme.palette.mode === 'light' ? '#495057' : '#adb5bd',
-              fontSize: '12px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-            },
-            '& .ch-subdomain-bg': {
-              fill: theme.palette.mode === 'light' ? '#f8f9fa' : '#1a1d23',
-            },
-            '& .ch-plugin-legend-lite': {
-              fill: theme.palette.mode === 'light' ? '#495057' : '#adb5bd',
-            },
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            {t('health.yearOverview')}
-          </Typography>
-          <Box 
-            ref={calHeatmapRef} 
-            sx={{ 
-              overflowX: 'auto',
-              pb: 2,
-              '&::-webkit-scrollbar': {
-                height: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: theme.palette.mode === 'light' ? '#f1f1f1' : '#2a2a2a',
-                borderRadius: '4px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: theme.palette.mode === 'light' ? '#667eea' : '#8b9af7',
-                borderRadius: '4px',
-                '&:hover': {
-                  background: theme.palette.mode === 'light' ? '#5568d3' : '#7684e0',
-                },
-              },
-            }}
-          />
-          <Box 
-            id="legend" 
-            sx={{ 
-              mt: 2,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1,
-              '& .ch-plugin-legend-lite': {
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1,
-              },
-            }} 
-          />
-        </Paper>
-
-        {/* Metrics Row */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                minHeight: 180,
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: theme.palette.mode === 'light' 
-                  ? 'rgba(255, 255, 255, 0.9)' 
-                  : 'rgba(33, 37, 41, 0.5)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'light' 
-                  ? 'rgba(0, 0, 0, 0.1)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-              }}
-            >
-              <CardContent sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <SelfImprovement sx={{ mr: 1, color: '#667eea' }} />
-                  <Typography variant="subtitle2" fontWeight={600}>
-                    {t('health.breakCompliance')}
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {dashboard.weekMetrics.breakCompliance !== null
-                    ? Math.round(dashboard.weekMetrics.breakCompliance * 100)
-                    : '--'}%
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t('health.sessionsWithBreaks')}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                minHeight: 180,
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: theme.palette.mode === 'light' 
-                  ? 'rgba(255, 255, 255, 0.9)' 
-                  : 'rgba(33, 37, 41, 0.5)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'light' 
-                  ? 'rgba(0, 0, 0, 0.1)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-              }}
-            >
-              <CardContent sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Mood sx={{ mr: 1, color: '#f59e0b' }} />
-                  <Typography variant="subtitle2" fontWeight={600}>
-                    {t('health.averageMood')}
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {dashboard.weekMetrics.averageMood !== null
-                    ? dashboard.weekMetrics.averageMood.toFixed(1)
-                    : '--'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t('health.outOf5Week')}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                minHeight: 180,
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: theme.palette.mode === 'light' 
-                  ? 'rgba(255, 255, 255, 0.9)' 
-                  : 'rgba(33, 37, 41, 0.5)',
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'light' 
-                  ? 'rgba(0, 0, 0, 0.1)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-              }}
-            >
-              <CardContent sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <NightsStay sx={{ mr: 1, color: '#8b5cf6' }} />
-                  <Typography variant="subtitle2" fontWeight={600}>
-                    {t('health.lateNightGaming')}
-                  </Typography>
-                </Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  {Math.floor(dashboard.weekMetrics.lateNightMinutes / 60)}h
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t('health.afterTime', { time: timeFormat === '12h' ? '10:00 PM' : '22:00' })}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Goals Panel */}
-        {dashboard.goalProgress.goalsEnabled && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              borderRadius: 3,
-              mb: 3,
-              bgcolor: theme.palette.mode === 'light' 
-                ? 'rgba(255, 255, 255, 0.9)' 
-                : 'rgba(33, 37, 41, 0.5)',
-              border: '1px solid',
-              borderColor: theme.palette.mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.1)' 
-                : 'rgba(255, 255, 255, 0.1)',
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-              {t('health.goalProgress')}
-            </Typography>
-
-            <Grid container spacing={3}>
-              {dashboard.goalProgress.maxHoursPerDayEnabled && dashboard.goalProgress.maxHoursPerDay && (
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    {t('health.hoursToday')}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(100, (dashboard.goalProgress.hoursToday / dashboard.goalProgress.maxHoursPerDay) * 100)}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      mb: 1,
-                      bgcolor: theme.palette.mode === 'light' ? '#f0f0f0' : '#3a3a3a',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        bgcolor: dashboard.goalProgress.hoursToday > dashboard.goalProgress.maxHoursPerDay 
-                          ? '#ef5350' 
-                          : '#4caf50',
-                      },
-                    }}
+              <div className="flex h-20 items-end gap-2">
+                {dashboard.last7DaysScores.map((score, index) => (
+                  <div
+                    key={index}
+                    className="min-h-2 flex-1 rounded-sm transition-all hover:-translate-y-1 hover:opacity-80"
+                    style={{ height: `${score}%`, backgroundColor: getScoreColor(score) }}
                   />
-                  <Typography variant="body2">
-                    {dashboard.goalProgress.hoursToday.toFixed(1)} / {dashboard.goalProgress.maxHoursPerDay} {t('health.hours')}
-                  </Typography>
-                </Grid>
-              )}
-
-              {dashboard.goalProgress.maxSessionsPerDayEnabled && dashboard.goalProgress.maxSessionsPerDay && (
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    {t('health.sessionsToday')}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(100, (dashboard.goalProgress.sessionsToday / dashboard.goalProgress.maxSessionsPerDay) * 100)}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      mb: 1,
-                      bgcolor: theme.palette.mode === 'light' ? '#f0f0f0' : '#3a3a3a',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        bgcolor: dashboard.goalProgress.sessionsToday > dashboard.goalProgress.maxSessionsPerDay 
-                          ? '#ef5350' 
-                          : '#4caf50',
-                      },
-                    }}
-                  />
-                  <Typography variant="body2">
-                    {dashboard.goalProgress.sessionsToday} / {dashboard.goalProgress.maxSessionsPerDay} {t('health.sessions')}
-                  </Typography>
-                </Grid>
-              )}
-
-              {dashboard.goalProgress.maxHoursPerWeekEnabled && dashboard.goalProgress.maxHoursPerWeek && (
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    {t('health.hoursThisWeek')}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(100, (dashboard.goalProgress.hoursThisWeek / dashboard.goalProgress.maxHoursPerWeek) * 100)}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      mb: 1,
-                      bgcolor: theme.palette.mode === 'light' ? '#f0f0f0' : '#3a3a3a',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        bgcolor: dashboard.goalProgress.hoursThisWeek > dashboard.goalProgress.maxHoursPerWeek 
-                          ? '#ef5350' 
-                          : '#4caf50',
-                      },
-                    }}
-                  />
-                  <Typography variant="body2">
-                    {dashboard.goalProgress.hoursThisWeek.toFixed(1)} / {dashboard.goalProgress.maxHoursPerWeek} {t('health.hours')}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </Paper>
-        )}
-
-        {/* Recent Sessions */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            bgcolor: theme.palette.mode === 'light' 
-              ? 'rgba(255, 255, 255, 0.9)' 
-              : 'rgba(33, 37, 41, 0.5)',
-            border: '1px solid',
-            borderColor: theme.palette.mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.1)' 
-              : 'rgba(255, 255, 255, 0.1)',
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            {t('health.recentSessions')}
-          </Typography>
-
-          {dashboard.recentSessions.length > 0 ? (
-            <Box>
-              {dashboard.recentSessions.slice(0, 5).map((session) => (
-                <Box
-                  key={session.sessionId}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    py: 2,
-                    borderBottom: '1px solid',
-                    borderColor: theme.palette.mode === 'light' 
-                      ? 'rgba(0, 0, 0, 0.1)' 
-                      : 'rgba(255, 255, 255, 0.1)',
-                    '&:last-child': {
-                      borderBottom: 'none',
-                    },
-                  }}
-                >
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {session.gameName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDuration(session.durationSeconds)} •{' '}
-                      {new Date(session.endedAt).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                  {session.moodRating && (
-                    <Chip
-                      label={`${t('health.mood')}: ${session.moodRating}/5`}
-                      size="small"
-                      sx={{
-                        bgcolor: 
-                          session.moodRating >= 4 ? '#4caf5020' :
-                          session.moodRating >= 3 ? '#ff980020' :
-                          '#ef535020',
-                        color:
-                          session.moodRating >= 4 ? '#4caf50' :
-                          session.moodRating >= 3 ? '#ff9800' :
-                          '#ef5350',
-                      }}
-                    />
-                  )}
-                </Box>
-              ))}
-            </Box>
+                ))}
+              </div>
+            </>
           ) : (
-            <Typography color="text.secondary">
-              {t('health.noSessionsYet')}
-            </Typography>
+            <p className="text-text-secondary">{t('health.notEnoughData')}</p>
           )}
-        </Paper>
-      </Box>
-    </Box>
+        </div>
+      </div>
+
+      <div
+        className={`${cardClass} mb-6 [&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-plugin-legend-lite]:fill-text-secondary [&_.ch-subdomain-bg]:fill-surface`}
+      >
+        <p className="mb-6 text-h4 font-semibold">{t('health.yearOverview')}</p>
+        <div ref={calHeatmapRef} className="overflow-x-auto pb-2" />
+        <div id="legend" className="mt-2 flex flex-wrap gap-2" />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className={`${cardClass} flex min-h-45 flex-col`}>
+          <div className="mb-2 flex items-center">
+            <PersonStanding className="mr-2 size-5 text-[#667eea]" />
+            <p className="text-body-sm font-semibold">{t('health.breakCompliance')}</p>
+          </div>
+          <p className="mb-1 text-h3 font-bold">
+            {dashboard.weekMetrics.breakCompliance !== null
+              ? Math.round(dashboard.weekMetrics.breakCompliance * 100)
+              : '--'}%
+          </p>
+          <p className="text-body-sm text-text-secondary">{t('health.sessionsWithBreaks')}</p>
+        </div>
+
+        <div className={`${cardClass} flex min-h-45 flex-col`}>
+          <div className="mb-2 flex items-center">
+            <Smile className="mr-2 size-5 text-amber-500" />
+            <p className="text-body-sm font-semibold">{t('health.averageMood')}</p>
+          </div>
+          <p className="mb-1 text-h3 font-bold">
+            {dashboard.weekMetrics.averageMood !== null
+              ? dashboard.weekMetrics.averageMood.toFixed(1)
+              : '--'}
+          </p>
+          <p className="text-body-sm text-text-secondary">{t('health.outOf5Week')}</p>
+        </div>
+
+        <div className={`${cardClass} flex min-h-45 flex-col`}>
+          <div className="mb-2 flex items-center">
+            <MoonStar className="mr-2 size-5 text-violet-500" />
+            <p className="text-body-sm font-semibold">{t('health.lateNightGaming')}</p>
+          </div>
+          <p className="mb-1 text-h3 font-bold">
+            {Math.floor(dashboard.weekMetrics.lateNightMinutes / 60)}h
+          </p>
+          <p className="text-body-sm text-text-secondary">
+            {t('health.afterTime', { time: timeFormat === '12h' ? '10:00 PM' : '22:00' })}
+          </p>
+        </div>
+      </div>
+
+      {dashboard.goalProgress.goalsEnabled && (
+        <div className={`${cardClass} mb-6`}>
+          <p className="mb-6 text-h4 font-semibold">{t('health.goalProgress')}</p>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {dashboard.goalProgress.maxHoursPerDayEnabled && dashboard.goalProgress.maxHoursPerDay && (
+              <div>
+                <p className="mb-1 text-body-sm text-text-secondary">{t('health.hoursToday')}</p>
+                <Progress
+                  value={Math.min(100, (dashboard.goalProgress.hoursToday / dashboard.goalProgress.maxHoursPerDay) * 100)}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursToday > dashboard.goalProgress.maxHoursPerDay ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                />
+                <p className="text-body-sm">
+                  {dashboard.goalProgress.hoursToday.toFixed(1)} / {dashboard.goalProgress.maxHoursPerDay} {t('health.hours')}
+                </p>
+              </div>
+            )}
+
+            {dashboard.goalProgress.maxSessionsPerDayEnabled && dashboard.goalProgress.maxSessionsPerDay && (
+              <div>
+                <p className="mb-1 text-body-sm text-text-secondary">{t('health.sessionsToday')}</p>
+                <Progress
+                  value={Math.min(100, (dashboard.goalProgress.sessionsToday / dashboard.goalProgress.maxSessionsPerDay) * 100)}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.sessionsToday > dashboard.goalProgress.maxSessionsPerDay ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                />
+                <p className="text-body-sm">
+                  {dashboard.goalProgress.sessionsToday} / {dashboard.goalProgress.maxSessionsPerDay} {t('health.sessions')}
+                </p>
+              </div>
+            )}
+
+            {dashboard.goalProgress.maxHoursPerWeekEnabled && dashboard.goalProgress.maxHoursPerWeek && (
+              <div>
+                <p className="mb-1 text-body-sm text-text-secondary">{t('health.hoursThisWeek')}</p>
+                <Progress
+                  value={Math.min(100, (dashboard.goalProgress.hoursThisWeek / dashboard.goalProgress.maxHoursPerWeek) * 100)}
+                  className={`mb-1 h-2 bg-border ${dashboard.goalProgress.hoursThisWeek > dashboard.goalProgress.maxHoursPerWeek ? '[&>div]:bg-[#ef5350]' : '[&>div]:bg-[#4caf50]'}`}
+                />
+                <p className="text-body-sm">
+                  {dashboard.goalProgress.hoursThisWeek.toFixed(1)} / {dashboard.goalProgress.maxHoursPerWeek} {t('health.hours')}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className={cardClass}>
+        <p className="mb-6 text-h4 font-semibold">{t('health.recentSessions')}</p>
+
+        {dashboard.recentSessions.length > 0 ? (
+          <div>
+            {dashboard.recentSessions.slice(0, 5).map((session) => (
+              <div
+                key={session.sessionId}
+                className="flex items-center justify-between border-b border-border py-4 last:border-0"
+              >
+                <div className="flex-1">
+                  <p className="font-semibold">{session.gameName}</p>
+                  <p className="text-body-sm text-text-secondary">
+                    {formatDuration(session.durationSeconds)} •{' '}
+                    {new Date(session.endedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                {session.moodRating && (
+                  <Badge
+                    style={{
+                      backgroundColor:
+                        session.moodRating >= 4 ? '#4caf5020' :
+                        session.moodRating >= 3 ? '#ff980020' :
+                        '#ef535020',
+                      color:
+                        session.moodRating >= 4 ? '#4caf50' :
+                        session.moodRating >= 3 ? '#ff9800' :
+                        '#ef5350',
+                    }}
+                  >
+                    {t('health.mood')}: {session.moodRating}/5
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-text-secondary">{t('health.noSessionsYet')}</p>
+        )}
+      </div>
+    </div>
   )
 }

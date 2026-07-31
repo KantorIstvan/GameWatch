@@ -1,34 +1,17 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
-  Button,
-  IconButton,
-  Box,
-  Slide,
-  alpha,
-  useTheme,
-  Autocomplete,
-} from '@mui/material'
-import { TransitionProps } from '@mui/material/transitions'
-import React from 'react'
-import { Close, PlaylistAdd } from '@mui/icons-material'
+import React, { useMemo, useState } from 'react'
+import dayjs from 'dayjs'
+import { ListPlus, ChevronsUpDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import { Game } from '../types'
 import DatePicker from './DatePicker'
-import dayjs from 'dayjs'
-
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />
-})
+import StyledDialog from './StyledDialog'
 
 interface CreatePlaythroughDialogProps {
   open: boolean
@@ -64,9 +47,9 @@ function CreatePlaythroughDialog({
   setStartDate,
 }: CreatePlaythroughDialogProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
+  const [gamePickerOpen, setGamePickerOpen] = useState(false)
 
-  const availablePlatforms = React.useMemo(() => {
+  const availablePlatforms = useMemo(() => {
     if (!selectedGame?.platforms) return []
     return selectedGame.platforms.split(',').map(p => p.trim()).filter(Boolean)
   }, [selectedGame])
@@ -78,213 +61,115 @@ function CreatePlaythroughDialog({
   }, [selectedGame, platform, availablePlatforms, setPlatform])
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-      fullScreen={false}
-      TransitionComponent={Transition}
-      PaperProps={{
-        sx: {
-          borderRadius: { xs: 2, sm: 3 },
-          boxShadow: theme.palette.mode === 'dark' 
-            ? `0 8px 32px ${alpha('#000000', 0.6)}` 
-            : `0 8px 32px ${alpha('#000000', 0.15)}`,
-          overflow: 'visible',
-          m: { xs: 2, sm: 3 },
-          maxHeight: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 64px)' },
-          background: theme.palette.mode === 'dark'
-            ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-            : theme.palette.background.paper,
-        }
-      }}
+    <StyledDialog
+      open={open}
+      onClose={onClose}
+      title={t('playthrough.create')}
+      icon={<ListPlus className="size-10 sm:size-12" />}
+      actions={
+        <>
+          <Button onClick={onClose} variant="outline" size="lg" className="flex-1">
+            {t('common.cancel')}
+          </Button>
+          <Button
+            onClick={onSubmit}
+            size="lg"
+            className="flex-1"
+            disabled={!selectedGame || !playthroughType || !platform || !startDate}
+          >
+            {t('playthrough.create')}
+          </Button>
+        </>
+      }
     >
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: { xs: 4, sm: 8 },
-          top: { xs: 4, sm: 8 },
-          color: theme.palette.text.secondary,
-          transition: 'all 0.2s ease-in-out',
-          minWidth: 44,
-          minHeight: 44,
-          '&:hover': {
-            color: theme.palette.text.primary,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            transform: 'rotate(90deg)',
-          }
-        }}
-      >
-        <Close />
-      </IconButton>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label>{t('playthrough.selectGame')} *</Label>
+          <Popover open={gamePickerOpen} onOpenChange={setGamePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={gamePickerOpen}
+                className="w-full justify-between font-normal"
+              >
+                <span className={cn(!selectedGame && 'text-muted-foreground')}>
+                  {selectedGame ? selectedGame.name : t('playthrough.selectGame')}
+                </span>
+                <ChevronsUpDown className="size-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+              <Command>
+                <CommandInput placeholder={t('playthrough.selectGame')} />
+                <CommandList className="max-h-62.5">
+                  <CommandEmpty>No games found.</CommandEmpty>
+                  <CommandGroup>
+                    {games.map((game) => (
+                      <CommandItem
+                        key={game.id}
+                        value={game.name}
+                        onSelect={() => {
+                          setSelectedGame(game)
+                          setGamePickerOpen(false)
+                        }}
+                      >
+                        {game.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          pt: { xs: 3, sm: 4 },
-          pb: 2,
-        }}
-      >
-        <Box
-          sx={{
-            width: { xs: 64, sm: 80 },
-            height: { xs: 64, sm: 80 },
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
-            border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-            color: theme.palette.primary.main,
-            animation: 'pulse 2s ease-in-out infinite',
-            '@keyframes pulse': {
-              '0%, 100%': {
-                boxShadow: `0 0 0 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-              },
-              '50%': {
-                boxShadow: `0 0 0 10px ${alpha(theme.palette.primary.main, 0)}`,
-              },
-            },
-          }}
-        >
-          <PlaylistAdd sx={{ fontSize: { xs: 40, sm: 48 } }} />
-        </Box>
-      </Box>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t('playthrough.playthroughTitle')}</Label>
+          <Input
+            value={playthroughTitle}
+            onChange={(e) => setPlaythroughTitle(e.target.value)}
+            placeholder={selectedGame ? `${selectedGame.name} playthrough` : ''}
+          />
+          <p className="text-caption text-text-secondary">{t('playthrough.playthroughTitleHelper')}</p>
+        </div>
 
-      <DialogTitle 
-        sx={{ 
-          textAlign: 'center',
-          pt: 2,
-          pb: 1,
-          px: { xs: 2, sm: 3, md: 4 },
-          fontSize: { xs: '1.25rem', sm: '1.5rem' },
-          fontWeight: 600,
-        }}
-      >
-        {t('playthrough.create')}
-      </DialogTitle>
-      
-      <DialogContent sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 2 }}>
-        <Autocomplete
-          fullWidth
-          options={games}
-          getOptionLabel={(option) => option.name}
-          value={selectedGame}
-          onChange={(_, newValue) => setSelectedGame(newValue)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={t('playthrough.selectGame')}
-              margin="normal"
-              required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  minHeight: 56,
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover fieldset': {
-                    borderColor: theme.palette.primary.main,
-                    borderWidth: 2,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderWidth: 2,
-                  },
-                },
-              }}
-            />
-          )}
-          ListboxProps={{
-            style: {
-              maxHeight: '250px',
-            },
-          }}
-          sx={{ mt: 1 }}
-        />
-        <TextField
-          fullWidth
-          label={t('playthrough.playthroughTitle')}
-          value={playthroughTitle}
-          onChange={(e) => setPlaythroughTitle(e.target.value)}
-          margin="normal"
-          placeholder={selectedGame ? `${selectedGame.name} playthrough` : ''}
-          helperText={t('playthrough.playthroughTitleHelper')}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              minHeight: 56,
-              transition: 'all 0.2s ease-in-out',
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-                borderWidth: 2,
-              },
-              '&.Mui-focused fieldset': {
-                borderWidth: 2,
-              },
-            },
-          }}
-        />
-        <TextField
-          select
-          fullWidth
-          label={t('playthrough.type')}
-          value={playthroughType}
-          onChange={(e) => setPlaythroughType(e.target.value)}
-          margin="normal"
-          required
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              minHeight: 56,
-              transition: 'all 0.2s ease-in-out',
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-                borderWidth: 2,
-              },
-              '&.Mui-focused fieldset': {
-                borderWidth: 2,
-              },
-            },
-          }}
-        >
-          <MenuItem value="story">Story</MenuItem>
-          <MenuItem value="100%">100%</MenuItem>
-          <MenuItem value="speedrun">Speedrun</MenuItem>
-          <MenuItem value="casual">Casual</MenuItem>
-        </TextField>
-        <TextField
-          select
-          fullWidth
-          label={t('playthrough.platform')}
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-          margin="normal"
-          required
-          disabled={!selectedGame || availablePlatforms.length === 0}
-          helperText={!selectedGame ? t('playthrough.selectGameFirst') : availablePlatforms.length === 0 ? t('playthrough.noPlatformsAvailable') : ''}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              minHeight: 56,
-              transition: 'all 0.2s ease-in-out',
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-                borderWidth: 2,
-              },
-              '&.Mui-focused fieldset': {
-                borderWidth: 2,
-              },
-            },
-          }}
-        >
-          {availablePlatforms.map((p) => (
-            <MenuItem key={p} value={p}>
-              {p}
-            </MenuItem>
-          ))}
-        </TextField>
+        <div className="flex flex-col gap-1.5">
+          <Label>{t('playthrough.type')} *</Label>
+          <Select value={playthroughType} onValueChange={setPlaythroughType}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="story">Story</SelectItem>
+              <SelectItem value="100%">100%</SelectItem>
+              <SelectItem value="speedrun">Speedrun</SelectItem>
+              <SelectItem value="casual">Casual</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label>{t('playthrough.platform')} *</Label>
+          <Select
+            value={platform}
+            onValueChange={setPlatform}
+            disabled={!selectedGame || availablePlatforms.length === 0}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availablePlatforms.map((p) => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-caption text-text-secondary">
+            {!selectedGame ? t('playthrough.selectGameFirst') : availablePlatforms.length === 0 ? t('playthrough.noPlatformsAvailable') : ''}
+          </p>
+        </div>
+
         <DatePicker
           label={t('playthrough.startDate')}
           value={startDate}
@@ -292,48 +177,8 @@ function CreatePlaythroughDialog({
           required
           maxDate={dayjs()}
         />
-      </DialogContent>
-      <DialogActions sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 3, pt: 2, gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
-        <Button 
-          onClick={onClose}
-          variant="outlined"
-          size="large"
-          fullWidth
-          sx={{
-            fontWeight: 600,
-            borderWidth: 2,
-            '&:hover': {
-              borderWidth: 2,
-              backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            }
-          }}
-        >
-          {t('common.cancel')}
-        </Button>
-        <Button 
-          onClick={onSubmit} 
-          variant="contained" 
-          color="primary"
-          size="large"
-          fullWidth
-          disabled={!selectedGame || !playthroughType || !platform || !startDate}
-          sx={{
-            fontWeight: 600,
-            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-            '&:hover': {
-              boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
-              transform: 'translateY(-1px)',
-            },
-            '&.Mui-disabled': {
-              boxShadow: 'none',
-            },
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-          {t('playthrough.create')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </div>
+    </StyledDialog>
   )
 }
 

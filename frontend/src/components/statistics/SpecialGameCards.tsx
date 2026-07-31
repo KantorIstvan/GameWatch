@@ -1,5 +1,4 @@
-import { Grid, Paper, Box, Typography, alpha, useTheme } from '@mui/material'
-import { TrendingUp, CalendarMonth, Timer } from '@mui/icons-material'
+import { TrendingUp, CalendarDays, Timer } from 'lucide-react'
 import GameRankingCard from '../GameRankingCard'
 
 interface SpecialGame {
@@ -18,79 +17,38 @@ interface SpecialGameCardsProps {
 }
 
 function SpecialGameCards({ favoriteGame, longestToComplete, fastestToComplete, t }: SpecialGameCardsProps) {
-  const theme = useTheme()
-
   return (
-    <Grid container spacing={3} mb={4}>
+    <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
       {favoriteGame && (
-        <Grid item xs={12} md={4}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              height: '100%',
-              background: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            }}
-          >
-            <Box display="flex" alignItems="center" mb={2.5}>
-              <TrendingUp sx={{ mr: 1, color: theme.palette.warning.main }} />
-              <Typography variant="h6" fontWeight="bold">
-                {t('statistics.userStats.favoriteGame')}
-              </Typography>
-            </Box>
-            <GameRankingCard game={favoriteGame} rank={1} showDaysToComplete={false} t={t} />
-          </Paper>
-        </Grid>
+        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
+          <div className="mb-4 flex items-center">
+            <TrendingUp className="mr-2 size-5 text-amber-500" />
+            <p className="text-h4 font-bold">{t('statistics.userStats.favoriteGame')}</p>
+          </div>
+          <GameRankingCard game={favoriteGame} rank={1} showDaysToComplete={false} t={t} />
+        </div>
       )}
 
       {longestToComplete && (
-        <Grid item xs={12} md={4}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              height: '100%',
-              background: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            }}
-          >
-            <Box display="flex" alignItems="center" mb={2.5}>
-              <CalendarMonth sx={{ mr: 1, color: theme.palette.info.main }} />
-              <Typography variant="h6" fontWeight="bold">
-                {t('statistics.userStats.longestToComplete')}
-              </Typography>
-            </Box>
-            <GameRankingCard game={longestToComplete} rank={1} showDaysToComplete={true} t={t} />
-          </Paper>
-        </Grid>
+        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
+          <div className="mb-4 flex items-center">
+            <CalendarDays className="mr-2 size-5 text-blue-500" />
+            <p className="text-h4 font-bold">{t('statistics.userStats.longestToComplete')}</p>
+          </div>
+          <GameRankingCard game={longestToComplete} rank={1} showDaysToComplete t={t} />
+        </div>
       )}
 
       {fastestToComplete && (
-        <Grid item xs={12} md={4}>
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              height: '100%',
-              background: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            }}
-          >
-            <Box display="flex" alignItems="center" mb={2.5}>
-              <Timer sx={{ mr: 1, color: theme.palette.success.main }} />
-              <Typography variant="h6" fontWeight="bold">
-                {t('statistics.userStats.fastestCompletion')}
-              </Typography>
-            </Box>
-            <GameRankingCard game={fastestToComplete} rank={1} showDaysToComplete={true} t={t} />
-          </Paper>
-        </Grid>
+        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
+          <div className="mb-4 flex items-center">
+            <Timer className="mr-2 size-5 text-success" />
+            <p className="text-h4 font-bold">{t('statistics.userStats.fastestCompletion')}</p>
+          </div>
+          <GameRankingCard game={fastestToComplete} rank={1} showDaysToComplete t={t} />
+        </div>
       )}
-    </Grid>
+    </div>
   )
 }
 
