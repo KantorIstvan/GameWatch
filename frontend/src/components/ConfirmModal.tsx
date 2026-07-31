@@ -1,24 +1,7 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box,
-  Slide,
-  IconButton,
-  alpha,
-  useTheme,
-} from '@mui/material'
-import { TransitionProps } from '@mui/material/transitions'
 import React from 'react'
-import CloseIcon from '@mui/icons-material/Close'
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { CircleAlert, TriangleAlert, CircleCheck, Info, CircleHelp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 interface ConfirmModalProps {
   open: boolean
@@ -31,205 +14,84 @@ interface ConfirmModalProps {
   confirmColor?: 'primary' | 'error' | 'warning' | 'success' | 'info' | 'secondary'
 }
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />
-})
+const colorMap: Record<NonNullable<ConfirmModalProps['confirmColor']>, string> = {
+  primary: 'var(--color-accent)',
+  secondary: 'var(--color-text-secondary)',
+  error: 'var(--color-danger)',
+  warning: '#ed6c02',
+  success: 'var(--color-success)',
+  info: '#0288d1',
+}
 
-function ConfirmModal({ 
-  open, 
-  onClose, 
-  onConfirm, 
-  title, 
-  message, 
-  confirmText = 'Confirm', 
-  cancelText = 'Cancel', 
-  confirmColor = 'primary' 
+function ConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  confirmColor = 'primary',
 }: ConfirmModalProps) {
-  const theme = useTheme()
-
-  const getIconAndColor = () => {
+  const getIcon = () => {
     switch (confirmColor) {
       case 'error':
-        return { 
-          icon: <ErrorOutlineIcon sx={{ fontSize: 48 }} />, 
-          color: theme.palette.error.main 
-        }
+        return <CircleAlert className="size-12" />
       case 'warning':
-        return { 
-          icon: <WarningAmberIcon sx={{ fontSize: 48 }} />, 
-          color: theme.palette.warning.main 
-        }
+        return <TriangleAlert className="size-12" />
       case 'success':
-        return { 
-          icon: <CheckCircleOutlineIcon sx={{ fontSize: 48 }} />, 
-          color: theme.palette.success.main 
-        }
+        return <CircleCheck className="size-12" />
       case 'info':
-        return { 
-          icon: <InfoOutlinedIcon sx={{ fontSize: 48 }} />, 
-          color: theme.palette.info.main 
-        }
+        return <Info className="size-12" />
       default:
-        return { 
-          icon: <HelpOutlineIcon sx={{ fontSize: 48 }} />, 
-          color: theme.palette.primary.main 
-        }
+        return <CircleHelp className="size-12" />
     }
   }
 
-  const { icon, color } = getIconAndColor()
+  const color = colorMap[confirmColor]
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-      TransitionComponent={Transition}
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: theme.palette.mode === 'dark' 
-            ? `0 8px 32px ${alpha('#000000', 0.6)}` 
-            : `0 8px 32px ${alpha('#000000', 0.15)}`,
-          overflow: 'visible',
-          background: theme.palette.mode === 'dark'
-            ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-            : theme.palette.background.paper,
-        }
-      }}
-    >
-      {/* Close Button */}
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: theme.palette.text.secondary,
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            color: theme.palette.text.primary,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            transform: 'rotate(90deg)',
-          }
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="overflow-visible rounded-xl">
+        <div className="flex justify-center pb-2 pt-2">
+          <div
+            className="flex size-20 items-center justify-center rounded-full border-2"
+            style={{
+              color,
+              borderColor: `color-mix(in srgb, ${color} 20%, transparent)`,
+              background: `linear-gradient(135deg, color-mix(in srgb, ${color} 10%, transparent) 0%, color-mix(in srgb, ${color} 5%, transparent) 100%)`,
+            }}
+          >
+            {getIcon()}
+          </div>
+        </div>
 
-      {/* Icon Section */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          pt: 4,
-          pb: 2,
-        }}
-      >
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
-            border: `2px solid ${alpha(color, 0.2)}`,
-            color: color,
-            animation: 'pulse 2s ease-in-out infinite',
-            '@keyframes pulse': {
-              '0%, 100%': {
-                boxShadow: `0 0 0 0 ${alpha(color, 0.4)}`,
-              },
-              '50%': {
-                boxShadow: `0 0 0 10px ${alpha(color, 0)}`,
-              },
-            },
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
+        <DialogTitle className="pb-1 text-center text-h3 font-semibold">
+          {title}
+        </DialogTitle>
 
-      {/* Title */}
-      <DialogTitle 
-        sx={{ 
-          textAlign: 'center',
-          pt: 2,
-          pb: 1,
-          px: 4,
-          fontSize: '1.5rem',
-          fontWeight: 600,
-        }}
-      >
-        {title}
-      </DialogTitle>
-
-      {/* Content */}
-      <DialogContent sx={{ px: 4, pb: 2 }}>
-        <Box sx={{ textAlign: 'center' }}>
+        <div className="text-center">
           {typeof message === 'string' ? (
-            <Typography 
-              variant="body1" 
-              color="text.secondary"
-              sx={{ lineHeight: 1.6 }}
-            >
-              {message}
-            </Typography>
+            <p className="text-body text-text-secondary">{message}</p>
           ) : (
             message
           )}
-        </Box>
-      </DialogContent>
+        </div>
 
-      {/* Actions */}
-      <DialogActions sx={{ px: 4, pb: 3, pt: 2, gap: 1.5 }}>
-        <Button 
-          onClick={onClose} 
-          variant="outlined"
-          size="large"
-          fullWidth
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            borderWidth: 2,
-            '&:hover': {
-              borderWidth: 2,
-              backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            }
-          }}
-        >
-          {cancelText}
-        </Button>
-        <Button 
-          onClick={onConfirm} 
-          variant="contained" 
-          color={confirmColor}
-          size="large"
-          fullWidth
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            boxShadow: `0 4px 12px ${alpha(color, 0.3)}`,
-            '&:hover': {
-              boxShadow: `0 6px 16px ${alpha(color, 0.4)}`,
-              transform: 'translateY(-1px)',
-            },
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-          {confirmText}
-        </Button>
-      </DialogActions>
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+          <Button onClick={onClose} variant="outline" size="lg" className="flex-1">
+            {cancelText}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            size="lg"
+            className="flex-1 text-white"
+            style={{ backgroundColor: color }}
+          >
+            {confirmText}
+          </Button>
+        </div>
+      </DialogContent>
     </Dialog>
   )
 }

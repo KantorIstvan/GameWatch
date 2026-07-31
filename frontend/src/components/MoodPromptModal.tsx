@@ -1,23 +1,9 @@
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Slider,
-  Box,
-  Typography,
-  useTheme,
-} from '@mui/material'
-import {
-  SentimentVeryDissatisfied,
-  SentimentDissatisfied,
-  SentimentNeutral,
-  SentimentSatisfied,
-  SentimentVerySatisfied,
-} from '@mui/icons-material'
+import { Frown, Meh, Smile, Laugh, Angry } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Slider } from '@/components/ui/slider'
 import healthApi from '../services/healthApi'
 
 interface MoodPromptModalProps {
@@ -28,12 +14,14 @@ interface MoodPromptModalProps {
 }
 
 const moodIcons = [
-  <SentimentVeryDissatisfied key="1" />,
-  <SentimentDissatisfied key="2" />,
-  <SentimentNeutral key="3" />,
-  <SentimentSatisfied key="4" />,
-  <SentimentVerySatisfied key="5" />,
+  <Angry key="1" className="size-16" />,
+  <Frown key="2" className="size-16" />,
+  <Meh key="3" className="size-16" />,
+  <Smile key="4" className="size-16" />,
+  <Laugh key="5" className="size-16" />,
 ]
+
+const moodColors = ['#ef5350', '#ff9800', '#9e9e9e', '#66bb6a', '#4caf50']
 
 export default function MoodPromptModal({
   open,
@@ -41,7 +29,6 @@ export default function MoodPromptModal({
   sessionHistoryId,
   required = false,
 }: MoodPromptModalProps) {
-  const theme = useTheme()
   const { t } = useTranslation()
   const [moodRating, setMoodRating] = useState<number>(3)
   const [submitting, setSubmitting] = useState(false)
@@ -77,111 +64,54 @@ export default function MoodPromptModal({
     }
   }
 
-  const handleClose = (_event: object, reason: string) => {
-    if (reason === 'backdropClick' && required) {
-      return
-    }
-    handleSkip()
-  }
-
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose}
-      maxWidth="sm" 
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          bgcolor: theme.palette.mode === 'light' 
-            ? 'rgba(255, 255, 255, 0.95)' 
-            : 'rgba(33, 37, 41, 0.95)',
-        },
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && required) return
+        if (!next) handleSkip()
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          {t('mood.prompt')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t('mood.rateSession')}
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ pt: 2, pb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            {moodIcons[moodRating - 1] && (
-              <Box
-                sx={{
-                  fontSize: '4rem',
-                  color: 
-                    moodRating === 1 ? '#ef5350' :
-                    moodRating === 2 ? '#ff9800' :
-                    moodRating === 3 ? '#9e9e9e' :
-                    moodRating === 4 ? '#66bb6a' :
-                    '#4caf50',
-                  transition: 'all 0.3s',
-                }}
-              >
-                {moodIcons[moodRating - 1]}
-              </Box>
-            )}
-          </Box>
-          
-          <Typography 
-            variant="h5" 
-            align="center" 
-            sx={{ mb: 3, fontWeight: 600 }}
-          >
+      <DialogContent showCloseButton={!required} className="rounded-xl bg-surface/95">
+        <DialogTitle className="text-h4 font-semibold">{t('mood.prompt')}</DialogTitle>
+        <p className="-mt-2 text-body-sm text-text-secondary">{t('mood.rateSession')}</p>
+
+        <div className="pb-2 pt-2">
+          <div className="mb-6 flex justify-center">
+            <div className="transition-all duration-300" style={{ color: moodColors[moodRating - 1] }}>
+              {moodIcons[moodRating - 1]}
+            </div>
+          </div>
+
+          <p className="mb-6 text-center text-h3 font-semibold">
             {moodLabels[moodRating - 1]}
-          </Typography>
+          </p>
 
           <Slider
-            value={moodRating}
-            onChange={(_e, value) => setMoodRating(value as number)}
+            value={[moodRating]}
+            onValueChange={([value]) => setMoodRating(value)}
             min={1}
             max={5}
             step={1}
-            marks
-            valueLabelDisplay="auto"
-            sx={{
-              '& .MuiSlider-thumb': {
-                width: 24,
-                height: 24,
-              },
-              '& .MuiSlider-mark': {
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-              },
-            }}
           />
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        {!required && (
-          <Button 
-            onClick={handleSkip} 
-            disabled={submitting}
-            sx={{ mr: 1 }}
-          >
-            {t('mood.skip')}
+          <div className="mt-2 flex justify-between text-caption text-text-tertiary">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <span key={n}>{n}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          {!required && (
+            <Button variant="ghost" onClick={handleSkip} disabled={submitting}>
+              {t('mood.skip')}
+            </Button>
+          )}
+          <Button onClick={handleSubmit} disabled={submitting} className="px-8">
+            {submitting ? t('mood.submitting') : t('mood.submit')}
           </Button>
-        )}
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={submitting}
-          sx={{
-            px: 4,
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-          }}
-        >
-          {submitting ? t('mood.submitting') : t('mood.submit')}
-        </Button>
-      </DialogActions>
+        </div>
+      </DialogContent>
     </Dialog>
   )
 }
