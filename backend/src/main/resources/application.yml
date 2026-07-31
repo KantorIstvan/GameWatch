@@ -47,7 +47,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${AUTH0_ISSUER_URI:https://your-tenant.auth0.com/}
+          issuer-uri: ${AUTH0_ISSUER_URI:https://dev-bhq8kp3tfqiph7j8.us.auth0.com/}
           audience: ${AUTH0_AUDIENCE:https://api.gamewatch.com}
 
 server:
@@ -65,5 +65,5 @@ cors:
 
 rawg:
   api:
-    key: ${RAWG_API_KEY}
+    key: ${RAWG_API_KEY:}
     base-url: https://api.rawg.io/api

@@ -1,12 +1,7 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/gamewatch
-    username: postgres
-    password: postgres
-  
   jpa:
     show-sql: true
-    
+
   security:
     oauth2:
       resourceserver:
@@ -19,3 +14,7 @@ logging:
     com.gamewatch: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
+
+rawg:
+  api:
+    key: ${RAWG_API_KEY:}
