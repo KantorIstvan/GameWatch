@@ -1,29 +1,9 @@
-import React, { useState } from 'react'
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Stack,
-  Typography,
-  alpha,
-  useTheme,
-  Slide,
-} from '@mui/material'
-import { TransitionProps } from '@mui/material/transitions'
-import { useTranslation } from 'react-i18next'
-import DateTimePicker from './DateTimePicker'
+import { useState } from 'react'
 import dayjs from 'dayjs'
-
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />
-})
+import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import DateTimePicker from './DateTimePicker'
 
 interface LogManualSessionDialogProps {
   open: boolean
@@ -36,7 +16,6 @@ interface LogManualSessionDialogProps {
 
 function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, isCompleted, isDropped }: LogManualSessionDialogProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [error, setError] = useState('')
@@ -85,10 +64,10 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
 
     if (playthroughStartDate) {
       const playthroughStart = new Date(playthroughStartDate)
-      playthroughStart.setHours(0, 0, 0, 0) 
+      playthroughStart.setHours(0, 0, 0, 0)
       const sessionStart = new Date(start)
       sessionStart.setHours(0, 0, 0, 0)
-      
+
       if (sessionStart < playthroughStart) {
         setError(`Cannot log session before playthrough start date: ${playthroughStart.toLocaleDateString()}`)
         return
@@ -106,45 +85,37 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
     onClose()
   }
 
+  const duration = (() => {
+    if (!startDateTime || !endDateTime || error) return null
+    const start = new Date(startDateTime)
+    const end = new Date(endDateTime)
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) return null
+    const durationSeconds = Math.floor((end.getTime() - start.getTime()) / 1000)
+    const hours = Math.floor(durationSeconds / 3600)
+    const minutes = Math.floor((durationSeconds % 3600) / 60)
+    const seconds = durationSeconds % 60
+    return `${hours}h ${minutes}m ${seconds}s`
+  })()
+
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      TransitionComponent={Transition}
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: theme.palette.mode === 'dark'
-            ? `0 8px 32px ${alpha('#000000', 0.6)}`
-            : `0 8px 32px ${alpha('#000000', 0.15)}`,
-        }
-      }}
-    >
-      <DialogTitle sx={{ pb: 1, fontSize: '1.5rem', fontWeight: 600 }}>
-        {t('playthrough.logManualSession')}
-      </DialogTitle>
-      <DialogContent>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ 
-            mb: 3, 
-            lineHeight: 1.6,
-          }}
-        >
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
+      <DialogContent className="rounded-xl">
+        <DialogTitle className="pb-1 text-h4 font-semibold">
+          {t('playthrough.logManualSession')}
+        </DialogTitle>
+
+        <p className="-mt-2 mb-1 text-body-sm text-text-secondary">
           Log a play session that you forgot to track. Enter the exact start and end times.
-        </Typography>
-        
-        <Stack spacing={3}>
+        </p>
+
+        <div className="flex flex-col gap-6">
           <DateTimePicker
             label="Start Date & Time"
             value={startDateTime}
             onChange={setStartDateTime}
             maxDateTime={dayjs()}
           />
-          
+
           <DateTimePicker
             label="End Date & Time"
             value={endDateTime}
@@ -152,82 +123,24 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
             maxDateTime={dayjs()}
           />
 
-          {error && (
-            <Typography color="error" variant="body2">
-              {error}
-            </Typography>
-          )}
+          {error && <p className="text-body-sm text-destructive">{error}</p>}
 
-          {startDateTime && endDateTime && !error && (() => {
-            const start = new Date(startDateTime)
-            const end = new Date(endDateTime)
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start < end) {
-              const durationSeconds = Math.floor((end.getTime() - start.getTime()) / 1000)
-              const hours = Math.floor(durationSeconds / 3600)
-              const minutes = Math.floor((durationSeconds % 3600) / 60)
-              const seconds = durationSeconds % 60
-              return (
-                <Typography 
-                  variant="body2" 
-                  color="primary"
-                  sx={{ 
-                    p: 2, 
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    borderRadius: 2,
-                    fontWeight: 600
-                  }}
-                >
-                  Duration: {hours}h {minutes}m {seconds}s
-                </Typography>
-              )
-            }
-            return null
-          })()}
-        </Stack>
+          {duration && (
+            <p className="rounded-md bg-accent/10 p-4 text-body-sm font-semibold text-accent">
+              Duration: {duration}
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <Button onClick={handleClose} variant="outline" className="flex-1">
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleSubmit} disabled={!startDateTime || !endDateTime} className="flex-1">
+            {t('common.save')}
+          </Button>
+        </div>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3, pt: 2, gap: 1 }}>
-        <Button 
-          onClick={handleClose}
-          variant="outlined"
-          size="medium"
-          fullWidth
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            borderWidth: 1.5,
-            minHeight: 40,
-            '&:hover': {
-              borderWidth: 1.5,
-              backgroundColor: alpha(theme.palette.primary.main, 0.05),
-            }
-          }}
-        >
-          {t('common.cancel')}
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          variant="contained"
-          color="primary"
-          size="medium"
-          fullWidth
-          disabled={!startDateTime || !endDateTime}
-          sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            minHeight: 40,
-            boxShadow: `0 3px 10px ${alpha(theme.palette.primary.main, 0.3)}`,
-            '&:hover': {
-              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-              transform: 'translateY(-1px)',
-            },
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-          {t('common.save')}
-        </Button>
-      </DialogActions>
     </Dialog>
   )
 }
