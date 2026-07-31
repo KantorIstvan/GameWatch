@@ -1,5 +1,5 @@
-import { Box, Typography, Paper, Stack, Chip, alpha, useTheme } from '@mui/material'
-import { SportsEsports } from '@mui/icons-material'
+import { Gamepad2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { GameRecommendation } from '../../types'
 
 interface GameRecommendationsProps {
@@ -9,128 +9,50 @@ interface GameRecommendationsProps {
 }
 
 function GameRecommendations({ recommendations, title, noDataMessage }: GameRecommendationsProps) {
-  const theme = useTheme()
-
   return (
-    <Paper 
-      elevation={0}
-      sx={{ 
-        p: 3, 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        background: alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: 'blur(20px)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-      }}
-    >
-      <Box display="flex" alignItems="center" mb={2}>
-        <SportsEsports sx={{ mr: 1, color: theme.palette.primary.main }} />
-        <Typography variant="h6" fontWeight="bold">
-          {title}
-        </Typography>
-      </Box>
+    <div className="flex h-full flex-col justify-center rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
+      <div className="mb-2 flex items-center">
+        <Gamepad2 className="mr-2 size-5 text-accent" />
+        <p className="text-h4 font-bold">{title}</p>
+      </div>
       {recommendations.length > 0 ? (
-        <Stack spacing={1.5}>
+        <div className="flex flex-col gap-3">
           {recommendations.map((game, index) => (
-            <Box 
+            <div
               key={game.externalId || index}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                p: 1.5,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.05),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                transition: 'all 0.2s',
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  transform: 'translateX(4px)',
-                }
-              }}
+              className="flex items-center gap-3 rounded-md border border-accent/10 bg-accent/5 p-3 transition-all duration-200 hover:translate-x-1 hover:bg-accent/10"
             >
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  minWidth: 28,
-                  fontWeight: 700,
-                  color: theme.palette.primary.main,
-                }}
-              >
-                #{index + 1}
-              </Typography>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography 
-                  variant="body2" 
-                  fontWeight={600}
-                  sx={{ 
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {game.name}
-                </Typography>
-                <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: 'wrap', gap: 0.5 }}>
-                  {game.matchingDevelopers && game.matchingDevelopers.length > 0 && (
-                    game.matchingDevelopers.slice(0, 2).map((developer, idx) => (
-                      <Chip
-                        key={`dev-${idx}`}
-                        label={developer}
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: '0.65rem',
-                          bgcolor: alpha(theme.palette.success.main, 0.2),
-                          color: theme.palette.success.main,
-                          '& .MuiChip-label': {
-                            px: 0.75,
-                          }
-                        }}
-                      />
-                    ))
-                  )}
-                  {game.matchingPublishers && game.matchingPublishers.length > 0 && (
-                    game.matchingPublishers.slice(0, 2).map((publisher, idx) => (
-                      <Chip
-                        key={`pub-${idx}`}
-                        label={publisher}
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: '0.65rem',
-                          bgcolor: alpha(theme.palette.info.main, 0.2),
-                          color: theme.palette.info.main,
-                          '& .MuiChip-label': {
-                            px: 0.75,
-                          }
-                        }}
-                      />
-                    ))
-                  )}
-                </Stack>
-              </Box>
-            </Box>
+              <p className="min-w-7 text-h4 font-bold text-accent">#{index + 1}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-body-sm font-semibold">{game.name}</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {game.matchingDevelopers?.slice(0, 2).map((developer, idx) => (
+                    <Badge
+                      key={`dev-${idx}`}
+                      className="h-4.5 bg-success/20 px-1.5 text-[0.65rem] text-success"
+                    >
+                      {developer}
+                    </Badge>
+                  ))}
+                  {game.matchingPublishers?.slice(0, 2).map((publisher, idx) => (
+                    <Badge
+                      key={`pub-${idx}`}
+                      className="h-4.5 bg-blue-500/20 px-1.5 text-[0.65rem] text-blue-500"
+                    >
+                      {publisher}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
           ))}
-        </Stack>
+        </div>
       ) : (
-        <Box
-          sx={{
-            height: 260,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'text.secondary',
-          }}
-        >
-          <Typography variant="body2">
-            {noDataMessage}
-          </Typography>
-        </Box>
+        <div className="flex h-65 items-center justify-center text-text-secondary">
+          <p className="text-body-sm">{noDataMessage}</p>
+        </div>
       )}
-    </Paper>
+    </div>
   )
 }
 
