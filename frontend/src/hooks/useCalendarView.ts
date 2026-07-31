@@ -1,5 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useMediaQuery } from '@mui/material'
+
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+
+  useEffect(() => {
+    const mql = window.matchMedia(query)
+    const listener = () => setMatches(mql.matches)
+    listener()
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [query])
+
+  return matches
+}
 
 export const useCalendarView = () => {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
