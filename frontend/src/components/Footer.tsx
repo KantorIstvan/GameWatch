@@ -36,12 +36,6 @@ function Footer() {
           >
             {t('footer.help')}
           </a>
-          <a
-            href="mailto:kantoristvan13@gmail.com"
-            className="text-body-sm font-medium text-text-secondary transition-colors hover:text-accent hover:underline"
-          >
-            {t('footer.contact')}
-          </a>
         </div>
 
         <div className="order-3 flex gap-1">
