@@ -1,6 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useTheme } from '../contexts/ThemeContext'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { usePlaythroughEvents } from '../hooks/usePlaythroughEvents'
@@ -10,15 +9,15 @@ import { CalendarToolbar } from '../components/calendar/CalendarToolbar'
 import { CalendarFilters } from '../components/calendar/CalendarFilters'
 import { CalendarListView } from '../components/calendar/CalendarListView'
 import { CalendarGridView } from '../components/calendar/CalendarGridView'
+import { CalendarEventPanel } from '../components/calendar/CalendarEventPanel'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import './Calendar.css'
 
 function Calendar() {
-  const { mode } = useTheme()
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
 
-  const { events, loading, error, refetch } = usePlaythroughEvents()
+  const { playthroughs, events, loading, error, refetch } = usePlaythroughEvents()
   const { viewMode, setViewMode, isMobile } = useCalendarView()
   const {
     statusFilter,
@@ -29,20 +28,32 @@ function Calendar() {
     groupedEventsByMonth,
   } = useCalendarFilters(events)
 
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+
   useEffect(() => {
     if (isAuthReady) {
       refetch()
     }
   }, [isAuthReady])
 
+  const openEventPanel = (eventId: string) => {
+    setSelectedEventId(eventId)
+    setPanelOpen(true)
+  }
+
   const handleEventClick = (info: any) => {
-    const playthroughId = info.event.extendedProps.originalId || info.event.id
-    window.location.href = `/playthrough/${playthroughId}`
+    openEventPanel(info.event.id)
   }
 
   const handleListItemClick = (eventId: string) => {
-    window.location.href = `/playthrough/${eventId}`
+    openEventPanel(eventId)
   }
+
+  const selectedEvent = events.find((event) => event.id === selectedEventId) || null
+  const selectedPlaythrough = selectedEvent
+    ? playthroughs.find((pt) => pt.id === (selectedEvent.extendedProps.originalId ?? Number(selectedEvent.id)))
+    : undefined
 
   if (loading) {
     return (
@@ -55,7 +66,6 @@ function Calendar() {
   return (
     <div>
       <CalendarToolbar
-        mode={mode}
         viewMode={viewMode}
         setViewMode={setViewMode}
         isMobile={isMobile}
@@ -68,7 +78,6 @@ function Calendar() {
       )}
 
       <CalendarFilters
-        mode={mode}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         searchQuery={searchQuery}
@@ -78,13 +87,11 @@ function Calendar() {
       {viewMode === 'list' ? (
         <CalendarListView
           groupedEventsByMonth={groupedEventsByMonth}
-          mode={mode}
           onEventClick={handleListItemClick}
         />
       ) : (
         <CalendarGridView
           events={filteredEvents}
-          mode={mode}
           onEventClick={handleEventClick}
         />
       )}
@@ -99,6 +106,13 @@ function Calendar() {
           </p>
         </div>
       )}
+
+      <CalendarEventPanel
+        event={selectedEvent}
+        playthrough={selectedPlaythrough}
+        open={panelOpen}
+        onOpenChange={setPanelOpen}
+      />
     </div>
   )
 }

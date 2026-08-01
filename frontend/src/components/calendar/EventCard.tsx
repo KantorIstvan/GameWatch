@@ -22,13 +22,11 @@ interface CalendarEvent {
 
 interface EventCardProps {
   event: CalendarEvent
-  mode: string
   onEventClick: (eventId: string) => void
 }
 
-export const EventCard = ({ event, mode, onEventClick }: EventCardProps) => {
+export const EventCard = ({ event, onEventClick }: EventCardProps) => {
   const { t } = useTranslation()
-  const accent = mode === 'light' ? '#667eea' : '#8b9af7'
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -40,18 +38,18 @@ export const EventCard = ({ event, mode, onEventClick }: EventCardProps) => {
 
   const getEventIcon = () => {
     if (event.extendedProps.isCompleted) {
-      return <CircleCheck className="size-5" style={{ color: '#10b981' }} />
+      return <CircleCheck className="size-5 text-success" />
     } else if (event.extendedProps.isDropped) {
-      return <CircleX className="size-5" style={{ color: '#f44336' }} />
+      return <CircleX className="size-5 text-danger" />
     } else {
-      return <Play className="size-5" style={{ color: '#f59e0b' }} />
+      return <Play className="size-5 text-warning" />
     }
   }
 
   const getEventTypeLabel = () => {
-    if (event.extendedProps.isCompleted) return t('calendar.completed', 'Completed')
-    if (event.extendedProps.isDropped) return t('calendar.dropped', 'Dropped')
-    return t('calendar.started', 'Started')
+    if (event.extendedProps.isCompleted) return t('calendar.completed')
+    if (event.extendedProps.isDropped) return t('calendar.dropped')
+    return t('calendar.started')
   }
 
   const formatDuration = (seconds: number) => {
@@ -62,48 +60,38 @@ export const EventCard = ({ event, mode, onEventClick }: EventCardProps) => {
   return (
     <div
       onClick={() => onEventClick(event.extendedProps.originalId?.toString() || event.id)}
-      className="group mb-2 cursor-pointer rounded-md border p-4 transition-all duration-200 hover:translate-x-1"
-      style={{
-        backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23',
-        borderColor: `${accent}1a`,
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = accent)}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = `${accent}1a`)}
+      className="group mb-2 cursor-pointer rounded-lg border border-border bg-surface-raised p-4 transition-all duration-200 hover:translate-x-1 hover:border-accent/40"
     >
       <div className="flex items-center gap-4">
         <div
           className="flex size-12 shrink-0 items-center justify-center rounded-md"
-          style={{ backgroundColor: event.backgroundColor }}
+          style={{ backgroundColor: `color-mix(in srgb, ${event.borderColor} 14%, transparent)` }}
         >
           {getEventIcon()}
         </div>
 
         <div className="min-w-0 flex-1">
-          <p
-            className="mb-0.5 truncate text-body-sm font-semibold sm:text-body"
-            style={{ color: mode === 'light' ? '#212529' : '#ffffff' }}
-          >
+          <p className="mb-0.5 truncate text-body-sm font-semibold text-text-primary sm:text-body">
             {event.title}
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-caption" style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}>
+            <span className="text-caption text-text-secondary">
               {formatEventDate(event.start)}
               {event.end && ` - ${formatEventDate(event.end)}`}
             </span>
 
+            {/* borderColor holds the solid accent; backgroundColor is now a soft
+                tint (for the month-grid pills), too faint for white label text. */}
             <Badge
               className="h-5 text-[0.7rem] font-semibold text-white"
-              style={{ backgroundColor: event.backgroundColor }}
+              style={{ backgroundColor: event.borderColor }}
             >
               {getEventTypeLabel()}
             </Badge>
 
             {event.extendedProps.durationSeconds > 0 && (
-              <span
-                className="text-[0.75rem] font-medium"
-                style={{ color: mode === 'light' ? '#6c757d' : '#868e96' }}
-              >
+              <span className="text-[0.75rem] font-medium text-text-secondary">
                 {formatDuration(event.extendedProps.durationSeconds)}
               </span>
             )}

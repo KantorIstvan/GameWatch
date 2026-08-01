@@ -1,9 +1,10 @@
 /* FullCalendar custom styles for discrete event markers */
 
-/* Event styling - compact dots/badges for discrete events */
+/* Event styling - compact dots/badges for discrete events.
+   Text color intentionally left unset here so each event's own textColor
+   (set per-status in usePlaythroughEvents) applies via FullCalendar's inline style. */
 .fc-event-main {
   padding: 2px 6px;
-  color: #ffffff !important;
 }
 
 .fc-daygrid-event {
@@ -16,7 +17,6 @@
 }
 
 .fc-event-title {
-  color: #ffffff !important;
   font-weight: 600 !important;
   font-size: 0.75rem;
 }

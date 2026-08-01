@@ -510,7 +510,15 @@
     "calendarView": "Naptár",
     "listView": "Lista",
     "event": "esemény",
-    "events": "esemény"
+    "events": "esemény",
+    "filter": "Szűrő",
+    "all": "Összes",
+    "completed": "Befejezve",
+    "dropped": "Abbahagyva",
+    "started": "Elkezdve",
+    "eventDetails": "Játékmenet Részletei",
+    "viewFullDetails": "Teljes Részletek Megtekintése",
+    "duration": "Időtartam"
   },
   "errors": {
     "failedLoadData": "Nem sikerült betölteni az adatokat. Kérlek, próbáld újra.",

@@ -38,6 +38,14 @@ export const usePlaythroughEvents = () => {
     }
   }
 
+  // Soft, tinted pill styling (accent color for text/border, a light tint for the
+  // fill) instead of a solid color block with white text.
+  const eventStyle = (accent: string) => ({
+    backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`,
+    borderColor: accent,
+    textColor: accent,
+  })
+
   const fetchPlaythroughs = async () => {
     try {
       setLoading(true)
@@ -57,9 +65,7 @@ export const usePlaythroughEvents = () => {
               title: playthrough.gameName || '',
               start: playthrough.startDate!,
               end: new Date(new Date(dropDate).getTime() + 86400000).toISOString().split('T')[0],
-              backgroundColor: 'var(--color-danger)',
-              borderColor: 'var(--color-danger)',
-              textColor: '#ffffff',
+              ...eventStyle('var(--color-danger)'),
               extendedProps: {
                 gameId: playthrough.gameId || 0,
                 playthroughType: playthrough.playthroughType || 'story',
@@ -80,9 +86,7 @@ export const usePlaythroughEvents = () => {
               title: playthrough.gameName || '',
               start: pickupDate,
               end: endDate,
-              backgroundColor: getEventColor(playthrough),
-              borderColor: getEventColor(playthrough),
-              textColor: '#ffffff',
+              ...eventStyle(getEventColor(playthrough)),
               extendedProps: {
                 gameId: playthrough.gameId || 0,
                 playthroughType: playthrough.playthroughType || 'story',
@@ -99,9 +103,7 @@ export const usePlaythroughEvents = () => {
               title: playthrough.gameName || '',
               start: dropDate,
               end: new Date(new Date(dropDate).getTime() + 86400000).toISOString().split('T')[0],
-              backgroundColor: 'var(--color-danger)',
-              borderColor: 'var(--color-danger)',
-              textColor: '#ffffff',
+              ...eventStyle('var(--color-danger)'),
               extendedProps: {
                 gameId: playthrough.gameId || 0,
                 playthroughType: playthrough.playthroughType || 'story',
@@ -120,9 +122,7 @@ export const usePlaythroughEvents = () => {
               title: playthrough.gameName || '',
               start: playthrough.startDate!,
               end: endDate,
-              backgroundColor: getEventColor(playthrough),
-              borderColor: getEventColor(playthrough),
-              textColor: '#ffffff',
+              ...eventStyle(getEventColor(playthrough)),
               extendedProps: {
                 gameId: playthrough.gameId || 0,
                 playthroughType: playthrough.playthroughType || 'story',
