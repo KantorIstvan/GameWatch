@@ -1,27 +1,10 @@
 import { CircleCheck, CircleX, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
-
-interface CalendarEvent {
-  id: string
-  title: string
-  start: string
-  end?: string
-  backgroundColor: string
-  borderColor: string
-  textColor: string
-  extendedProps: {
-    gameId: number
-    playthroughType: string
-    isCompleted: boolean
-    isDropped: boolean
-    durationSeconds: number
-    originalId?: number
-  }
-}
+import { TimelineEvent } from '../../types/timeline'
 
 interface EventCardProps {
-  event: CalendarEvent
+  event: TimelineEvent
   onEventClick: (eventId: string) => void
 }
 

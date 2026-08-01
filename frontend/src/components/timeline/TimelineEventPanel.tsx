@@ -5,27 +5,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
 import { Playthrough } from '../../types'
+import { TimelineEvent } from '../../types/timeline'
 import { formatPlaythroughType, getPlaythroughTypeColor } from '../../utils/playthroughUtils'
 
-interface CalendarEvent {
-  id: string
-  title: string
-  start: string
-  end?: string
-  backgroundColor: string
-  borderColor: string
-  extendedProps: {
-    gameId: number
-    playthroughType: string
-    isCompleted: boolean
-    isDropped: boolean
-    durationSeconds: number
-    originalId?: number
-  }
-}
-
-interface CalendarEventPanelProps {
-  event: CalendarEvent | null
+interface TimelineEventPanelProps {
+  event: TimelineEvent | null
   playthrough?: Playthrough
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -46,7 +30,7 @@ function formatDuration(seconds: number) {
   return `${minutes}m`
 }
 
-export function CalendarEventPanel({ event, playthrough, open, onOpenChange }: CalendarEventPanelProps) {
+export function TimelineEventPanel({ event, playthrough, open, onOpenChange }: TimelineEventPanelProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 

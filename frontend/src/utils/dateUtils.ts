@@ -213,3 +213,27 @@ export function toLocalDateString(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+/** Step a date forward/backward by whole days, preserving time-of-day. */
+export function addDays(date: Date, amount: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + amount)
+  return result
+}
+
+/** Whole calendar days between two dates (`to` - `from`), ignoring time-of-day. */
+export function diffInDays(from: Date, to: Date): number {
+  const start = getStartOfDay(from)
+  const end = getStartOfDay(to)
+  return Math.round((end.getTime() - start.getTime()) / 86400000)
+}
+
+/**
+ * Parse a `YYYY-MM-DD` date-only string as a local calendar date. Unlike `new Date(str)`,
+ * which treats a bare date string as UTC midnight, this reads the year/month/day
+ * components directly so day-offset math doesn't shift by a day near UTC boundaries.
+ */
+export function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
