@@ -22,14 +22,12 @@ interface CalendarEvent {
 
 interface CalendarListViewProps {
   groupedEventsByMonth: { [key: string]: CalendarEvent[] }
-  mode: string
   onEventClick: (eventId: string) => void
 }
 
-export const CalendarListView = ({ groupedEventsByMonth, mode, onEventClick }: CalendarListViewProps) => {
+export const CalendarListView = ({ groupedEventsByMonth, onEventClick }: CalendarListViewProps) => {
   const { t } = useTranslation()
   const sortedMonths = Object.keys(groupedEventsByMonth).sort().reverse()
-  const accent = mode === 'light' ? '#667eea' : '#8b9af7'
 
   const formatMonthHeader = (monthKey: string) => {
     const [year, month] = monthKey.split('-')
@@ -44,12 +42,9 @@ export const CalendarListView = ({ groupedEventsByMonth, mode, onEventClick }: C
     <div>
       {sortedMonths.map((monthKey) => (
         <div key={monthKey} className="mb-8">
-          <p className="mb-4 flex items-center gap-2 text-h4 font-semibold" style={{ color: accent }}>
+          <p className="mb-4 flex items-center gap-2 text-h4 font-semibold text-accent">
             {formatMonthHeader(monthKey)}
-            <Badge
-              className="font-semibold"
-              style={{ backgroundColor: `${accent}1a`, color: accent }}
-            >
+            <Badge className="bg-accent-subtle font-semibold text-accent">
               {groupedEventsByMonth[monthKey].length}
             </Badge>
           </p>
@@ -58,7 +53,6 @@ export const CalendarListView = ({ groupedEventsByMonth, mode, onEventClick }: C
             <EventCard
               key={event.id}
               event={event}
-              mode={mode}
               onEventClick={onEventClick}
             />
           ))}

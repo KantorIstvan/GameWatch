@@ -3,6 +3,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { useTranslation } from 'react-i18next'
 import { useWeekStart } from '../../contexts/WeekStartContext'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import './fullcalendar-overrides.css'
 
 interface CalendarEvent {
@@ -25,33 +26,48 @@ interface CalendarEvent {
 
 interface CalendarGridViewProps {
   events: CalendarEvent[]
-  mode: string
   onEventClick: (info: any) => void
 }
 
-export const CalendarGridView = ({ events, mode, onEventClick }: CalendarGridViewProps) => {
+function formatDuration(seconds: number) {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}
+
+export const CalendarGridView = ({ events, onEventClick }: CalendarGridViewProps) => {
   const { t } = useTranslation()
   const { getFirstDayNumber } = useWeekStart()
 
   const renderEventContent = (eventInfo: any) => {
     const isCompleted = eventInfo.event.extendedProps.isCompleted
     const isDropped = eventInfo.event.extendedProps.isDropped
+    const dotColor = eventInfo.event.borderColor || eventInfo.event.backgroundColor
+
     return (
-      <div className="flex items-center gap-1 overflow-hidden text-ellipsis whitespace-nowrap p-1 text-[0.8rem] font-semibold text-white">
-        {isCompleted && <span className="text-[0.7rem] text-white">✓</span>}
-        {isDropped && <span className="text-[0.7rem] text-white">✗</span>}
-        <span className="text-white">{eventInfo.event.title}</span>
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-1 text-[0.75rem] font-semibold">
+            <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: dotColor }} />
+            <span className="truncate">{eventInfo.event.title}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p className="font-semibold">{eventInfo.event.title}</p>
+          <p className="text-text-secondary">
+            {isCompleted ? t('calendar.completed') : isDropped ? t('calendar.dropped') : t('calendar.started')}
+            {' · '}
+            {formatDuration(eventInfo.event.extendedProps.durationSeconds)}
+          </p>
+        </TooltipContent>
+      </Tooltip>
     )
   }
 
   return (
     <div
-      className="gw-calendar-card overflow-hidden rounded-xl border p-4 shadow-2 transition-all duration-300 sm:p-6 md:p-8"
-      style={{
-        backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23',
-        borderColor: mode === 'light' ? 'rgba(102, 126, 234, 0.1)' : 'rgba(139, 154, 247, 0.1)',
-      }}
+      className="gw-calendar-card overflow-hidden rounded-xl border border-border bg-surface-raised p-4 shadow-1 transition-all duration-300 sm:p-6 md:p-8"
     >
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
