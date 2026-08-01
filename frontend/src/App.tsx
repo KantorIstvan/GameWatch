@@ -9,7 +9,7 @@ import Timers from './pages/Timers'
 import Statistics from './pages/Statistics'
 import Games from './pages/Games'
 import GameStatistics from './pages/GameStatistics'
-import Calendar from './pages/Calendar'
+import Timeline from './pages/Timeline'
 import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
@@ -47,7 +47,7 @@ function AppContent() {
           <Route path="statistics" element={<Statistics />} />
           <Route path="games" element={<Games />} />
           <Route path="games/:id/statistics" element={<GameStatistics />} />
-          <Route path="calendar" element={<Calendar />} />
+          <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
           <Route path="settings" element={<Settings />} />

@@ -3,19 +3,19 @@ import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-interface CalendarFiltersProps {
+interface TimelineFiltersProps {
   statusFilter: string
   setStatusFilter: (filter: string) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
 }
 
-export const CalendarFilters = ({
+export const TimelineFilters = ({
   statusFilter,
   setStatusFilter,
   searchQuery,
   setSearchQuery,
-}: CalendarFiltersProps) => {
+}: TimelineFiltersProps) => {
   const { t } = useTranslation()
 
   return (

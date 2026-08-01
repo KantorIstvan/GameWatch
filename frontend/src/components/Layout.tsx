@@ -1,6 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, CalendarDays, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -30,7 +30,7 @@ function Layout() {
   const { mode, toggleTheme } = useTheme()
   const { t } = useTranslation()
   const location = useLocation()
-  const currentTab = location.pathname === '/statistics' ? '/statistics' : location.pathname.startsWith('/games') ? '/games' : location.pathname === '/calendar' ? '/calendar' : location.pathname === '/health' ? '/health' : '/'
+  const currentTab = location.pathname === '/statistics' ? '/statistics' : location.pathname.startsWith('/games') ? '/games' : location.pathname === '/timeline' ? '/timeline' : location.pathname === '/health' ? '/health' : '/'
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } })
@@ -40,7 +40,7 @@ function Layout() {
     { label: t('nav.timers'), path: '/', icon: <Timer /> },
     { label: t('nav.statistics'), path: '/statistics', icon: <BarChart /> },
     { label: t('nav.myGames'), path: '/games', icon: <Gamepad2 /> },
-    { label: t('nav.calendar'), path: '/calendar', icon: <CalendarDays /> },
+    { label: t('nav.calendar'), path: '/timeline', icon: <GanttChart /> },
     { label: t('nav.health'), path: '/health', icon: <Heart /> },
   ]
 

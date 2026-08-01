@@ -1,28 +1,11 @@
 import { useState, useEffect } from 'react'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
+import { TimelineEvent } from '../types/timeline'
 
-interface CalendarEvent {
-  id: string
-  title: string
-  start: string
-  end?: string
-  backgroundColor: string
-  borderColor: string
-  textColor: string
-  extendedProps: {
-    gameId: number
-    playthroughType: string
-    isCompleted: boolean
-    isDropped: boolean
-    durationSeconds: number
-    originalId?: number
-  }
-}
-
-export const usePlaythroughEvents = () => {
+export const useTimelineEvents = () => {
   const [playthroughs, setPlaythroughs] = useState<Playthrough[]>([])
-  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [events, setEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -52,15 +35,15 @@ export const usePlaythroughEvents = () => {
       const response = await playthroughsApi.getAll()
       const data = response.data
       setPlaythroughs(data)
-      
-      const calendarEvents: CalendarEvent[] = []
-      
+
+      const timelineEvents: TimelineEvent[] = []
+
       data
         .filter((playthrough: Playthrough) => playthrough.startDate)
         .forEach((playthrough: Playthrough) => {
           if (playthrough.droppedAt && playthrough.pickedUpAt) {
             const dropDate = new Date(playthrough.droppedAt).toISOString().split('T')[0]
-            calendarEvents.push({
+            timelineEvents.push({
               id: `${playthrough.id}-dropped`,
               title: playthrough.gameName || '',
               start: playthrough.startDate!,
@@ -75,13 +58,13 @@ export const usePlaythroughEvents = () => {
                 originalId: playthrough.id,
               },
             })
-            
+
             const pickupDate = new Date(playthrough.pickedUpAt).toISOString().split('T')[0]
-            const endDate = playthrough.endDate 
+            const endDate = playthrough.endDate
               ? new Date(new Date(playthrough.endDate).getTime() + 86400000).toISOString().split('T')[0]
               : undefined
-            
-            calendarEvents.push({
+
+            timelineEvents.push({
               id: playthrough.id.toString(),
               title: playthrough.gameName || '',
               start: pickupDate,
@@ -98,7 +81,7 @@ export const usePlaythroughEvents = () => {
           } else if (playthrough.isDropped && playthrough.droppedAt) {
             // For dropped games that were never picked up, only show event on the drop date
             const dropDate = new Date(playthrough.droppedAt).toISOString().split('T')[0]
-            calendarEvents.push({
+            timelineEvents.push({
               id: playthrough.id.toString(),
               title: playthrough.gameName || '',
               start: dropDate,
@@ -113,11 +96,11 @@ export const usePlaythroughEvents = () => {
               },
             })
           } else {
-            const endDate = playthrough.endDate 
+            const endDate = playthrough.endDate
               ? new Date(new Date(playthrough.endDate).getTime() + 86400000).toISOString().split('T')[0]
               : undefined
-            
-            calendarEvents.push({
+
+            timelineEvents.push({
               id: playthrough.id.toString(),
               title: playthrough.gameName || '',
               start: playthrough.startDate!,
@@ -133,8 +116,8 @@ export const usePlaythroughEvents = () => {
             })
           }
         })
-      
-      setEvents(calendarEvents)
+
+      setEvents(timelineEvents)
       setError(null)
     } catch (err: any) {
       setError('calendar.errorLoading')

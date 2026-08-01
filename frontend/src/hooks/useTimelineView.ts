@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useMediaQuery } from './useMediaQuery'
 
-export const useCalendarView = () => {
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')
+export const useTimelineView = () => {
+  const [viewMode, setViewMode] = useState<'timeline' | 'list'>('list')
   const isMobile = useMediaQuery('(max-width:768px)')
   const isPortrait = useMediaQuery('(orientation: portrait)')
 
@@ -11,7 +11,7 @@ export const useCalendarView = () => {
     if (isMobile && isPortrait) {
       setViewMode('list')
     } else if (!isMobile) {
-      setViewMode('calendar')
+      setViewMode('timeline')
     }
   }, [isMobile, isPortrait])
 

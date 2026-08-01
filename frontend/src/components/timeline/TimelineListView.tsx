@@ -1,31 +1,14 @@
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { EventCard } from './EventCard'
+import { TimelineEvent } from '../../types/timeline'
 
-interface CalendarEvent {
-  id: string
-  title: string
-  start: string
-  end?: string
-  backgroundColor: string
-  borderColor: string
-  textColor: string
-  extendedProps: {
-    gameId: number
-    playthroughType: string
-    isCompleted: boolean
-    isDropped: boolean
-    durationSeconds: number
-    originalId?: number
-  }
-}
-
-interface CalendarListViewProps {
-  groupedEventsByMonth: { [key: string]: CalendarEvent[] }
+interface TimelineListViewProps {
+  groupedEventsByMonth: { [key: string]: TimelineEvent[] }
   onEventClick: (eventId: string) => void
 }
 
-export const CalendarListView = ({ groupedEventsByMonth, onEventClick }: CalendarListViewProps) => {
+export const TimelineListView = ({ groupedEventsByMonth, onEventClick }: TimelineListViewProps) => {
   const { t } = useTranslation()
   const sortedMonths = Object.keys(groupedEventsByMonth).sort().reverse()
 

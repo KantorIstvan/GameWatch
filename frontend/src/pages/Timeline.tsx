@@ -2,23 +2,22 @@ import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { usePlaythroughEvents } from '../hooks/usePlaythroughEvents'
-import { useCalendarFilters } from '../hooks/useCalendarFilters'
-import { useCalendarView } from '../hooks/useCalendarView'
-import { CalendarToolbar } from '../components/calendar/CalendarToolbar'
-import { CalendarFilters } from '../components/calendar/CalendarFilters'
-import { CalendarListView } from '../components/calendar/CalendarListView'
-import { CalendarGridView } from '../components/calendar/CalendarGridView'
-import { CalendarEventPanel } from '../components/calendar/CalendarEventPanel'
+import { useTimelineEvents } from '../hooks/useTimelineEvents'
+import { useTimelineFilters } from '../hooks/useTimelineFilters'
+import { useTimelineView } from '../hooks/useTimelineView'
+import { TimelineToolbar } from '../components/timeline/TimelineToolbar'
+import { TimelineFilters } from '../components/timeline/TimelineFilters'
+import { TimelineListView } from '../components/timeline/TimelineListView'
+import { TimelineGanttView } from '../components/timeline/TimelineGanttView'
+import { TimelineEventPanel } from '../components/timeline/TimelineEventPanel'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import './Calendar.css'
 
-function Calendar() {
+function Timeline() {
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
 
-  const { playthroughs, events, loading, error, refetch } = usePlaythroughEvents()
-  const { viewMode, setViewMode, isMobile } = useCalendarView()
+  const { playthroughs, events, loading, error, refetch } = useTimelineEvents()
+  const { viewMode, setViewMode, isMobile } = useTimelineView()
   const {
     statusFilter,
     setStatusFilter,
@@ -26,7 +25,7 @@ function Calendar() {
     setSearchQuery,
     filteredEvents,
     groupedEventsByMonth,
-  } = useCalendarFilters(events)
+  } = useTimelineFilters(events)
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -40,14 +39,6 @@ function Calendar() {
   const openEventPanel = (eventId: string) => {
     setSelectedEventId(eventId)
     setPanelOpen(true)
-  }
-
-  const handleEventClick = (info: any) => {
-    openEventPanel(info.event.id)
-  }
-
-  const handleListItemClick = (eventId: string) => {
-    openEventPanel(eventId)
   }
 
   const selectedEvent = events.find((event) => event.id === selectedEventId) || null
@@ -65,7 +56,7 @@ function Calendar() {
 
   return (
     <div>
-      <CalendarToolbar
+      <TimelineToolbar
         viewMode={viewMode}
         setViewMode={setViewMode}
         isMobile={isMobile}
@@ -77,7 +68,7 @@ function Calendar() {
         </Alert>
       )}
 
-      <CalendarFilters
+      <TimelineFilters
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         searchQuery={searchQuery}
@@ -85,14 +76,14 @@ function Calendar() {
       />
 
       {viewMode === 'list' ? (
-        <CalendarListView
+        <TimelineListView
           groupedEventsByMonth={groupedEventsByMonth}
-          onEventClick={handleListItemClick}
+          onEventClick={openEventPanel}
         />
       ) : (
-        <CalendarGridView
+        <TimelineGanttView
           events={filteredEvents}
-          onEventClick={handleEventClick}
+          onEventClick={openEventPanel}
         />
       )}
 
@@ -107,7 +98,7 @@ function Calendar() {
         </div>
       )}
 
-      <CalendarEventPanel
+      <TimelineEventPanel
         event={selectedEvent}
         playthrough={selectedPlaythrough}
         open={panelOpen}
@@ -117,4 +108,4 @@ function Calendar() {
   )
 }
 
-export default Calendar
+export default Timeline

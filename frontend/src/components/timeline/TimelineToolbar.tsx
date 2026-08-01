@@ -1,14 +1,14 @@
-import { CalendarDays, List } from 'lucide-react'
+import { GanttChart, List } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
-interface CalendarToolbarProps {
-  viewMode: 'calendar' | 'list'
-  setViewMode: (mode: 'calendar' | 'list') => void
+interface TimelineToolbarProps {
+  viewMode: 'timeline' | 'list'
+  setViewMode: (mode: 'timeline' | 'list') => void
   isMobile: boolean
 }
 
-export const CalendarToolbar = ({ viewMode, setViewMode, isMobile }: CalendarToolbarProps) => {
+export const TimelineToolbar = ({ viewMode, setViewMode, isMobile }: TimelineToolbarProps) => {
   const { t } = useTranslation()
 
   return (
@@ -27,11 +27,11 @@ export const CalendarToolbar = ({ viewMode, setViewMode, isMobile }: CalendarToo
           </Button>
           <Button
             size="icon"
-            variant={viewMode === 'calendar' ? 'default' : 'secondary'}
-            onClick={() => setViewMode('calendar')}
+            variant={viewMode === 'timeline' ? 'default' : 'secondary'}
+            onClick={() => setViewMode('timeline')}
             aria-label={t('calendar.calendarView')}
           >
-            <CalendarDays className="size-4.5" />
+            <GanttChart className="size-4.5" />
           </Button>
         </div>
       )}
