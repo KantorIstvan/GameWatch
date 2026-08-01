@@ -130,10 +130,6 @@ function Layout() {
             <DropdownMenuContent align="end" side="top" className="min-w-56">
               <DropdownMenuLabel className="font-medium">{user?.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={toggleTheme}>
-                {mode === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-                {mode === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}
-              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings">
                   <SettingsIcon className="size-4" />

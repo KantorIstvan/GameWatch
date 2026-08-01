@@ -13,9 +13,7 @@
     "myGames": "My Games",
     "calendar": "Timeline",
     "health": "Health",
-    "settings": "Settings",
-    "lightMode": "Light Mode",
-    "darkMode": "Dark Mode"
+    "settings": "Settings"
   },
   "settings": {
     "title": "Settings",
