@@ -255,6 +255,7 @@ function Statistics() {
                 data={timeOfDayData}
                 title={t('statistics.userStats.timeOfDayDistribution')}
                 noDataMessage={t('statistics.userStats.noData')}
+                valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
             </div>
 
@@ -263,6 +264,7 @@ function Statistics() {
                 data={genreData}
                 title={t('statistics.userStats.genreDistribution')}
                 noDataMessage={t('statistics.userStats.noData')}
+                valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
             </div>
 
@@ -272,6 +274,7 @@ function Statistics() {
                 title={t('statistics.userStats.platformDistribution')}
                 minLabelPercent={0.2}
                 noDataMessage={t('statistics.userStats.noData')}
+                valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
             </div>
 
