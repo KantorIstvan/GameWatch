@@ -129,13 +129,14 @@ function PlaythroughDetail() {
 
   const handleLogManualSession = useCallback(async (startedAt: string, endedAt: string) => {
     try {
-      await handlers.logManualSession(startedAt, endedAt)
+      const sessionHistoryId = await handlers.logManualSession(startedAt, endedAt)
       setManualSessionDialogOpen(false)
       toast.success('Session logged successfully!')
+      promptForMood(sessionHistoryId)
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to log manual session.')
     }
-  }, [handlers])
+  }, [handlers, promptForMood])
 
   const handleOpenImportDialog = useCallback(async () => {
     if (!playthrough || !game) return

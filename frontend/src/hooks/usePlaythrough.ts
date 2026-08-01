@@ -224,6 +224,7 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
     const response = await playthroughsApi.logManualSession(id, startedAt, endedAt)
     setPlaythrough(response.data)
     setElapsedTime(response.data.durationSeconds || 0)
+    return response.data.lastSessionHistoryId
   }, [id])
 
   const importSessions = useCallback(async (sourcePlaythroughId: number) => {
