@@ -174,6 +174,7 @@ export interface GameRanking {
   daysToComplete?: number
   startDate?: string
   endDate?: string
+  badges?: string[]
 }
 
 export interface GameRecommendation {

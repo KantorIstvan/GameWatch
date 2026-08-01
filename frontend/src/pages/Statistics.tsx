@@ -316,6 +316,7 @@ function Statistics() {
                 label={t('statistics.userStats.favoriteGame')}
                 labelIcon={<TrendingUp className="size-4" />}
                 metric={formatTime(statistics.favoriteGame.playtimeSeconds)}
+                badges={statistics.favoriteGame.badges?.map((badge) => t(`statistics.userStats.${badge}`))}
               />
             )}
           </div>
