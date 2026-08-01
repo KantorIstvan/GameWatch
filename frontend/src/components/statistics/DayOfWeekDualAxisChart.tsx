@@ -1,4 +1,4 @@
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { useWeekStart } from '../../contexts/WeekStartContext'
 import { formatDurationWords } from '../../utils/formatters'
@@ -16,10 +16,11 @@ interface DayOfWeekDualAxisChartProps {
 }
 
 // Monochromatic by default — only today's bar/line gets the brand accent
-// (see vibrant* below), so the current day reads at a glance.
-const normalPrimary = 'var(--color-text-tertiary)'
+// (see vibrant* below), so the current day reads at a glance. Bar color
+// matches the Hourly Activity chart (ReusableBarChart) for visual consistency.
+const normalPrimary = 'var(--color-text-secondary)'
 const normalPrimaryLight = 'var(--color-border)'
-const normalSecondary = 'var(--color-text-tertiary)'
+const normalSecondary = 'var(--color-text-secondary)'
 const vibrantPrimary = 'var(--color-accent)'
 const vibrantPrimaryLight = 'var(--color-accent-hover)'
 const vibrantSecondary = 'var(--color-accent-hover)'
@@ -44,7 +45,6 @@ function DayOfWeekDualAxisChart({
   const chartData = data.map((item, index) => ({
     ...item,
     barColor: index === currentDayMappedIndex ? vibrantPrimary : normalPrimary,
-    barGradientId: index === currentDayMappedIndex ? 'gradientCurrent' : 'gradientNormal',
     lineColor: index === currentDayMappedIndex ? vibrantSecondary : normalSecondary,
   }))
 
@@ -103,29 +103,6 @@ function DayOfWeekDualAxisChart({
     return null
   }
 
-  const CustomLegend = (props: any) => {
-    const { payload } = props
-    return (
-      <div className="flex flex-wrap items-center justify-center gap-4 pb-2 sm:gap-8">
-        {payload.map((entry: any, index: number) => (
-          <div key={`legend-${index}`} className="flex items-center gap-1.5 sm:gap-2">
-            {entry.dataKey === 'hours' ? (
-              <span
-                className="h-3 w-4 shrink-0 rounded-sm sm:h-3.5 sm:w-5"
-                style={{ background: `linear-gradient(135deg, ${normalPrimary} 0%, ${normalPrimaryLight} 100%)` }}
-              />
-            ) : (
-              <span className="h-0.75 w-4 shrink-0 rounded-full sm:w-5" style={{ backgroundColor: normalSecondary }} />
-            )}
-            <span className="whitespace-nowrap text-[0.7rem] font-medium text-text-secondary sm:text-body-sm">
-              {entry.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    )
-  }
-
   return (
     <>
       {hasData ? (
@@ -140,17 +117,6 @@ function DayOfWeekDualAxisChart({
                 bottom: window.innerWidth < 600 ? 10 : 20
               }}
             >
-              <defs>
-                <linearGradient id="gradientCurrent" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={vibrantPrimary} stopOpacity={1} />
-                  <stop offset="100%" stopColor={vibrantPrimaryLight} stopOpacity={0.85} />
-                </linearGradient>
-                <linearGradient id="gradientNormal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={normalPrimary} stopOpacity={0.9} />
-                  <stop offset="100%" stopColor={normalPrimaryLight} stopOpacity={0.7} />
-                </linearGradient>
-              </defs>
-
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
 
               <XAxis
@@ -215,19 +181,17 @@ function DayOfWeekDualAxisChart({
 
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-accent-subtle)' }} />
 
-              <Legend content={<CustomLegend />} />
-
               <Bar
                 yAxisId="left"
                 dataKey="hours"
                 name="Total Hours"
-                radius={[6, 6, 0, 0]}
+                radius={[8, 8, 0, 0]}
                 maxBarSize={window.innerWidth < 600 ? 40 : 60}
               >
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={`url(#${entry.barGradientId})`}
+                    fill={entry.barColor}
                   />
                 ))}
               </Bar>
