@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { ListPlus, ChevronsUpDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -48,6 +48,24 @@ function CreatePlaythroughDialog({
 }: CreatePlaythroughDialogProps) {
   const { t } = useTranslation()
   const [gamePickerOpen, setGamePickerOpen] = useState(false)
+  const gameListRef = useRef<HTMLDivElement>(null)
+
+  // The game list is a Popover nested inside a Dialog; Radix's dialog scroll-lock
+  // intercepts wheel events before they reach the popover's own scroll container,
+  // so mouse-wheel scrolling silently does nothing. Take over scrolling manually
+  // with a non-passive listener so preventDefault actually applies.
+  useEffect(() => {
+    const el = gameListRef.current
+    if (!el || !gamePickerOpen) return
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      el.scrollTop += e.deltaY
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    return () => el.removeEventListener('wheel', handleWheel)
+  }, [gamePickerOpen])
 
   const availablePlatforms = useMemo(() => {
     if (!selectedGame?.platforms) return []
@@ -102,7 +120,7 @@ function CreatePlaythroughDialog({
             <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
               <Command>
                 <CommandInput placeholder={t('playthrough.selectGame')} />
-                <CommandList className="max-h-62.5">
+                <CommandList ref={gameListRef}>
                   <CommandEmpty>No games found.</CommandEmpty>
                   <CommandGroup>
                     {games.map((game) => (
