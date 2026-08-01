@@ -452,7 +452,14 @@
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
     "backToTimers": "Back to Timers",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "duration": {
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "combined": "{{hours}} {{minutes}}"
+    }
   },
   "game": {
     "released": "Released",

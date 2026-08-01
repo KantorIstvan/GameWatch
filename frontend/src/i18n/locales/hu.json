@@ -432,7 +432,14 @@
     "back": "Vissza",
     "backToDashboard": "Vissza az Irányítópulthoz",
     "backToTimers": "Vissza az Időmérőkhöz",
-    "retry": "Próbáld újra"
+    "retry": "Próbáld újra",
+    "duration": {
+      "hours_one": "{{count}} óra",
+      "hours_other": "{{count}} óra",
+      "minutes_one": "{{count}} perc",
+      "minutes_other": "{{count}} perc",
+      "combined": "{{hours}} {{minutes}}"
+    }
   },
   "game": {
     "released": "Megjelent",

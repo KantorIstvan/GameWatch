@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthContext } from '../contexts/AuthContext'
-import { formatTime, formatTimeDetailed } from '../utils/formatters'
+import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/formatters'
 import { exportStatisticsToCSV } from '../utils/csvExport'
 import { useStatistics } from '../hooks/useStatistics'
 import { useStatisticsCharts } from '../hooks/useStatisticsCharts'
@@ -206,6 +206,7 @@ function Statistics() {
                 <DailyPlaytimeChart
                   data={dailyPlaytimeData}
                   title={t('statistics.userStats.dailyPlaytime')}
+                  valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
                 />
               </div>
             )}
@@ -250,6 +251,7 @@ function Statistics() {
                 noDataMessage={t('statistics.userStats.noData')}
                 isHourlyChart={true}
                 highlightCurrentHour={true}
+                valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
             </div>
 
