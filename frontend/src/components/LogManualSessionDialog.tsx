@@ -12,9 +12,10 @@ interface LogManualSessionDialogProps {
   playthroughStartDate?: string | null
   isCompleted?: boolean
   isDropped?: boolean
+  submitting?: boolean
 }
 
-function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, isCompleted, isDropped }: LogManualSessionDialogProps) {
+function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, isCompleted, isDropped, submitting }: LogManualSessionDialogProps) {
   const { t } = useTranslation()
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
@@ -136,7 +137,7 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
           <Button onClick={handleClose} variant="outline" className="flex-1">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={!startDateTime || !endDateTime} className="flex-1">
+          <Button onClick={handleSubmit} disabled={!startDateTime || !endDateTime || submitting} className="flex-1">
             {t('common.save')}
           </Button>
         </div>
