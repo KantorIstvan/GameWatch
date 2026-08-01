@@ -15,20 +15,23 @@ interface ReusablePieChartProps {
   showLabel?: boolean
   height?: number
   noDataMessage?: string
+  valueFormatter?: (hours: number) => string
 }
 
 function ReusablePieChart({
   data,
   title,
   height = 300,
-  noDataMessage = 'No data available'
+  noDataMessage = 'No data available',
+  valueFormatter
 }: ReusablePieChartProps) {
   const hasData = data.length > 0 && data.some(item => item.value > 0)
   const filteredData = data.filter(item => item.value > 0)
 
   const tooltipContent = (value: any, name: string | undefined, props: any) => {
     const displayName = props?.payload?.fullName || name || ''
-    return [`${Number(value).toFixed(1)}h`, displayName]
+    const formattedValue = valueFormatter ? valueFormatter(Number(value)) : `${Number(value).toFixed(1)}h`
+    return [formattedValue, displayName]
   }
 
   return (
