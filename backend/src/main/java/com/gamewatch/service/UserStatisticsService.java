@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,32 +32,30 @@ public class UserStatisticsService {
     private final RawgApiService rawgApiService;
 
     @Transactional(readOnly = true)
-    public UserStatisticsDto getUserStatistics(User user, String interval) {
-        Instant cutoffDate = getCutoffDate(user, interval);
-        
+    public UserStatisticsDto getUserStatistics(User user, String interval, String date) {
+        DateRange range = getDateRange(user, interval, date);
+
         List<Playthrough> allPlaythroughs = playthroughRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
-        
+
         int totalGamesInLibrary = userGameRepository.findGamesByUser(user).size();
-        
-        List<Playthrough> playthroughs = filterPlaythroughsByInterval(allPlaythroughs, cutoffDate);
-        
+
+        // Bounded ranges query sessions directly by date so a playthrough that spans
+        // multiple periods (e.g. still ongoing, lastPlayedAt long after this week) still
+        // surfaces the sessions it actually has inside this narrower window.
+        List<SessionHistory> sessions = range.start().equals(Instant.EPOCH)
+            ? fetchAllSessions(allPlaythroughs)
+            : sessionHistoryRepository.findSessionsByUserAndDateRange(user.getId(), range.start(), range.end());
+
+        List<Playthrough> playthroughs = filterPlaythroughsByInterval(allPlaythroughs, sessions, range);
+
         if (playthroughs.isEmpty()) {
             return createEmptyStatistics();
         }
-        
-        List<Long> playthroughIds = playthroughs.stream()
-            .map(Playthrough::getId)
-            .collect(Collectors.toList());
-        
-        List<SessionHistory> allSessions = sessionHistoryRepository
-            .findByPlaythroughIdsOrderByPlaythroughAndSession(playthroughIds);
-        
-        List<SessionHistory> sessions = filterSessionsByInterval(allSessions, cutoffDate);
-        
-        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, cutoffDate);
-        
+
+        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, range);
+
         return UserStatisticsDto.builder()
-            .totalPlaytimeSeconds(calculateTotalPlaytime(playthroughs))
+            .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, range))
             .averageSessionPlaytimeSeconds(calculateAverageSessionPlaytime(sessions))
             .gamesCompleted(countCompletedGames(playthroughs))
             .gamesInProgress(countInProgressGames(playthroughs))
@@ -79,55 +78,90 @@ public class UserStatisticsService {
             .build();
     }
 
-    private Instant getCutoffDate(User user, String interval) {
-        LocalDateTime now = LocalDateTime.now();
-        
+    /**
+     * A calendar-bound period [start, end], both inclusive-at-the-second. `date` anchors
+     * which week/month/year to use (e.g. a date in February selects the whole of
+     * February), defaulting to today when absent — so passing no date reproduces the
+     * previous "current period" behavior exactly.
+     */
+    private record DateRange(Instant start, Instant end) {
+    }
+
+    private DateRange getDateRange(User user, String interval, String date) {
+        LocalDate referenceDate;
+        try {
+            referenceDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now();
+        } catch (DateTimeParseException e) {
+            referenceDate = LocalDate.now();
+        }
+
         return switch (interval.toLowerCase()) {
             case "week" -> {
                 // Get first day of week based on user preference
-                LocalDate today = now.toLocalDate();
                 String firstDayOfWeek = user.getFirstDayOfWeek() != null ? user.getFirstDayOfWeek() : "MONDAY";
-                java.time.DayOfWeek startDay = firstDayOfWeek.equals("SUNDAY") 
-                    ? java.time.DayOfWeek.SUNDAY 
+                java.time.DayOfWeek startDay = firstDayOfWeek.equals("SUNDAY")
+                    ? java.time.DayOfWeek.SUNDAY
                     : java.time.DayOfWeek.MONDAY;
-                LocalDate weekStart = today.with(startDay);
-                // If today is before the start day, go back a week
-                if (weekStart.isAfter(today)) {
+                LocalDate weekStart = referenceDate.with(startDay);
+                // If the reference date is before the start day, go back a week
+                if (weekStart.isAfter(referenceDate)) {
                     weekStart = weekStart.minusWeeks(1);
                 }
-                yield weekStart.atStartOfDay(ZoneId.systemDefault()).toInstant();
+                LocalDate weekEnd = weekStart.plusDays(6);
+                yield new DateRange(
+                    weekStart.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                    weekEnd.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                );
             }
             case "month" -> {
-                // Get 1st day of current month at 00:00
-                LocalDate firstOfMonth = now.toLocalDate().withDayOfMonth(1);
-                yield firstOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant();
+                LocalDate firstOfMonth = referenceDate.withDayOfMonth(1);
+                LocalDate lastOfMonth = referenceDate.withDayOfMonth(referenceDate.lengthOfMonth());
+                yield new DateRange(
+                    firstOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                    lastOfMonth.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                );
             }
             case "year" -> {
-                // Get January 1st of current year at 00:00
-                LocalDate firstOfYear = now.toLocalDate().withDayOfYear(1);
-                yield firstOfYear.atStartOfDay(ZoneId.systemDefault()).toInstant();
+                LocalDate firstOfYear = referenceDate.withDayOfYear(1);
+                LocalDate lastOfYear = referenceDate.withDayOfYear(referenceDate.lengthOfYear());
+                yield new DateRange(
+                    firstOfYear.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                    lastOfYear.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                );
             }
-            default -> Instant.EPOCH;
+            default -> new DateRange(Instant.EPOCH, Instant.now());
         };
     }
 
-    private List<Playthrough> filterPlaythroughsByInterval(List<Playthrough> playthroughs, Instant cutoffDate) {
-        if (cutoffDate.equals(Instant.EPOCH)) {
-            return playthroughs;
+    private List<SessionHistory> fetchAllSessions(List<Playthrough> playthroughs) {
+        if (playthroughs.isEmpty()) {
+            return new ArrayList<>();
         }
-        
-        return playthroughs.stream()
-            .filter(p -> p.getLastPlayedAt() != null && p.getLastPlayedAt().isAfter(cutoffDate))
-            .collect(Collectors.toList());
+        List<Long> playthroughIds = playthroughs.stream().map(Playthrough::getId).collect(Collectors.toList());
+        return sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(playthroughIds);
     }
 
-    private List<SessionHistory> filterSessionsByInterval(List<SessionHistory> sessions, Instant cutoffDate) {
-        if (cutoffDate.equals(Instant.EPOCH)) {
-            return sessions;
+    /**
+     * A playthrough is in-scope for a period if it has a session inside the window
+     * (covers ongoing playthroughs that also have activity outside it) OR its
+     * lastPlayedAt falls inside the window (covers manually-logged time with no
+     * discrete session rows).
+     */
+    private List<Playthrough> filterPlaythroughsByInterval(
+            List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange, DateRange range) {
+        if (range.start().equals(Instant.EPOCH)) {
+            return playthroughs;
         }
-        
-        return sessions.stream()
-            .filter(s -> s.getStartedAt().isAfter(cutoffDate))
+
+        Set<Long> playthroughIdsWithSessionInRange = sessionsInRange.stream()
+            .map(s -> s.getPlaythrough().getId())
+            .collect(Collectors.toSet());
+
+        return playthroughs.stream()
+            .filter(p -> playthroughIdsWithSessionInRange.contains(p.getId())
+                || (p.getLastPlayedAt() != null
+                    && p.getLastPlayedAt().isAfter(range.start())
+                    && p.getLastPlayedAt().isBefore(range.end())))
             .collect(Collectors.toList());
     }
 
@@ -135,6 +169,34 @@ public class UserStatisticsService {
         return playthroughs.stream()
             .mapToLong(p -> p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L)
             .sum();
+    }
+
+    /**
+     * For a bounded period, a playthrough's full lifetime durationSeconds overcounts
+     * if it also has activity outside the window (e.g. an ongoing playthrough touched
+     * again after this week). Sum actual session time inside the window instead, and
+     * fall back to durationSeconds only for playthroughs with no session rows at all
+     * (pure manually-logged time, which carries no per-session timestamps).
+     */
+    private Long calculateTotalPlaytimeForRange(List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange, DateRange range) {
+        if (range.start().equals(Instant.EPOCH)) {
+            return calculateTotalPlaytime(playthroughs);
+        }
+
+        long sessionTotal = sessionsInRange.stream()
+            .mapToLong(SessionHistory::getDurationSeconds)
+            .sum();
+
+        Set<Long> playthroughIdsWithSessionInRange = sessionsInRange.stream()
+            .map(s -> s.getPlaythrough().getId())
+            .collect(Collectors.toSet());
+
+        long manualOnlyTotal = playthroughs.stream()
+            .filter(p -> !playthroughIdsWithSessionInRange.contains(p.getId()))
+            .mapToLong(p -> p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L)
+            .sum();
+
+        return sessionTotal + manualOnlyTotal;
     }
 
     private Double calculateAverageSessionPlaytime(List<SessionHistory> sessions) {
@@ -252,23 +314,26 @@ public class UserStatisticsService {
         }
     }
 
-    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(List<SessionHistory> sessions, Instant cutoffDate) {
+    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(List<SessionHistory> sessions, DateRange range) {
         Map<LocalDate, Long> dailyMap = new HashMap<>();
-        
+
         for (SessionHistory session : sessions) {
             LocalDate date = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault()).toLocalDate();
             dailyMap.merge(date, session.getDurationSeconds(), Long::sum);
         }
-        
-        LocalDate startDate = cutoffDate.equals(Instant.EPOCH) 
+
+        LocalDate startDate = range.start().equals(Instant.EPOCH)
             ? sessions.stream()
                 .map(s -> LocalDateTime.ofInstant(s.getStartedAt(), ZoneId.systemDefault()).toLocalDate())
                 .min(LocalDate::compareTo)
                 .orElse(LocalDate.now())
-            : LocalDateTime.ofInstant(cutoffDate, ZoneId.systemDefault()).toLocalDate();
-        
-        LocalDate endDate = LocalDate.now();
-        
+            : LocalDateTime.ofInstant(range.start(), ZoneId.systemDefault()).toLocalDate();
+
+        // Cap at today: for the current period this stops the list at "now" (old
+        // behavior); for a past period, range.end() is already before today.
+        LocalDate rangeEndDate = LocalDateTime.ofInstant(range.end(), ZoneId.systemDefault()).toLocalDate();
+        LocalDate endDate = rangeEndDate.isBefore(LocalDate.now()) ? rangeEndDate : LocalDate.now();
+
         List<UserStatisticsDto.DailyPlaytime> result = new ArrayList<>();
         LocalDate current = startDate;
         while (!current.isAfter(endDate)) {

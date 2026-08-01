@@ -23,9 +23,10 @@ public class StatisticsController {
     @GetMapping
     public ResponseEntity<UserStatisticsDto> getUserStatistics(
             @RequestParam(defaultValue = "all") String interval,
+            @RequestParam(required = false) String date,
             Authentication authentication) {
         User user = userService.getOrCreateUser(authentication);
-        UserStatisticsDto statistics = userStatisticsService.getUserStatistics(user, interval);
+        UserStatisticsDto statistics = userStatisticsService.getUserStatistics(user, interval, date);
         return ResponseEntity.ok(statistics);
     }
 
