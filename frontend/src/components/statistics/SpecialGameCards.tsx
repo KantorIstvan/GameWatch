@@ -1,5 +1,8 @@
 import { TrendingUp, CalendarDays, Timer, Hourglass } from 'lucide-react'
-import GameRankingCard from '../GameRankingCard'
+import GameBannerCard from './GameBannerCard'
+import StatCard from '../StatCard'
+import { statColors, statForegrounds } from '../../lib/statColors'
+import { formatTime } from '../../utils/formatters'
 
 interface SpecialGame {
   gameId: number
@@ -20,45 +23,50 @@ interface SpecialGameCardsProps {
 
 function SpecialGameCards({ favoriteGame, longestSessionSeconds, longestToComplete, fastestToComplete, formatDuration, t }: SpecialGameCardsProps) {
   return (
-    <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-4">
       {favoriteGame && (
-        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
-          <div className="mb-4 flex items-center">
-            <TrendingUp className="mr-2 size-5 text-accent" />
-            <p className="text-h4 font-bold">{t('statistics.userStats.favoriteGame')}</p>
-          </div>
-          <GameRankingCard game={favoriteGame} rank={1} showDaysToComplete={false} t={t} />
-        </div>
+        <GameBannerCard
+          game={favoriteGame}
+          size="medium"
+          label={t('statistics.userStats.favoriteGame')}
+          labelIcon={<TrendingUp className="size-4" />}
+          metric={formatTime(favoriteGame.playtimeSeconds)}
+        />
       )}
 
       {!!longestSessionSeconds && (
-        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
-          <div className="mb-4 flex items-center">
-            <Hourglass className="mr-2 size-5 text-success" />
-            <p className="text-h4 font-bold">{t('statistics.userStats.longestSession')}</p>
-          </div>
-          <p className="text-h2 font-bold text-text-primary">{formatDuration(longestSessionSeconds)}</p>
-        </div>
+        <StatCard
+          title={t('statistics.userStats.longestSession')}
+          value={formatDuration(longestSessionSeconds)}
+          icon={<Hourglass className="size-5" />}
+          color={statColors.aqua}
+          foreground={statForegrounds.aqua}
+          className="min-h-56"
+        />
       )}
 
       {longestToComplete && (
-        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
-          <div className="mb-4 flex items-center">
-            <CalendarDays className="mr-2 size-5 text-warning" />
-            <p className="text-h4 font-bold">{t('statistics.userStats.longestToComplete')}</p>
-          </div>
-          <GameRankingCard game={longestToComplete} rank={1} showDaysToComplete t={t} />
-        </div>
+        <GameBannerCard
+          game={longestToComplete}
+          size="medium"
+          label={t('statistics.userStats.longestToComplete')}
+          labelIcon={<CalendarDays className="size-4" />}
+          metric={longestToComplete.daysToComplete !== undefined
+            ? t('statistics.userStats.daysToComplete', { days: longestToComplete.daysToComplete })
+            : undefined}
+        />
       )}
 
       {fastestToComplete && (
-        <div className="h-full rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
-          <div className="mb-4 flex items-center">
-            <Timer className="mr-2 size-5 text-success" />
-            <p className="text-h4 font-bold">{t('statistics.userStats.fastestCompletion')}</p>
-          </div>
-          <GameRankingCard game={fastestToComplete} rank={1} showDaysToComplete t={t} />
-        </div>
+        <GameBannerCard
+          game={fastestToComplete}
+          size="medium"
+          label={t('statistics.userStats.fastestCompletion')}
+          labelIcon={<Timer className="size-4" />}
+          metric={fastestToComplete.daysToComplete !== undefined
+            ? t('statistics.userStats.daysToComplete', { days: fastestToComplete.daysToComplete })
+            : undefined}
+        />
       )}
     </div>
   )

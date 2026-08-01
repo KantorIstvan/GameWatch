@@ -15,6 +15,7 @@ import TopGamesSection from '../components/statistics/TopGamesSection'
 import GameRecommendations from '../components/statistics/GameRecommendations'
 import SpecialGameCards from '../components/statistics/SpecialGameCards'
 import PeriodPicker from '../components/statistics/PeriodPicker'
+import { statColors, statForegrounds } from '../lib/statColors'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,28 +23,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const palette = {
   secondary: 'var(--color-text-secondary)',
-}
-
-// Fixed categorical assignment (dataviz stat-accent palette, see tokens.css) — one
-// hue per bento-tile identity, never reassigned by rank/value.
-const statColors = {
-  blue: 'var(--color-stat-blue)',
-  orange: 'var(--color-stat-orange)',
-  aqua: 'var(--color-stat-aqua)',
-  yellow: 'var(--color-stat-yellow)',
-  magenta: 'var(--color-stat-magenta)',
-  green: 'var(--color-stat-green)',
-  violet: 'var(--color-stat-violet)',
-}
-
-const statForegrounds = {
-  blue: 'var(--color-stat-blue-foreground)',
-  orange: 'var(--color-stat-orange-foreground)',
-  aqua: 'var(--color-stat-aqua-foreground)',
-  yellow: 'var(--color-stat-yellow-foreground)',
-  magenta: 'var(--color-stat-magenta-foreground)',
-  green: 'var(--color-stat-green-foreground)',
-  violet: 'var(--color-stat-violet-foreground)',
 }
 
 function Statistics() {
@@ -145,60 +124,56 @@ function Statistics() {
         </Alert>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-4">
         <StatCard
           hero
+          className="col-span-2 md:row-span-2"
           title={t('statistics.userStats.totalPlaytime')}
           value={formatTime(statistics.totalPlaytimeSeconds)}
           icon={<Timer className="size-6" />}
           color={statColors.blue}
           foreground={statForegrounds.blue}
         />
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 sm:gap-5">
-          <StatCard
-            title={t('statistics.userStats.totalGames')}
-            value={statistics.totalGamesCount}
-            icon={<Gamepad2 className="size-5" />}
-            color={statColors.orange}
-            foreground={statForegrounds.orange}
-          />
-          <StatCard
-            title={t('statistics.userStats.completed')}
-            value={statistics.gamesCompleted}
-            icon={<CircleCheck className="size-5" />}
-            color={statColors.green}
-            foreground={statForegrounds.green}
-          />
-          <StatCard
-            title={t('statistics.userStats.inProgress')}
-            value={statistics.gamesInProgress}
-            icon={<CirclePlay className="size-5" />}
-            color={statColors.yellow}
-            foreground={statForegrounds.yellow}
-          />
-          <StatCard
-            title={t('statistics.userStats.totalSessions')}
-            value={statistics.totalSessionCount}
-            icon={<CalendarDays className="size-5" />}
-            color={statColors.aqua}
-            foreground={statForegrounds.aqua}
-          />
-          <StatCard
-            className="col-span-2 sm:col-span-1"
-            title={t('statistics.userStats.avgSession')}
-            value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
-            icon={<Clock className="size-5" />}
-            color={statColors.violet}
-            foreground={statForegrounds.violet}
-          />
-        </div>
-      </div>
+        <StatCard
+          title={t('statistics.userStats.totalGames')}
+          value={statistics.totalGamesCount}
+          icon={<Gamepad2 className="size-5" />}
+          color={statColors.orange}
+          foreground={statForegrounds.orange}
+        />
+        <StatCard
+          title={t('statistics.userStats.completed')}
+          value={statistics.gamesCompleted}
+          icon={<CircleCheck className="size-5" />}
+          color={statColors.green}
+          foreground={statForegrounds.green}
+        />
+        <StatCard
+          title={t('statistics.userStats.inProgress')}
+          value={statistics.gamesInProgress}
+          icon={<CirclePlay className="size-5" />}
+          color={statColors.yellow}
+          foreground={statForegrounds.yellow}
+        />
+        <StatCard
+          title={t('statistics.userStats.totalSessions')}
+          value={statistics.totalSessionCount}
+          icon={<CalendarDays className="size-5" />}
+          color={statColors.aqua}
+          foreground={statForegrounds.aqua}
+        />
+        <StatCard
+          title={t('statistics.userStats.avgSession')}
+          value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
+          icon={<Clock className="size-5" />}
+          color={statColors.violet}
+          foreground={statForegrounds.violet}
+        />
 
-      {hasData && (
-        <>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
+        {hasData && (
+          <>
             <div
-              className="h-full rounded-xl border border-current/20 p-4 backdrop-blur-xl sm:p-6"
+              className="h-full rounded-xl border border-current/20 p-5 backdrop-blur-xl"
               style={{
                 color: statColors.green,
                 background: `linear-gradient(135deg, color-mix(in srgb, ${statColors.green} 10%, transparent) 0%, color-mix(in srgb, ${statColors.green} 5%, transparent) 100%)`,
@@ -237,6 +212,7 @@ function Statistics() {
 
             {statistics.favoriteDeveloper && (
               <InfoCard
+                className="p-5"
                 icon={<Code className="size-5" />}
                 iconColor={statColors.magenta}
                 iconForeground={statForegrounds.magenta}
@@ -248,6 +224,7 @@ function Statistics() {
 
             {statistics.favoritePublisher && (
               <InfoCard
+                className="p-5"
                 icon={<Building2 className="size-5" />}
                 iconColor={statColors.aqua}
                 iconForeground={statForegrounds.aqua}
@@ -256,8 +233,12 @@ function Statistics() {
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
               />
             )}
-          </div>
+          </>
+        )}
+      </div>
 
+      {hasData && (
+        <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
             {dailyPlaytimeData.length > 0 && (
               <div className="lg:col-span-2">

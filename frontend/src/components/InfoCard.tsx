@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 interface InfoCardProps {
   icon: ReactNode
@@ -7,12 +8,13 @@ interface InfoCardProps {
   title: string
   value: string | number
   subtitle?: string
+  className?: string
 }
 
-function InfoCard({ icon, iconColor, iconForeground, title, value, subtitle }: InfoCardProps) {
+function InfoCard({ icon, iconColor, iconForeground, title, value, subtitle, className }: InfoCardProps) {
   return (
     <div
-      className="h-full rounded-xl border border-current/20 p-8 backdrop-blur-xl"
+      className={cn('h-full rounded-xl border border-current/20 p-8 backdrop-blur-xl', className)}
       style={{
         color: iconColor,
         background: `linear-gradient(135deg, color-mix(in srgb, ${iconColor} 10%, transparent) 0%, color-mix(in srgb, ${iconColor} 5%, transparent) 100%)`,
