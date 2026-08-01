@@ -140,3 +140,15 @@ export function formatDateTimeLocal(date: Date): string {
 export function getMaxDateTime(): string {
   return formatDateTimeLocal(new Date())
 }
+
+/**
+ * Get the ISO 8601 week number (1-53) for a date.
+ * Example: 2026-08-01 -> 31
+ */
+export function getISOWeekNumber(date: Date = new Date()): number {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNumber = target.getUTCDay() || 7
+  target.setUTCDate(target.getUTCDate() + 4 - dayNumber)
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1))
+  return Math.ceil(((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+}
