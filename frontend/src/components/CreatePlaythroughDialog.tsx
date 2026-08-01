@@ -50,21 +50,24 @@ function CreatePlaythroughDialog({
   const [gamePickerOpen, setGamePickerOpen] = useState(false)
   const gameListRef = useRef<HTMLDivElement>(null)
 
-  // The game list is a Popover nested inside a Dialog; Radix's dialog scroll-lock
-  // intercepts wheel events before they reach the popover's own scroll container,
-  // so mouse-wheel scrolling silently does nothing. Take over scrolling manually
-  // with a non-passive listener so preventDefault actually applies.
+  // The game list is a Popover nested inside a Dialog. Radix's dialog scroll-lock
+  // registers a capture-phase wheel listener on the document that stops propagation
+  // before it reaches the popover's own scroll container, so a listener on the list
+  // itself never even fires. Intercept at the window level (the earliest possible
+  // point in the capture phase) so this runs first, and take scrolling over manually.
   useEffect(() => {
-    const el = gameListRef.current
-    if (!el || !gamePickerOpen) return
+    if (!gamePickerOpen) return
 
     const handleWheel = (e: WheelEvent) => {
+      const el = gameListRef.current
+      if (!el || !el.contains(e.target as Node)) return
       e.preventDefault()
+      e.stopPropagation()
       el.scrollTop += e.deltaY
     }
 
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
+    window.addEventListener('wheel', handleWheel, { capture: true, passive: false })
+    return () => window.removeEventListener('wheel', handleWheel, { capture: true })
   }, [gamePickerOpen])
 
   const availablePlatforms = useMemo(() => {
