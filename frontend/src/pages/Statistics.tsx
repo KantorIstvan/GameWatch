@@ -139,50 +139,38 @@ function Statistics() {
             title={t('statistics.userStats.longestSession')}
             value={formatTimeDetailed(statistics.longestSessionSeconds)}
             icon={<Hourglass className="size-5" />}
-            color={statColors.aqua}
-            foreground={statForegrounds.aqua}
           />
         )}
         <StatCard
           title={t('statistics.userStats.totalGames')}
           value={statistics.totalGamesCount}
           icon={<Gamepad2 className="size-5" />}
-          color={statColors.orange}
-          foreground={statForegrounds.orange}
         />
         <StatCard
           title={t('statistics.userStats.completed')}
           value={statistics.gamesCompleted}
           icon={<CircleCheck className="size-5" />}
-          color={statColors.green}
-          foreground={statForegrounds.green}
         />
         <StatCard
           title={t('statistics.userStats.inProgress')}
           value={statistics.gamesInProgress}
           icon={<CirclePlay className="size-5" />}
-          color={statColors.yellow}
-          foreground={statForegrounds.yellow}
         />
         <StatCard
           title={t('statistics.userStats.totalSessions')}
           value={statistics.totalSessionCount}
           icon={<CalendarDays className="size-5" />}
-          color={statColors.aqua}
-          foreground={statForegrounds.aqua}
         />
         <StatCard
           title={t('statistics.userStats.avgSession')}
           value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
           icon={<Clock className="size-5" />}
-          color={statColors.violet}
-          foreground={statForegrounds.violet}
         />
 
         {hasData && (
           <>
             <div
-              className="h-full rounded-xl border border-current/20 p-5 backdrop-blur-xl"
+              className="h-full rounded-xl border border-current/20 p-5 backdrop-blur-xl md:col-span-2"
               style={{
                 color: statColors.green,
                 background: `linear-gradient(135deg, color-mix(in srgb, ${statColors.green} 10%, transparent) 0%, color-mix(in srgb, ${statColors.green} 5%, transparent) 100%)`,
@@ -221,10 +209,8 @@ function Statistics() {
 
             {statistics.favoriteDeveloper && (
               <InfoCard
-                className="p-5"
+                className="p-5 md:col-span-2"
                 icon={<Code className="size-5" />}
-                iconColor={statColors.magenta}
-                iconForeground={statForegrounds.magenta}
                 title={t('statistics.userStats.favoriteDeveloper')}
                 value={statistics.favoriteDeveloper}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -233,10 +219,8 @@ function Statistics() {
 
             {statistics.favoritePublisher && (
               <InfoCard
-                className="p-5"
+                className="p-5 md:col-span-2"
                 icon={<Building2 className="size-5" />}
-                iconColor={statColors.aqua}
-                iconForeground={statForegrounds.aqua}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}

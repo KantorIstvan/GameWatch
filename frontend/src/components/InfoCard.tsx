@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 interface InfoCardProps {
   icon: ReactNode
-  iconColor: string
+  iconColor?: string
   iconForeground?: string
   title: string
   value: string | number
@@ -14,16 +14,24 @@ interface InfoCardProps {
 function InfoCard({ icon, iconColor, iconForeground, title, value, subtitle, className }: InfoCardProps) {
   return (
     <div
-      className={cn('h-full rounded-xl border border-current/20 p-8 backdrop-blur-xl', className)}
-      style={{
-        color: iconColor,
-        background: `linear-gradient(135deg, color-mix(in srgb, ${iconColor} 10%, transparent) 0%, color-mix(in srgb, ${iconColor} 5%, transparent) 100%)`,
-      }}
+      className={cn(
+        'h-full rounded-xl border p-8 backdrop-blur-xl',
+        iconColor ? 'border-current/20' : 'border-border bg-surface/60',
+        className
+      )}
+      style={
+        iconColor
+          ? {
+              color: iconColor,
+              background: `linear-gradient(135deg, color-mix(in srgb, ${iconColor} 10%, transparent) 0%, color-mix(in srgb, ${iconColor} 5%, transparent) 100%)`,
+            }
+          : undefined
+      }
     >
       <div className="mb-2 flex items-center">
         <div
-          className="mr-3 flex rounded-md p-2 shadow-2"
-          style={{ backgroundColor: iconColor, color: iconForeground ?? '#ffffff' }}
+          className={cn('mr-3 flex rounded-md p-2 shadow-2', !iconColor && 'bg-text-primary text-bg')}
+          style={iconColor ? { backgroundColor: iconColor, color: iconForeground ?? '#ffffff' } : undefined}
         >
           {icon}
         </div>
