@@ -1,5 +1,7 @@
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { useWeekStart } from '../../contexts/WeekStartContext'
+import { formatDurationWords } from '../../utils/formatters'
 
 interface DayOfWeekData {
   day: string
@@ -26,6 +28,7 @@ function DayOfWeekDualAxisChart({
   noDataMessage = 'No data available'
 }: DayOfWeekDualAxisChartProps) {
   const { weekStart } = useWeekStart()
+  const { t } = useTranslation()
 
   const hasData = data.length > 0 && data.some(item => item.hours > 0 || item.avgHours > 0)
 
@@ -41,14 +44,7 @@ function DayOfWeekDualAxisChart({
     lineColor: index === currentDayMappedIndex ? vibrantSecondary : normalSecondary,
   }))
 
-  const formatDuration = (hours: number) => {
-    if (hours < 1) {
-      return `${Math.round(hours * 60)}min`
-    }
-    const h = Math.floor(hours)
-    const m = Math.round((hours - h) * 60)
-    return m > 0 ? `${h}h ${m}min` : `${h}h`
-  }
+  const formatDuration = (hours: number) => formatDurationWords(Math.round(hours * 3600), t)
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -84,7 +80,7 @@ function DayOfWeekDualAxisChart({
                   : `linear-gradient(135deg, ${normalPrimary} 0%, ${normalPrimaryLight} 100%)`,
               }} />
               <span className="text-caption text-text-secondary sm:text-body-sm">
-                Total: <strong className="font-semibold text-text-primary">{payload[0]?.value?.toFixed(1)}h</strong>
+                Total: <strong className="font-semibold text-text-primary">{formatDuration(payload[0]?.value || 0)}</strong>
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">

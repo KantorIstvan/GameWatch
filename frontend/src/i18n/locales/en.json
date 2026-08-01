@@ -188,12 +188,12 @@
   },
   "statistics": {
     "title": "Statistics",
-    "exportCSV": "Export CSV",
+    "exportCSV": "Export",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
     "userStats": {
       "totalPlaytime": "Total Playtime",
-      "totalGames": "Total Games",
+      "totalGames": "Owned Games",
       "completed": "Completed",
       "inProgress": "In Progress",
       "totalSessions": "Total Sessions",
@@ -212,6 +212,7 @@
       "month": "Month",
       "year": "Year",
       "allTime": "All Time",
+      "currentWeekLabel": "Week {{number}}",
       "hours": "Hours",
       "hoursPlayed": "Hours Played",
       "daysToComplete": "{{days}} days to complete",
@@ -288,6 +289,28 @@
       "startTime": "Start Time",
       "endTime": "End Time",
       "actions": "Actions"
+    },
+    "export": {
+      "metric": "Metric",
+      "value": "Value",
+      "exportDate": "Export Date",
+      "timePeriod": "Time Period",
+      "gamesCompleted": "Games Completed",
+      "gamesInProgress": "Games In Progress",
+      "overview": "Overview",
+      "date": "Date",
+      "rank": "Rank",
+      "game": "Game",
+      "day": "Day",
+      "category": "Category",
+      "genre": "Genre",
+      "platform": "Platform",
+      "hour": "Hour",
+      "highlights": "Highlights",
+      "topGames": "Top Games",
+      "totalDuration": "Total Duration",
+      "avgDuration": "Average Duration",
+      "daysToComplete": "Days to Complete"
     }
   },
   "dashboard": {
@@ -452,7 +475,14 @@
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
     "backToTimers": "Back to Timers",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "duration": {
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "combined": "{{hours}} {{minutes}}"
+    }
   },
   "game": {
     "released": "Released",
@@ -500,7 +530,15 @@
     "calendarView": "Calendar",
     "listView": "List",
     "event": "event",
-    "events": "events"
+    "events": "events",
+    "filter": "Filter",
+    "all": "All",
+    "completed": "Completed",
+    "dropped": "Dropped",
+    "started": "Started",
+    "eventDetails": "Playthrough Details",
+    "viewFullDetails": "View Full Details",
+    "duration": "Duration"
   },
   "errors": {
     "failedLoadData": "Failed to load data. Please try again.",

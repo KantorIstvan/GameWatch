@@ -178,12 +178,12 @@
   },
   "statistics": {
     "title": "Statisztikák",
-    "exportCSV": "CSV Exportálás",
+    "exportCSV": "Exportálás",
     "comingSoon": "Hamarosan",
     "comingSoonDescription": "Dolgozunk azon, hogy részletes statisztikákat nyújtsunk játékszokásaidról!",
     "userStats": {
       "totalPlaytime": "Összes Játékidő",
-      "totalGames": "Összes Játszott Játék",
+      "totalGames": "Birtokolt Játékok",
       "completed": "Befejezve",
       "inProgress": "Folyamatban",
       "totalSessions": "Összes Alkalom",
@@ -202,6 +202,7 @@
       "month": "Hónap",
       "year": "Év",
       "allTime": "Mindent",
+      "currentWeekLabel": "{{number}}. hét",
       "hours": "Órák",
       "hoursPlayed": "Játékórák",
       "daysToComplete": "{{days}} nap alatt",
@@ -276,6 +277,28 @@
       "startTime": "Kezdés Ideje",
       "endTime": "Befejezés Ideje",
       "actions": "Műveletek"
+    },
+    "export": {
+      "metric": "Mutató",
+      "value": "Érték",
+      "exportDate": "Exportálás Dátuma",
+      "timePeriod": "Időszak",
+      "gamesCompleted": "Befejezett Játékok",
+      "gamesInProgress": "Folyamatban Lévő Játékok",
+      "overview": "Áttekintés",
+      "date": "Dátum",
+      "rank": "Helyezés",
+      "game": "Játék",
+      "day": "Nap",
+      "category": "Kategória",
+      "genre": "Műfaj",
+      "platform": "Platform",
+      "hour": "Óra",
+      "highlights": "Kiemelt Statisztikák",
+      "topGames": "Legtöbbet Játszott Játékok",
+      "totalDuration": "Összes Időtartam",
+      "avgDuration": "Átlagos Időtartam",
+      "daysToComplete": "Napok a Befejezésig"
     }
   },
   "dashboard": {
@@ -432,7 +455,14 @@
     "back": "Vissza",
     "backToDashboard": "Vissza az Irányítópulthoz",
     "backToTimers": "Vissza az Időmérőkhöz",
-    "retry": "Próbáld újra"
+    "retry": "Próbáld újra",
+    "duration": {
+      "hours_one": "{{count}} óra",
+      "hours_other": "{{count}} óra",
+      "minutes_one": "{{count}} perc",
+      "minutes_other": "{{count}} perc",
+      "combined": "{{hours}} {{minutes}}"
+    }
   },
   "game": {
     "released": "Megjelent",
@@ -480,7 +510,15 @@
     "calendarView": "Naptár",
     "listView": "Lista",
     "event": "esemény",
-    "events": "esemény"
+    "events": "esemény",
+    "filter": "Szűrő",
+    "all": "Összes",
+    "completed": "Befejezve",
+    "dropped": "Abbahagyva",
+    "started": "Elkezdve",
+    "eventDetails": "Játékmenet Részletei",
+    "viewFullDetails": "Teljes Részletek Megtekintése",
+    "duration": "Időtartam"
   },
   "errors": {
     "failedLoadData": "Nem sikerült betölteni az adatokat. Kérlek, próbáld újra.",

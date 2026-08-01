@@ -1,15 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight,
+  Timer, CalendarDays, Clock, RotateCcw, PlayCircle, History, PlusCircle, Trophy, Zap
+} from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { gamesApi, playthroughsApi } from '../services/api'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
+import StatCard from '../components/StatCard'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTranslation } from 'react-i18next'
 import { getStartOfWeek, getStartOfMonth, getStartOfYear } from '../utils/dateUtils'
+import { formatDurationWords } from '../utils/formatters'
 import type { GameStatistics } from '../types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,20 +74,7 @@ function GameStatisticsPage() {
     }
   }
 
-  const formatDuration = (seconds: number): string => {
-    if (!seconds) return '0h 0m 0s'
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`
-    } else {
-      return `${secs}s`
-    }
-  }
+  const formatDuration = (seconds: number): string => formatDurationWords(seconds, t)
 
   const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return 'N/A'
@@ -199,59 +191,10 @@ function GameStatisticsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedSessions.length / rowsPerPage))
 
-  const exportToCSV = () => {
+  const handleExport = async () => {
     if (!statistics) return
-
-    const rows: (string | number)[][] = []
-
-    rows.push(['GameWatch Game Statistics Export'])
-    rows.push(['Game', statistics.gameName])
-    rows.push(['Export Date', new Date().toLocaleString()])
-    rows.push([])
-
-    rows.push(['Overview'])
-    rows.push(['Total Playtime', formatDuration(statistics.totalPlayTimeSeconds)])
-    rows.push(['Total Sessions', statistics.totalSessions.toString()])
-    rows.push(['Average Session Time', formatDuration(Math.round(statistics.averageSessionTimeSeconds))])
-    rows.push(['Longest Session', formatDuration(statistics.longestSessionSeconds)])
-    rows.push(['Number of Replays', statistics.replaysCount.toString()])
-    if (statistics.firstStartedDate) rows.push(['First Started', formatDateOnly(statistics.firstStartedDate)])
-    if (statistics.lastPlayedDate) rows.push(['Last Played', formatDateOnly(statistics.lastPlayedDate)])
-    if (statistics.longestCompletionSeconds) rows.push(['Longest Completion', formatDuration(statistics.longestCompletionSeconds)])
-    if (statistics.shortestCompletionSeconds) rows.push(['Shortest Completion', formatDuration(statistics.shortestCompletionSeconds)])
-    rows.push([])
-
-    rows.push(['Session Details'])
-    rows.push(['Session #', 'Playthrough', 'Date', 'Duration', 'Pause Count'])
-    filteredAndSortedSessions.forEach(session => {
-      rows.push([
-        session.sessionNumber,
-        session.playthroughTitle || 'N/A',
-        formatDateOnly(session.sessionDate),
-        formatDuration(session.sessionTimeSeconds),
-        session.pauseCount || 0
-      ])
-    })
-
-    const csvContent = rows.map(row =>
-      row.map(cell => {
-        const cellStr = String(cell ?? '')
-        if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
-          return `"${cellStr.replace(/"/g, '""')}"`
-        }
-        return cellStr
-      }).join(',')
-    ).join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `gamewatch-${statistics.gameName.replace(/[^a-z0-9]/gi, '_')}-${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const { exportGameStatisticsToXlsx } = await import('../utils/xlsxExport')
+    exportGameStatisticsToXlsx(statistics, filteredAndSortedSessions, t)
   }
 
   if (loading) return <Loading />
@@ -266,22 +209,37 @@ function GameStatisticsPage() {
 
   if (!statistics) return null
 
+  // Only the two headline metrics get a color accent, matching the Statistics page's
+  // pattern of highlighting a card or two and leaving the rest neutral rather than
+  // coloring every tile (which just becomes visual noise).
   const statCards = [
-    { label: t('statistics.gameStats.totalPlayTime'), value: formatDuration(statistics.totalPlayTimeSeconds) },
-    { label: t('statistics.gameStats.totalSessions'), value: statistics.totalSessions.toString() },
-    { label: t('statistics.gameStats.averageSession'), value: formatDuration(statistics.averageSessionTimeSeconds) },
-    { label: t('statistics.gameStats.longestSession'), value: formatDuration(statistics.longestSessionSeconds) },
-    { label: t('statistics.gameStats.replays'), value: statistics.replaysCount.toString() },
-    { label: t('statistics.gameStats.firstStarted'), value: formatDateOnly(statistics.firstStartedDate) },
-    { label: t('statistics.gameStats.lastPlayed'), value: formatDateOnly(statistics.lastPlayedDate) },
-    { label: t('statistics.gameStats.gameAdded'), value: formatDateOnly(statistics.gameAddedDate) },
+    {
+      label: t('statistics.gameStats.totalPlayTime'),
+      value: formatDuration(statistics.totalPlayTimeSeconds),
+      icon: <Timer className="size-5" />,
+      color: 'var(--color-success)'
+    },
+    {
+      label: t('statistics.gameStats.totalSessions'),
+      value: statistics.totalSessions.toString(),
+      icon: <CalendarDays className="size-5" />,
+      color: 'var(--color-accent)'
+    },
+    { label: t('statistics.gameStats.averageSession'), value: formatDuration(statistics.averageSessionTimeSeconds), icon: <Clock className="size-5" /> },
+    { label: t('statistics.gameStats.longestSession'), value: formatDuration(statistics.longestSessionSeconds), icon: <Trophy className="size-5" /> },
+    { label: t('statistics.gameStats.replays'), value: statistics.replaysCount.toString(), icon: <RotateCcw className="size-5" /> },
+    { label: t('statistics.gameStats.firstStarted'), value: formatDateOnly(statistics.firstStartedDate), icon: <PlayCircle className="size-5" /> },
+    { label: t('statistics.gameStats.lastPlayed'), value: formatDateOnly(statistics.lastPlayedDate), icon: <History className="size-5" /> },
+    { label: t('statistics.gameStats.gameAdded'), value: formatDateOnly(statistics.gameAddedDate), icon: <PlusCircle className="size-5" /> },
     {
       label: t('statistics.gameStats.longestCompletion'),
-      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na')
+      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na'),
+      icon: <Trophy className="size-5" />
     },
     {
       label: t('statistics.gameStats.shortestCompletion'),
-      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na')
+      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na'),
+      icon: <Zap className="size-5" />
     },
   ]
 
@@ -297,7 +255,7 @@ function GameStatisticsPage() {
             <p className="mt-1 text-body-sm text-text-secondary">{t('statistics.gameStats.title')}</p>
           </div>
         </div>
-        <Button onClick={exportToCSV} className="bg-success text-white hover:bg-success/90">
+        <Button onClick={handleExport} className="bg-success text-white hover:bg-success/90">
           <Download className="size-4" />
           {t('statistics.exportCSV')}
         </Button>
@@ -305,10 +263,7 @@ function GameStatisticsPage() {
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         {statCards.map((stat, index) => (
-          <div key={index} className="h-full rounded-lg border border-border bg-surface/60 p-5 backdrop-blur-xl">
-            <p className="text-caption font-medium uppercase tracking-wide text-text-secondary">{stat.label}</p>
-            <p className="mt-2 text-h4 font-bold text-accent">{stat.value}</p>
-          </div>
+          <StatCard key={index} title={stat.label} value={stat.value} icon={stat.icon} color={stat.color} />
         ))}
       </div>
 
@@ -373,7 +328,7 @@ function GameStatisticsPage() {
                     borderRadius: 8,
                   }}
                   labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
-                  formatter={(value: number | undefined) => [`${value || 0} ${t('statistics.gameStats.hours').toLowerCase()}`, t('statistics.gameStats.playtime')]}
+                  formatter={(value: number | undefined) => [formatDurationWords(Math.round((value || 0) * 3600), t), t('statistics.gameStats.playtime')]}
                 />
                 <Area
                   type="monotone"

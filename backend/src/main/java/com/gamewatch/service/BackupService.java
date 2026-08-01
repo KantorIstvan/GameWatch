@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,7 @@ public class BackupService {
     private final UserGameRepository userGameRepository;
     private final HealthSettingsRepository healthSettingsRepository;
     private final MoodEntryRepository moodEntryRepository;
+    private final HealthService healthService;
 
     @Transactional(readOnly = true)
     public BackupDto exportBackup(User user) {
@@ -167,9 +170,42 @@ public class BackupService {
             importHealthSettings(user, data.getHealthSettings());
         }
 
-        log.info("Backup import completed: {} games, {} playthroughs, {} sessions, {} mood entries", 
-                gameMap.size(), playthroughMap.size(), sessionMap.size(), 
+        // Recompute derived daily health metrics (health score, heatmap) for every
+        // date covered by the imported sessions. These metrics are a cache derived
+        // from SessionHistory/MoodEntry rather than raw backed-up data, so importing
+        // sessions alone leaves the heatmap empty until this runs.
+        if (!sessionMap.isEmpty()) {
+            recalculateHealthMetricsForImportedSessions(user, sessionMap.values());
+        }
+
+        log.info("Backup import completed: {} games, {} playthroughs, {} sessions, {} mood entries",
+                gameMap.size(), playthroughMap.size(), sessionMap.size(),
                 data.getMoodEntries() != null ? data.getMoodEntries().size() : 0);
+    }
+
+    private void recalculateHealthMetricsForImportedSessions(User user, Collection<SessionHistory> sessions) {
+        LocalDate minDate = null;
+        LocalDate maxDate = null;
+
+        for (SessionHistory session : sessions) {
+            LocalDate startDate = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault()).toLocalDate();
+            LocalDate endDate = LocalDateTime.ofInstant(session.getEndedAt(), ZoneId.systemDefault()).toLocalDate();
+
+            if (minDate == null || startDate.isBefore(minDate)) {
+                minDate = startDate;
+            }
+            if (maxDate == null || endDate.isAfter(maxDate)) {
+                maxDate = endDate;
+            }
+        }
+
+        if (minDate == null) {
+            return;
+        }
+
+        log.info("Backfilling health metrics for user {} from {} to {} after backup import",
+                user.getId(), minDate, maxDate);
+        healthService.backfillMissingMetrics(user, minDate, maxDate);
     }
 
     private List<BackupDto.BackupGameDto> mapGamesToBackupDto(List<Game> games) {

@@ -185,7 +185,7 @@
     "comingSoonDescription": "Nous travaillons pour vous apporter des statistiques détaillées sur vos habitudes de jeu !",
     "userStats": {
       "totalPlaytime": "Temps de Jeu Total",
-      "totalGames": "Total de Jeux Joués",
+      "totalGames": "Jeux Possédés",
       "completed": "Terminés",
       "inProgress": "En Cours",
       "totalSessions": "Total de Sessions",

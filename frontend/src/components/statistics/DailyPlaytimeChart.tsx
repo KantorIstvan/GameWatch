@@ -3,10 +3,18 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 interface DailyPlaytimeChartProps {
   data: Array<{ date: string; hours: number }>
   title: string
+  valueFormatter?: (hours: number) => string
 }
 
-function DailyPlaytimeChart({ data, title }: DailyPlaytimeChartProps) {
+function DailyPlaytimeChart({ data, title, valueFormatter }: DailyPlaytimeChartProps) {
   if (data.length === 0) return null
+
+  // Thin out date labels as the range grows so they never overlap, instead of
+  // rendering one tick per day regardless of how many days are in view.
+  const targetTickCount = window.innerWidth < 600 ? 6 : 12
+  const tickInterval = data.length > targetTickCount
+    ? Math.ceil(data.length / targetTickCount) - 1
+    : 0
 
   return (
     <div className="h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-5 md:p-6">
@@ -36,7 +44,7 @@ function DailyPlaytimeChart({ data, title }: DailyPlaytimeChartProps) {
               angle={-45}
               textAnchor="end"
               height={window.innerWidth < 600 ? 55 : 60}
-              interval={window.innerWidth < 600 ? 'preserveStartEnd' : 0}
+              interval={tickInterval}
             />
             <YAxis
               label={window.innerWidth >= 600 ? {
@@ -55,6 +63,7 @@ function DailyPlaytimeChart({ data, title }: DailyPlaytimeChartProps) {
                 border: '1px solid var(--color-border)',
                 borderRadius: 8,
               }}
+              formatter={valueFormatter ? (value: number | undefined, name: string | undefined) => [valueFormatter(value || 0), name || ''] : undefined}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             <Area

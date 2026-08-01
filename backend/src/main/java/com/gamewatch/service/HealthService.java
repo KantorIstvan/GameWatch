@@ -450,6 +450,30 @@ public class HealthService {
             .build();
     }
 
+    /**
+     * Heatmap data for a single calendar year, independent of the main dashboard
+     * (which only ever covers the current year). Backfills missing metrics for the
+     * requested range first so older years that predate regular app usage still
+     * render correctly instead of showing gaps.
+     */
+    @Transactional
+    public Map<LocalDate, Integer> getYearlyHeatmap(User user, int year) {
+        LocalDate today = LocalDate.now();
+        LocalDate yearStart = LocalDate.of(year, 1, 1);
+        LocalDate yearEnd = year == today.getYear() ? today : LocalDate.of(year, 12, 31);
+
+        backfillMissingMetrics(user, yearStart, yearEnd);
+
+        List<DailyHealthMetrics> yearlyMetrics = dailyHealthMetricsRepository
+            .findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(user.getId(), yearStart, yearEnd);
+
+        return yearlyMetrics.stream()
+            .collect(Collectors.toMap(
+                DailyHealthMetrics::getMetricDate,
+                m -> m.getHealthScore() != null ? m.getHealthScore() : 50
+            ));
+    }
+
     private HealthDashboardDto.WeeklyMetricsDto calculateWeeklyMetrics(List<DailyHealthMetrics> weekData) {
         double totalHours = weekData.stream()
             .mapToDouble(m -> m.getTotalHours() != null ? m.getTotalHours() : 0.0)

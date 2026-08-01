@@ -4,17 +4,13 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 interface CalendarFiltersProps {
-  mode: string
   statusFilter: string
   setStatusFilter: (filter: string) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
 }
 
-const accent = (mode: string) => (mode === 'light' ? '#667eea' : '#8b9af7')
-
 export const CalendarFilters = ({
-  mode,
   statusFilter,
   setStatusFilter,
   searchQuery,
@@ -25,20 +21,17 @@ export const CalendarFilters = ({
   return (
     <div className="mb-6">
       <div className="mb-2 flex items-center gap-1">
-        <Filter className="size-5" style={{ color: accent(mode) }} />
-        <p className="font-semibold" style={{ color: mode === 'light' ? '#495057' : '#adb5bd' }}>
-          {t('calendar.filter', 'Filter')}
-        </p>
+        <Filter className="size-5 text-accent" />
+        <p className="font-semibold text-text-secondary">{t('calendar.filter')}</p>
       </div>
 
       <div className="relative mb-4">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" style={{ color: accent(mode) }} />
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-accent" />
         <Input
-          placeholder={t('calendar.searchPlaceholder', 'Search games...')}
+          placeholder={t('calendar.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
-          style={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1a1d23' }}
         />
       </div>
 
@@ -51,50 +44,30 @@ export const CalendarFilters = ({
       >
         <ToggleGroupItem
           value="all"
-          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
-          style={
-            statusFilter === 'all'
-              ? { backgroundColor: accent(mode), borderColor: accent(mode) }
-              : { color: accent(mode), borderColor: `${accent(mode)}33` }
-          }
+          className="rounded-md! border border-border px-4 py-2 font-semibold text-text-secondary data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[state=on]:border-accent"
         >
-          {t('calendar.all', 'All')}
+          {t('calendar.all')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="completed"
-          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
-          style={
-            statusFilter === 'completed'
-              ? { backgroundColor: mode === 'light' ? '#10b981' : '#34d399', borderColor: mode === 'light' ? '#10b981' : '#34d399' }
-              : { color: mode === 'light' ? '#10b981' : '#34d399', borderColor: mode === 'light' ? '#10b98133' : '#34d39933' }
-          }
+          className="rounded-md! border border-success/20 px-4 py-2 font-semibold text-success data-[state=on]:border-success data-[state=on]:bg-success data-[state=on]:text-white"
         >
           <CircleCheck className="mr-1 size-4" />
-          {t('calendar.completed', 'Completed')}
+          {t('calendar.completed')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="dropped"
-          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
-          style={
-            statusFilter === 'dropped'
-              ? { backgroundColor: mode === 'light' ? '#f44336' : '#ef5350', borderColor: mode === 'light' ? '#f44336' : '#ef5350' }
-              : { color: mode === 'light' ? '#f44336' : '#ef5350', borderColor: mode === 'light' ? '#f4433633' : '#ef535033' }
-          }
+          className="rounded-md! border border-danger/20 px-4 py-2 font-semibold text-danger data-[state=on]:border-danger data-[state=on]:bg-danger data-[state=on]:text-white"
         >
           <CircleX className="mr-1 size-4" />
-          {t('calendar.dropped', 'Dropped')}
+          {t('calendar.dropped')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="started"
-          className="rounded-md! border px-4 py-2 font-semibold data-[state=on]:text-white"
-          style={
-            statusFilter === 'started'
-              ? { backgroundColor: mode === 'light' ? '#f59e0b' : '#fbbf24', borderColor: mode === 'light' ? '#f59e0b' : '#fbbf24' }
-              : { color: mode === 'light' ? '#f59e0b' : '#fbbf24', borderColor: mode === 'light' ? '#f59e0b33' : '#fbbf2433' }
-          }
+          className="rounded-md! border border-warning/20 px-4 py-2 font-semibold text-warning data-[state=on]:border-warning data-[state=on]:bg-warning data-[state=on]:text-white"
         >
           <Play className="mr-1 size-4" />
-          {t('calendar.started', 'Started')}
+          {t('calendar.started')}
         </ToggleGroupItem>
       </ToggleGroup>
     </div>
