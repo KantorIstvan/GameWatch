@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight,
+  Timer, CalendarDays, Clock, RotateCcw, PlayCircle, History, PlusCircle, Trophy, Zap
+} from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { gamesApi, playthroughsApi } from '../services/api'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
+import StatCard from '../components/StatCard'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -205,22 +209,37 @@ function GameStatisticsPage() {
 
   if (!statistics) return null
 
+  // Only the two headline metrics get a color accent, matching the Statistics page's
+  // pattern of highlighting a card or two and leaving the rest neutral rather than
+  // coloring every tile (which just becomes visual noise).
   const statCards = [
-    { label: t('statistics.gameStats.totalPlayTime'), value: formatDuration(statistics.totalPlayTimeSeconds) },
-    { label: t('statistics.gameStats.totalSessions'), value: statistics.totalSessions.toString() },
-    { label: t('statistics.gameStats.averageSession'), value: formatDuration(statistics.averageSessionTimeSeconds) },
-    { label: t('statistics.gameStats.longestSession'), value: formatDuration(statistics.longestSessionSeconds) },
-    { label: t('statistics.gameStats.replays'), value: statistics.replaysCount.toString() },
-    { label: t('statistics.gameStats.firstStarted'), value: formatDateOnly(statistics.firstStartedDate) },
-    { label: t('statistics.gameStats.lastPlayed'), value: formatDateOnly(statistics.lastPlayedDate) },
-    { label: t('statistics.gameStats.gameAdded'), value: formatDateOnly(statistics.gameAddedDate) },
+    {
+      label: t('statistics.gameStats.totalPlayTime'),
+      value: formatDuration(statistics.totalPlayTimeSeconds),
+      icon: <Timer className="size-5" />,
+      color: 'var(--color-success)'
+    },
+    {
+      label: t('statistics.gameStats.totalSessions'),
+      value: statistics.totalSessions.toString(),
+      icon: <CalendarDays className="size-5" />,
+      color: 'var(--color-accent)'
+    },
+    { label: t('statistics.gameStats.averageSession'), value: formatDuration(statistics.averageSessionTimeSeconds), icon: <Clock className="size-5" /> },
+    { label: t('statistics.gameStats.longestSession'), value: formatDuration(statistics.longestSessionSeconds), icon: <Trophy className="size-5" /> },
+    { label: t('statistics.gameStats.replays'), value: statistics.replaysCount.toString(), icon: <RotateCcw className="size-5" /> },
+    { label: t('statistics.gameStats.firstStarted'), value: formatDateOnly(statistics.firstStartedDate), icon: <PlayCircle className="size-5" /> },
+    { label: t('statistics.gameStats.lastPlayed'), value: formatDateOnly(statistics.lastPlayedDate), icon: <History className="size-5" /> },
+    { label: t('statistics.gameStats.gameAdded'), value: formatDateOnly(statistics.gameAddedDate), icon: <PlusCircle className="size-5" /> },
     {
       label: t('statistics.gameStats.longestCompletion'),
-      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na')
+      value: statistics.longestCompletionSeconds ? formatDuration(statistics.longestCompletionSeconds) : t('statistics.gameStats.na'),
+      icon: <Trophy className="size-5" />
     },
     {
       label: t('statistics.gameStats.shortestCompletion'),
-      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na')
+      value: statistics.shortestCompletionSeconds ? formatDuration(statistics.shortestCompletionSeconds) : t('statistics.gameStats.na'),
+      icon: <Zap className="size-5" />
     },
   ]
 
@@ -244,10 +263,7 @@ function GameStatisticsPage() {
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         {statCards.map((stat, index) => (
-          <div key={index} className="h-full rounded-lg border border-border bg-surface/60 p-5 backdrop-blur-xl">
-            <p className="text-caption font-medium uppercase tracking-wide text-text-secondary">{stat.label}</p>
-            <p className="mt-2 text-h4 font-bold text-accent">{stat.value}</p>
-          </div>
+          <StatCard key={index} title={stat.label} value={stat.value} icon={stat.icon} color={stat.color} />
         ))}
       </div>
 
