@@ -103,17 +103,36 @@ public class BackupService {
         Map<Long, Game> gameMap = new HashMap<>();
         Map<Long, Playthrough> playthroughMap = new HashMap<>();
         Map<Long, SessionHistory> sessionMap = new HashMap<>();
-        
+
         // Track games by externalId and name to prevent duplicates within import
         Map<Integer, Game> gamesByExternalId = new HashMap<>();
         Map<String, Game> gamesByName = new HashMap<>();
+
+        // Playthroughs/sessions/mood entries have no external-id equivalent, so re-importing
+        // the same backup (or the same backup twice) would otherwise duplicate every one of
+        // them. Index what the user already has by a content signature and reuse a match
+        // instead of inserting a duplicate row.
+        Map<String, Playthrough> existingPlaythroughsBySignature = playthroughRepository
+            .findByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+            .collect(Collectors.toMap(this::playthroughSignature, p -> p, (a, b) -> a));
+
+        List<Long> existingPlaythroughIds = existingPlaythroughsBySignature.values().stream()
+            .map(Playthrough::getId)
+            .collect(Collectors.toList());
+        Map<String, SessionHistory> existingSessionsBySignature = existingPlaythroughIds.isEmpty()
+            ? new HashMap<>()
+            : sessionHistoryRepository.findByPlaythroughIdIn(existingPlaythroughIds).stream()
+                .collect(Collectors.toMap(this::sessionSignature, s -> s, (a, b) -> a));
+
+        Map<String, MoodEntry> existingMoodEntriesBySignature = moodEntryRepository.findByUserId(user.getId()).stream()
+            .collect(Collectors.toMap(this::moodEntrySignature, m -> m, (a, b) -> a));
 
         // Import games
         if (data.getGames() != null) {
             for (BackupDto.BackupGameDto gameDto : data.getGames()) {
                 Game game = importGame(user, gameDto, gamesByExternalId, gamesByName);
                 gameMap.put(gameDto.getOriginalId(), game);
-                
+
                 // Track for deduplication
                 if (gameDto.getExternalId() != null) {
                     gamesByExternalId.put(gameDto.getExternalId(), game);
@@ -129,11 +148,11 @@ public class BackupService {
             for (BackupDto.BackupPlaythroughDto ptDto : data.getPlaythroughs()) {
                 Game game = gameMap.get(ptDto.getGameOriginalId());
                 if (game != null) {
-                    Playthrough playthrough = importPlaythrough(user, ptDto, game, playthroughMap);
+                    Playthrough playthrough = importPlaythrough(user, ptDto, game, existingPlaythroughsBySignature);
                     playthroughMap.put(ptDto.getOriginalId(), playthrough);
                 }
             }
-            
+
             // Second pass - set imported relationships
             for (BackupDto.BackupPlaythroughDto ptDto : data.getPlaythroughs()) {
                 if (ptDto.getImportedFromPlaythroughOriginalId() != null) {
@@ -152,7 +171,7 @@ public class BackupService {
             for (BackupDto.BackupSessionDto sessionDto : data.getSessions()) {
                 Playthrough playthrough = playthroughMap.get(sessionDto.getPlaythroughOriginalId());
                 if (playthrough != null) {
-                    SessionHistory session = importSession(sessionDto, playthrough);
+                    SessionHistory session = importSession(sessionDto, playthrough, existingSessionsBySignature);
                     sessionMap.put(sessionDto.getOriginalId(), session);
                 }
             }
@@ -161,7 +180,7 @@ public class BackupService {
         // Import mood entries
         if (data.getMoodEntries() != null) {
             for (BackupDto.BackupMoodEntryDto moodDto : data.getMoodEntries()) {
-                importMoodEntry(user, moodDto, sessionMap);
+                importMoodEntry(user, moodDto, sessionMap, existingMoodEntriesBySignature);
             }
         }
 
@@ -404,8 +423,20 @@ public class BackupService {
         }
     }
 
-    private Playthrough importPlaythrough(User user, BackupDto.BackupPlaythroughDto ptDto, 
-                                         Game game, Map<Long, Playthrough> playthroughMap) {
+    private Playthrough importPlaythrough(User user, BackupDto.BackupPlaythroughDto ptDto,
+                                         Game game, Map<String, Playthrough> existingPlaythroughsBySignature) {
+        LocalDate startDate = ptDto.getStartDate() != null ? LocalDate.parse(ptDto.getStartDate()) : null;
+        LocalDate endDate = ptDto.getEndDate() != null ? LocalDate.parse(ptDto.getEndDate()) : null;
+
+        String signature = playthroughSignature(user.getId(), game.getId(), ptDto.getPlaythroughType(),
+            ptDto.getTitle(), ptDto.getPlatform(), ptDto.getStartedAt(), ptDto.getStoppedAt(),
+            ptDto.getDurationSeconds(), startDate, endDate);
+        Playthrough existing = existingPlaythroughsBySignature.get(signature);
+        if (existing != null) {
+            log.debug("Skipping duplicate playthrough for game {} (already imported)", game.getName());
+            return existing;
+        }
+
         Playthrough playthrough = Playthrough.builder()
             .user(user)
             .game(game)
@@ -419,8 +450,8 @@ public class BackupService {
             .isCompleted(ptDto.getIsCompleted())
             .isDropped(ptDto.getIsDropped())
             .isPaused(ptDto.getIsPaused())
-            .startDate(ptDto.getStartDate() != null ? LocalDate.parse(ptDto.getStartDate()) : null)
-            .endDate(ptDto.getEndDate() != null ? LocalDate.parse(ptDto.getEndDate()) : null)
+            .startDate(startDate)
+            .endDate(endDate)
             .sessionCount(ptDto.getSessionCount())
             .pauseCount(ptDto.getPauseCount())
             .lastPlayedAt(ptDto.getLastPlayedAt())
@@ -430,10 +461,22 @@ public class BackupService {
             .manualTimeSet(ptDto.getManualTimeSet())
             .build();
 
-        return playthroughRepository.save(playthrough);
+        playthrough = playthroughRepository.save(playthrough);
+        existingPlaythroughsBySignature.put(signature, playthrough);
+        return playthrough;
     }
 
-    private SessionHistory importSession(BackupDto.BackupSessionDto sessionDto, Playthrough playthrough) {
+    private SessionHistory importSession(BackupDto.BackupSessionDto sessionDto, Playthrough playthrough,
+                                        Map<String, SessionHistory> existingSessionsBySignature) {
+        String signature = sessionSignature(playthrough.getId(), sessionDto.getSessionNumber(),
+            sessionDto.getStartedAt(), sessionDto.getEndedAt(), sessionDto.getDurationSeconds());
+        SessionHistory existing = existingSessionsBySignature.get(signature);
+        if (existing != null) {
+            log.debug("Skipping duplicate session #{} for playthrough {} (already imported)",
+                sessionDto.getSessionNumber(), playthrough.getId());
+            return existing;
+        }
+
         SessionHistory session = SessionHistory.builder()
             .playthrough(playthrough)
             .sessionNumber(sessionDto.getSessionNumber())
@@ -443,14 +486,24 @@ public class BackupService {
             .endedAt(sessionDto.getEndedAt())
             .build();
 
-        return sessionHistoryRepository.save(session);
+        session = sessionHistoryRepository.save(session);
+        existingSessionsBySignature.put(signature, session);
+        return session;
     }
 
-    private void importMoodEntry(User user, BackupDto.BackupMoodEntryDto moodDto, 
-                                Map<Long, SessionHistory> sessionMap) {
+    private void importMoodEntry(User user, BackupDto.BackupMoodEntryDto moodDto,
+                                Map<Long, SessionHistory> sessionMap,
+                                Map<String, MoodEntry> existingMoodEntriesBySignature) {
         SessionHistory session = null;
         if (moodDto.getSessionHistoryOriginalId() != null) {
             session = sessionMap.get(moodDto.getSessionHistoryOriginalId());
+        }
+
+        String signature = moodEntrySignature(user.getId(), session != null ? session.getId() : null,
+            moodDto.getMoodRating(), moodDto.getNote(), moodDto.getRecordedAt());
+        if (existingMoodEntriesBySignature.containsKey(signature)) {
+            log.debug("Skipping duplicate mood entry for user {} (already imported)", user.getId());
+            return;
         }
 
         MoodEntry moodEntry = MoodEntry.builder()
@@ -461,7 +514,49 @@ public class BackupService {
             .recordedAt(moodDto.getRecordedAt())
             .build();
 
-        moodEntryRepository.save(moodEntry);
+        moodEntry = moodEntryRepository.save(moodEntry);
+        existingMoodEntriesBySignature.put(signature, moodEntry);
+    }
+
+    /**
+     * Content-based identity for a playthrough, used to detect that a backup entry
+     * matches something the user already has (e.g. the same backup imported twice)
+     * since imported rows get fresh IDs and can't be matched by the backup's originalId.
+     */
+    private String playthroughSignature(Playthrough p) {
+        return playthroughSignature(p.getUser().getId(), p.getGame().getId(), p.getPlaythroughType(),
+            p.getTitle(), p.getPlatform(), p.getStartedAt(), p.getStoppedAt(), p.getDurationSeconds(),
+            p.getStartDate(), p.getEndDate());
+    }
+
+    private String playthroughSignature(Long userId, Long gameId, String playthroughType, String title,
+                                       String platform, Instant startedAt, Instant stoppedAt,
+                                       Long durationSeconds, LocalDate startDate, LocalDate endDate) {
+        return String.join("|", String.valueOf(userId), String.valueOf(gameId), String.valueOf(playthroughType),
+            String.valueOf(title), String.valueOf(platform), String.valueOf(startedAt), String.valueOf(stoppedAt),
+            String.valueOf(durationSeconds), String.valueOf(startDate), String.valueOf(endDate));
+    }
+
+    private String sessionSignature(SessionHistory s) {
+        return sessionSignature(s.getPlaythrough().getId(), s.getSessionNumber(), s.getStartedAt(),
+            s.getEndedAt(), s.getDurationSeconds());
+    }
+
+    private String sessionSignature(Long playthroughId, Integer sessionNumber, Instant startedAt,
+                                   Instant endedAt, Long durationSeconds) {
+        return String.join("|", String.valueOf(playthroughId), String.valueOf(sessionNumber),
+            String.valueOf(startedAt), String.valueOf(endedAt), String.valueOf(durationSeconds));
+    }
+
+    private String moodEntrySignature(MoodEntry m) {
+        return moodEntrySignature(m.getUser().getId(), m.getSessionHistory() != null ? m.getSessionHistory().getId() : null,
+            m.getMoodRating(), m.getNote(), m.getRecordedAt());
+    }
+
+    private String moodEntrySignature(Long userId, Long sessionHistoryId, Integer moodRating,
+                                     String note, Instant recordedAt) {
+        return String.join("|", String.valueOf(userId), String.valueOf(sessionHistoryId),
+            String.valueOf(moodRating), String.valueOf(note), String.valueOf(recordedAt));
     }
 
     private void importHealthSettings(User user, BackupDto.BackupHealthSettingsDto dto) {
