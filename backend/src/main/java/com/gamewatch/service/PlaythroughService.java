@@ -6,7 +6,6 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.SessionHistory;
 import com.gamewatch.entity.User;
-import com.gamewatch.entity.MoodEntry;
 import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
@@ -478,34 +477,31 @@ public class PlaythroughService {
             .endedAt(request.getEndedAt())
             .build();
         sessionHistoryRepository.saveAndFlush(newSession);
-        
+
         playthrough.setSessionCount(playthrough.getSessionCount() + 1);
         playthrough.setDurationSeconds(playthrough.getDurationSeconds() + durationSeconds);
-        
+
         if (playthrough.getLastPlayedAt() == null || request.getEndedAt().isAfter(playthrough.getLastPlayedAt())) {
             playthrough.setLastPlayedAt(request.getEndedAt());
         }
-        
+
         playthrough = playthroughRepository.save(playthrough);
-        log.info("Logged manual session for playthrough {}: session #{}, duration={} sec", 
+        log.info("Logged manual session for playthrough {}: session #{}, duration={} sec",
             playthroughId, insertAtSessionNumber, durationSeconds);
 
-        // Automatically create a mood entry with rating 5/5 for manual sessions
+        // Recalculate health metrics for the day the session was logged
         try {
-            MoodEntry moodEntry = MoodEntry.builder()
-                .user(user)
-                .sessionHistory(newSession)
-                .moodRating(5) // Default to excellent mood for manual sessions
-                .note("Auto-logged with manual session")
-                .recordedAt(request.getEndedAt())
-                .build();
-            healthService.saveMoodEntry(moodEntry);
-            log.info("Auto-created mood entry (5/5) for manual session {}", newSession.getId());
+            LocalDate sessionDate = request.getEndedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            healthService.recalculateMetricsForDate(user, sessionDate);
         } catch (Exception e) {
-            log.warn("Failed to auto-create mood entry for manual session: {}", e.getMessage());
+            log.error("Failed to recalculate health metrics for user {}", user.getId(), e);
         }
 
-        return mapToDto(playthrough);
+        // lastSessionHistoryId lets the frontend prompt for mood the same way it does
+        // after an automatically-tracked session, instead of fabricating a mood rating.
+        PlaythroughDto dto = mapToDto(playthrough);
+        dto.setLastSessionHistoryId(newSession.getId());
+        return dto;
     }
 
     @Transactional

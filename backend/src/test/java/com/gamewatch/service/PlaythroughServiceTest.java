@@ -286,6 +286,34 @@ class PlaythroughServiceTest {
     }
 
     @Test
+    void logManualSession_SetsLastSessionHistoryIdInsteadOfFabricatingMood() {
+        Instant sessionStart = Instant.now().minus(2, ChronoUnit.HOURS);
+        Instant sessionEnd = Instant.now().minus(1, ChronoUnit.HOURS);
+
+        LogManualSessionRequest request = new LogManualSessionRequest();
+        request.setStartedAt(sessionStart);
+        request.setEndedAt(sessionEnd);
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of());
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionHistoryRepository.saveAndFlush(any(SessionHistory.class))).thenAnswer(invocation -> {
+            SessionHistory session = invocation.getArgument(0);
+            session.setId(42L);
+            return session;
+        });
+
+        PlaythroughDto result = playthroughService.logManualSession(testUser, 1L, request);
+
+        // The frontend uses lastSessionHistoryId to open the same mood-prompt modal
+        // shown after an automatically-tracked session, instead of the backend
+        // fabricating a 5/5 mood rating on the user's behalf.
+        assertThat(result.getLastSessionHistoryId()).isEqualTo(42L);
+        verify(healthService, never()).saveMoodEntry(any());
+        verify(healthService).recalculateMetricsForDate(eq(testUser), any(LocalDate.class));
+    }
+
+    @Test
     void logManualSession_WhileActive_ThrowsException() {
         testPlaythrough.setIsActive(true);
         
