@@ -15,12 +15,16 @@ interface DayOfWeekDualAxisChartProps {
   noDataMessage?: string
 }
 
-const normalPrimary = 'var(--color-accent)'
-const normalPrimaryLight = 'var(--color-accent-hover)'
+// Monochromatic by default — only today's bar/line gets the brand accent
+// (see vibrant* below), so the current day reads at a glance.
+const normalPrimary = 'var(--color-text-tertiary)'
+const normalPrimaryLight = 'var(--color-border)'
 const normalSecondary = 'var(--color-text-tertiary)'
-const vibrantPrimary = '#FF6B35'
-const vibrantPrimaryLight = '#FF8A5C'
-const vibrantSecondary = '#F7931E'
+const vibrantPrimary = 'var(--color-accent)'
+const vibrantPrimaryLight = 'var(--color-accent-hover)'
+const vibrantSecondary = 'var(--color-accent-hover)'
+const vibrantPrimaryBorder = 'color-mix(in srgb, var(--color-accent) 30%, transparent)'
+const vibrantPrimaryBg = 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
 
 function DayOfWeekDualAxisChart({
   data,
@@ -55,7 +59,7 @@ function DayOfWeekDualAxisChart({
           className="min-w-40 rounded-xl border p-4 sm:min-w-55"
           style={{
             backgroundColor: 'var(--color-surface-raised)',
-            borderColor: isCurrentDay ? `${vibrantPrimary}4d` : 'var(--color-border)',
+            borderColor: isCurrentDay ? vibrantPrimaryBorder : 'var(--color-border)',
           }}
         >
           <p
@@ -66,7 +70,7 @@ function DayOfWeekDualAxisChart({
             {isCurrentDay && (
               <span
                 className="inline-flex size-4 items-center justify-center rounded-full text-[0.65rem] font-bold sm:size-5 sm:text-caption"
-                style={{ backgroundColor: `${vibrantPrimary}1a`, color: vibrantPrimary }}
+                style={{ backgroundColor: vibrantPrimaryBg, color: vibrantPrimary }}
               >
                 ●
               </span>

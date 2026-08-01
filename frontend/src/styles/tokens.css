@@ -6,36 +6,40 @@
    semantic tokens below, never these directly.
    ========================================================================= */
 :root {
-  /* Neutral scale — black/white minimal palette */
+  /* Neutral scale — cool, desaturated grays (same family used for both light
+     and dark surfaces/text; each theme just reads the ramp from opposite ends) */
   --gray-0: #ffffff;
-  --gray-50: #f9f9fb;
-  --gray-100: #f1f1f4;
-  --gray-200: #e4e4e9;
-  --gray-300: #d1d1d8;
-  --gray-400: #a8a8b3;
-  --gray-500: #8b8b96;
-  --gray-600: #6b6b76;
-  --gray-700: #48484f;
-  --gray-800: #2c2c32;
-  --gray-900: #1a1a1e;
-  --gray-950: #0a0a0c;
+  --gray-50: #f8f9fa;
+  --gray-100: #e9ecef;
+  --gray-200: #dee2e6;
+  --gray-300: #ced4da;
+  --gray-400: #adb5bd;
+  --gray-500: #6c757d;
+  --gray-600: #495057;
+  --gray-700: #343a40;
+  --gray-800: #212529;
+  --gray-900: #15181b;
+  --gray-950: #0e0f11;
 
-  /* Single confident accent — rose, deliberately not the default SaaS blue/indigo */
-  --accent-100: #ffe4e6;
-  --accent-500: #e11d48;
-  --accent-600: #be123c;
+  /* Brand — vivid orange, reserved for the sidebar, logo and the highest-emphasis
+     buttons/highlights (see --color-accent below for the everyday text/icon/fill
+     shade — the raw swatch here is too bright for reliable text contrast). */
+  --accent-500: #f3722c;
+  --accent-600: #cd591b;
+  --accent-100: #f7e3d7;
 
-  /* Status colors — each its own hue so calendar/badges read at a glance.
-     success/warning sit one step darker than the "500" swatch so white
-     badge text (text-accent-foreground) still clears WCAG AA on top of them. */
-  --danger-500: #dc2626;
-  --success-500: #15803d;
-  --warning-500: #b45309;
+  /* Status colors — vivid brand-identity swatches (chart marks, badge dots).
+     Everyday text/fill usage goes through the darker --color-* semantic shades
+     below, which are calibrated to clear WCAG AA (4.5:1) as body text. */
+  --danger-500: #ef233c;
+  --success-500: #38b000;
+  --warning-500: #ffd000;
+  --info-500: #00b4d8;
 
   /* Signature brand gradient (logo wordmark) — one deliberate moment, stays within
      the accent hue rather than adding a second color to the app */
-  --brand-start: #fb7185;
-  --brand-end: #9f1239;
+  --brand-start: #f3722c;
+  --brand-end: #942b07;
 
   /* Categorical stat-tile accents — Statistics dashboard identity colors only
      (bento tiles), kept separate from the single UI accent above. Fixed hue
@@ -101,14 +105,22 @@
   --color-text-secondary: var(--gray-500);
   --color-text-tertiary: var(--gray-400);
 
-  --color-accent: var(--accent-500);
-  --color-accent-hover: var(--accent-600);
+  /* Deep, WCAG-AA-safe shades of the brand hue — used for everyday text/icons/
+     fills (text-accent, bg-accent, border-accent...). The vivid --accent-500
+     primitive above stays reserved for the sidebar/logo/hero-button moments
+     where it isn't paired with overlaid text. */
+  --color-accent: #c55214;
+  --color-accent-hover: #a6430d;
   --color-accent-subtle: var(--accent-100);
   --color-accent-foreground: var(--gray-0);
 
-  --color-danger: var(--danger-500);
-  --color-success: var(--success-500);
-  --color-warning: var(--warning-500);
+  /* Same treatment for the supporting status hues: deep enough to clear 4.5:1
+     as text, while the vivid *-500 primitives stay available for chart marks. */
+  --color-danger: #ea102a;
+  --color-success: #677f2d;
+  --color-warning: #8f7400;
+  --color-info: #00819b;
+  --color-info-foreground: var(--gray-0);
 
   --color-brand-start: var(--brand-start);
   --color-brand-end: var(--brand-end);
@@ -145,7 +157,7 @@
   --color-popover-foreground: var(--color-text-primary);
 
   --color-primary: var(--color-accent);
-  --color-primary-foreground: var(--gray-0);
+  --color-primary-foreground: var(--color-accent-foreground);
 
   --color-secondary: var(--color-surface-raised);
   --color-secondary-foreground: var(--color-text-primary);
@@ -154,7 +166,7 @@
   --color-muted-foreground: var(--color-text-secondary);
 
   --color-destructive: var(--color-danger);
-  --color-destructive-foreground: var(--gray-0);
+  --color-destructive-foreground: var(--color-accent-foreground);
 
   --color-input: var(--gray-200);
   --color-ring: var(--color-accent);
@@ -165,24 +177,28 @@
    the variable here re-themes every one of them automatically. */
 [data-theme='dark'] {
   --color-bg: var(--gray-950);
-  --color-surface: #131316;
-  --color-surface-raised: #1c1c1f;
+  --color-surface: var(--gray-900);
+  --color-surface-raised: #1b1e21;
   --color-border: rgba(255, 255, 255, 0.08);
   --color-text-primary: var(--gray-0);
-  --color-text-secondary: #a1a1a6;
+  --color-text-secondary: #9ca1a6;
   --color-text-tertiary: var(--gray-600);
 
-  --color-accent: #fb7185;
-  --color-accent-hover: #fda4af;
-  --color-accent-subtle: rgba(251, 113, 133, 0.16);
+  /* Lightened + desaturated so each hue still reads clearly against a
+     near-black surface; foreground flips to dark text (below) since these
+     are too bright for white text on top. */
+  --color-accent: #ff9961;
+  --color-accent-hover: #ffa97b;
+  --color-accent-subtle: rgba(255, 153, 97, 0.16);
   --color-accent-foreground: var(--gray-950);
 
-  --color-danger: #f87171;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
+  --color-danger: #ff586d;
+  --color-success: #38b000;
+  --color-warning: #ffd933;
+  --color-info: #32dbfc;
+  --color-info-foreground: var(--gray-950);
 
   --color-input: rgba(255, 255, 255, 0.12);
-  --color-destructive-foreground: var(--gray-0);
 
   /* Stat-tile accents, stepped for the dark surface — same 7 hues, foreground
      pairing unchanged (verified against these steps too). */

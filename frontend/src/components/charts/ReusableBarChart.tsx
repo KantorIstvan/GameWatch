@@ -63,7 +63,7 @@ function ReusableBarChart({
   })) : data
 
   const currentHour = new Date().getHours()
-  const highlightColor = '#FF6B35'
+  const highlightColor = 'var(--color-accent)'
 
   return (
     <>
