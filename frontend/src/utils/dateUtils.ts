@@ -152,3 +152,64 @@ export function getISOWeekNumber(date: Date = new Date()): number {
   const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1))
   return Math.ceil(((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
+
+/**
+ * Get the end of the calendar week containing `date` (23:59:59.999 on the 7th day).
+ */
+export function getEndOfWeek(date: Date = new Date(), weekStart: WeekStart = 'MONDAY'): Date {
+  const result = getStartOfWeek(date, weekStart)
+  result.setDate(result.getDate() + 6)
+  result.setHours(23, 59, 59, 999)
+  return result
+}
+
+/**
+ * Get the end of the calendar month containing `date` (last day, 23:59:59.999).
+ */
+export function getEndOfMonth(date: Date = new Date()): Date {
+  const result = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+  result.setHours(23, 59, 59, 999)
+  return result
+}
+
+/**
+ * Get the end of the calendar year containing `date` (Dec 31st, 23:59:59.999).
+ */
+export function getEndOfYear(date: Date = new Date()): Date {
+  const result = new Date(date.getFullYear(), 11, 31)
+  result.setHours(23, 59, 59, 999)
+  return result
+}
+
+/** Step a date forward/backward by whole calendar weeks, preserving time-of-day. */
+export function addWeeks(date: Date, amount: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + amount * 7)
+  return result
+}
+
+/** Step a date forward/backward by whole calendar months, clamped to a valid day. */
+export function addMonths(date: Date, amount: number): Date {
+  const result = new Date(date)
+  const day = result.getDate()
+  result.setDate(1)
+  result.setMonth(result.getMonth() + amount)
+  const lastDayOfTargetMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate()
+  result.setDate(Math.min(day, lastDayOfTargetMonth))
+  return result
+}
+
+/** Step a date forward/backward by whole calendar years. */
+export function addYears(date: Date, amount: number): Date {
+  const result = new Date(date)
+  result.setFullYear(result.getFullYear() + amount)
+  return result
+}
+
+/** Format a Date as a `YYYY-MM-DD` local calendar-date string (no time/timezone shift). */
+export function toLocalDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}

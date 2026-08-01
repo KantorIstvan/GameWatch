@@ -50,21 +50,21 @@ export const CalendarFilters = ({
         </ToggleGroupItem>
         <ToggleGroupItem
           value="completed"
-          className="rounded-md! border border-success/20 px-4 py-2 font-semibold text-success data-[state=on]:border-success data-[state=on]:bg-success data-[state=on]:text-white"
+          className="rounded-md! border border-success/20 px-4 py-2 font-semibold text-success data-[state=on]:border-success data-[state=on]:bg-success data-[state=on]:text-accent-foreground"
         >
           <CircleCheck className="mr-1 size-4" />
           {t('calendar.completed')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="dropped"
-          className="rounded-md! border border-danger/20 px-4 py-2 font-semibold text-danger data-[state=on]:border-danger data-[state=on]:bg-danger data-[state=on]:text-white"
+          className="rounded-md! border border-danger/20 px-4 py-2 font-semibold text-danger data-[state=on]:border-danger data-[state=on]:bg-danger data-[state=on]:text-accent-foreground"
         >
           <CircleX className="mr-1 size-4" />
           {t('calendar.dropped')}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="started"
-          className="rounded-md! border border-warning/20 px-4 py-2 font-semibold text-warning data-[state=on]:border-warning data-[state=on]:bg-warning data-[state=on]:text-white"
+          className="rounded-md! border border-warning/20 px-4 py-2 font-semibold text-warning data-[state=on]:border-warning data-[state=on]:bg-warning data-[state=on]:text-accent-foreground"
         >
           <Play className="mr-1 size-4" />
           {t('calendar.started')}

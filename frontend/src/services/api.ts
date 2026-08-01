@@ -80,8 +80,8 @@ export const playthroughsApi = {
 }
 
 export const statisticsApi = {
-  getUserStatistics: (interval: 'week' | 'month' | 'year' | 'all' = 'all') => 
-    apiClient.get('/statistics', { params: { interval } }),
+  getUserStatistics: (interval: 'week' | 'month' | 'year' | 'all' = 'all', date?: string, signal?: AbortSignal) =>
+    apiClient.get('/statistics', { params: { interval, date }, signal }),
   getGameRecommendations: (limit: number = 5) =>
     apiClient.get('/statistics/recommendations', { params: { limit } }),
 }

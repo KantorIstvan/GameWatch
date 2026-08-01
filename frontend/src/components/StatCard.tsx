@@ -6,11 +6,12 @@ interface StatCardProps {
   value: string | number
   icon: React.ReactNode
   color?: string
+  foreground?: string
   hero?: boolean
   className?: string
 }
 
-const StatCard = React.memo(({ title, value, icon, color, hero = false, className }: StatCardProps) => {
+const StatCard = React.memo(({ title, value, icon, color, foreground, hero = false, className }: StatCardProps) => {
   const resolvedColor = color ?? (hero ? 'var(--color-accent)' : undefined)
 
   return (
@@ -35,18 +36,15 @@ const StatCard = React.memo(({ title, value, icon, color, hero = false, classNam
           className={cn(
             'mr-3 flex rounded-md shadow-2',
             hero ? 'p-3' : 'p-2',
-            resolvedColor ? 'text-white' : 'bg-text-primary text-bg'
+            !resolvedColor && 'bg-text-primary text-bg'
           )}
-          style={resolvedColor ? { backgroundColor: resolvedColor } : undefined}
+          style={resolvedColor ? { backgroundColor: resolvedColor, color: foreground ?? '#ffffff' } : undefined}
         >
           {icon}
         </div>
         <p className="text-body-sm font-medium text-text-secondary">{title}</p>
       </div>
-      <p
-        className={cn('font-bold', hero ? 'text-display' : 'text-h1', !resolvedColor && 'text-text-primary')}
-        style={resolvedColor ? { color: resolvedColor } : undefined}
-      >
+      <p className={cn('font-bold text-text-primary', hero ? 'text-display' : 'text-h1')}>
         {value}
       </p>
     </div>

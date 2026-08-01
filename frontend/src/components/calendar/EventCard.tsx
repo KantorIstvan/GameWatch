@@ -84,7 +84,7 @@ export const EventCard = ({ event, onEventClick }: EventCardProps) => {
             {/* borderColor holds the solid accent; backgroundColor is now a soft
                 tint (for the month-grid pills), too faint for white label text. */}
             <Badge
-              className="h-5 text-[0.7rem] font-semibold text-white"
+              className="h-5 text-[0.7rem] font-semibold text-accent-foreground"
               style={{ backgroundColor: event.borderColor }}
             >
               {getEventTypeLabel()}

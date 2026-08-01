@@ -20,19 +20,34 @@
   --gray-900: #1a1a1e;
   --gray-950: #0a0a0c;
 
-  /* Monochrome accent — no hue anywhere in the app, only black/white/gray */
-  --accent-100: var(--gray-100);
-  --accent-500: var(--gray-900);
-  --accent-600: #000000;
+  /* Single confident accent — rose, deliberately not the default SaaS blue/indigo */
+  --accent-100: #ffe4e6;
+  --accent-500: #e11d48;
+  --accent-600: #be123c;
 
-  /* Status colors differentiated by weight (lightness), not hue */
-  --danger-500: var(--gray-950);
-  --success-500: var(--gray-700);
-  --warning-500: var(--gray-500);
+  /* Status colors — each its own hue so calendar/badges read at a glance.
+     success/warning sit one step darker than the "500" swatch so white
+     badge text (text-accent-foreground) still clears WCAG AA on top of them. */
+  --danger-500: #dc2626;
+  --success-500: #15803d;
+  --warning-500: #b45309;
 
-  /* Signature brand gradient (logo wordmark) — one deliberate moment, not reused elsewhere */
-  --brand-start: var(--gray-700);
-  --brand-end: var(--gray-950);
+  /* Signature brand gradient (logo wordmark) — one deliberate moment, stays within
+     the accent hue rather than adding a second color to the app */
+  --brand-start: #fb7185;
+  --brand-end: #9f1239;
+
+  /* Categorical stat-tile accents — Statistics dashboard identity colors only
+     (bento tiles), kept separate from the single UI accent above. Fixed hue
+     order, CVD-validated (dataviz categorical palette), one hue per stat
+     identity rather than rank. */
+  --stat-blue-500: #2a78d6;
+  --stat-orange-500: #eb6834;
+  --stat-aqua-500: #1baf7a;
+  --stat-yellow-500: #eda100;
+  --stat-magenta-500: #e87ba4;
+  --stat-green-500: #008300;
+  --stat-violet-500: #4a3aa7;
 }
 
 /* =========================================================================
@@ -84,6 +99,7 @@
   --color-border: var(--gray-200);
   --color-text-primary: var(--gray-950);
   --color-text-secondary: var(--gray-500);
+  --color-text-tertiary: var(--gray-400);
 
   --color-accent: var(--accent-500);
   --color-accent-hover: var(--accent-600);
@@ -96,6 +112,24 @@
 
   --color-brand-start: var(--brand-start);
   --color-brand-end: var(--brand-end);
+
+  /* Stat-tile categorical accents — Statistics page bento/dashboard identity
+     colors (see primitives above). Each hue ships a matching *-foreground for
+     its icon chip, picked per-hue for contrast rather than a single default. */
+  --color-stat-blue: var(--stat-blue-500);
+  --color-stat-blue-foreground: var(--gray-0);
+  --color-stat-orange: var(--stat-orange-500);
+  --color-stat-orange-foreground: var(--gray-0);
+  --color-stat-aqua: var(--stat-aqua-500);
+  --color-stat-aqua-foreground: var(--gray-950);
+  --color-stat-yellow: var(--stat-yellow-500);
+  --color-stat-yellow-foreground: var(--gray-950);
+  --color-stat-magenta: var(--stat-magenta-500);
+  --color-stat-magenta-foreground: var(--gray-950);
+  --color-stat-green: var(--stat-green-500);
+  --color-stat-green-foreground: var(--gray-0);
+  --color-stat-violet: var(--stat-violet-500);
+  --color-stat-violet-foreground: var(--gray-0);
 
   /* ShadcnUI-standard aliases — mapped onto the same semantic values above so
      every vendor primitive (dialog, popover, dropdown-menu, select, command,
@@ -136,18 +170,29 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-text-primary: var(--gray-0);
   --color-text-secondary: #a1a1a6;
+  --color-text-tertiary: var(--gray-600);
 
-  --color-accent: var(--gray-100);
-  --color-accent-hover: #ffffff;
-  --color-accent-subtle: rgba(255, 255, 255, 0.12);
+  --color-accent: #fb7185;
+  --color-accent-hover: #fda4af;
+  --color-accent-subtle: rgba(251, 113, 133, 0.16);
   --color-accent-foreground: var(--gray-950);
 
-  --color-danger: var(--gray-100);
-  --color-success: var(--gray-300);
-  --color-warning: var(--gray-500);
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
 
   --color-input: rgba(255, 255, 255, 0.12);
   --color-destructive-foreground: var(--gray-0);
+
+  /* Stat-tile accents, stepped for the dark surface — same 7 hues, foreground
+     pairing unchanged (verified against these steps too). */
+  --color-stat-blue: #3987e5;
+  --color-stat-orange: #d95926;
+  --color-stat-aqua: #199e70;
+  --color-stat-yellow: #c98500;
+  --color-stat-magenta: #d55181;
+  --color-stat-green: #008300;
+  --color-stat-violet: #9085e9;
 }
 
 :root {

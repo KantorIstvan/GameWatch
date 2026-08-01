@@ -1,14 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import axios from 'axios'
 import { statisticsApi } from '../services/api'
 import { UserStatistics, GameRecommendation } from '../types'
 import { apiCache, createCacheKey } from '../utils/apiCache'
+import { toLocalDateString } from '../utils/dateUtils'
 
-export function useStatistics(interval: 'week' | 'month' | 'year' | 'all', isAuthReady: boolean) {
+export function useStatistics(
+  interval: 'week' | 'month' | 'year' | 'all',
+  referenceDate: Date,
+  isAuthReady: boolean
+) {
   const [statistics, setStatistics] = useState<UserStatistics | null>(null)
   const [recommendations, setRecommendations] = useState<GameRecommendation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [topGamesHash, setTopGamesHash] = useState<string>('')
+  // Guards against a slower, stale request (e.g. from a period the user has since
+  // navigated away from) resolving after a faster, newer one and clobbering it.
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const createTopGamesHash = useCallback((stats: UserStatistics | null): string => {
     if (!stats || !stats.topMostPlayedGames || stats.topMostPlayedGames.length === 0) {
@@ -21,17 +30,24 @@ export function useStatistics(interval: 'week' | 'month' | 'year' | 'all', isAut
   }, [])
 
   const fetchStatistics = useCallback(async () => {
+    abortControllerRef.current?.abort()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
-      const response = await statisticsApi.getUserStatistics(interval)
+      const response = await statisticsApi.getUserStatistics(interval, toLocalDateString(referenceDate), controller.signal)
       setStatistics(response.data)
     } catch (err: any) {
+      if (axios.isCancel(err)) return
       setError(err.response?.data?.message || 'Failed to load statistics')
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current === controller) {
+        setLoading(false)
+      }
     }
-  }, [interval])
+  }, [interval, referenceDate])
 
   const fetchRecommendations = useCallback(async (gamesHash: string) => {
     try {

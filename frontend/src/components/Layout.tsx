@@ -101,7 +101,7 @@ function Layout() {
                     <SidebarMenuButton asChild isActive={currentTab === item.path} tooltip={item.label}>
                       <Link to={item.path}>
                         {item.icon}
-                        <span>{item.label}</span>
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

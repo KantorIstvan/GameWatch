@@ -75,7 +75,7 @@ export function CalendarEventPanel({ event, playthrough, open, onOpenChange }: C
           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           <SheetHeader className="relative z-10 w-full text-left">
             <Badge
-              className="mb-2 w-fit gap-1 text-white"
+              className="mb-2 w-fit gap-1 text-accent-foreground"
               style={{ backgroundColor: event.borderColor }}
             >
               <StatusIcon className="size-3.5" />
