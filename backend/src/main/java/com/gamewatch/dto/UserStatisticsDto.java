@@ -74,5 +74,9 @@ public class UserStatisticsDto {
         private Long daysToComplete;
         private LocalDate startDate;
         private LocalDate endDate;
+        // Other categories (most playtime, most sessions, longest session, longest
+        // average session) this game also leads in, besides the main criterion
+        // (most replays) that made it the favorite. See UserStatisticsService#findFavoriteGame.
+        private List<String> badges;
     }
 }

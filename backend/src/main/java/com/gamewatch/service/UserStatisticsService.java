@@ -66,7 +66,7 @@ public class UserStatisticsService {
             .dailyPlaytime(dailyPlaytimeData)
             .genreDistribution(calculateGenreDistribution(playthroughs))
             .platformDistribution(calculatePlatformDistribution(playthroughs))
-            .favoriteGame(findFavoriteGame(playthroughs))
+            .favoriteGame(findFavoriteGame(playthroughs, sessions))
             .longestToCompleteGame(findLongestToCompleteGame(playthroughs))
             .fastestToCompleteGame(findFastestToCompleteGame(playthroughs))
             .topMostPlayedGames(findTopMostPlayedGames(playthroughs, 5))
@@ -395,14 +395,73 @@ public class UserStatisticsService {
         return platformMap;
     }
 
-    private UserStatisticsDto.GameRankingDto findFavoriteGame(List<Playthrough> playthroughs) {
-        Map<Long, GamePlaytimeAggregation> gamePlaytimeMap = aggregatePlaytimeByGame(playthroughs);
-        
-        return gamePlaytimeMap.values().stream()
-            .max(Comparator.comparing(GamePlaytimeAggregation::getPlaythroughCount)
-                .thenComparing(GamePlaytimeAggregation::getTotalPlaytime))
-            .map(this::toGameRankingDto)
+    /**
+     * Most replays (playthrough count) is the single deciding criterion for "Favorite
+     * Game" — a game you've completed/started over again is a stronger "favorite"
+     * signal than raw total playtime, and unlike playtime it doesn't just duplicate
+     * the #1 spot in "Most Played Games". The other four candidate criteria (most
+     * playtime, most sessions, longest session, longest average session) rarely land
+     * on the same game, so rather than picking among them they're surfaced as badges
+     * on the winning game whenever it also happens to lead in one of them.
+     */
+    private UserStatisticsDto.GameRankingDto findFavoriteGame(List<Playthrough> playthroughs, List<SessionHistory> sessions) {
+        Map<Long, GameFavoriteAggregation> statsByGame = new HashMap<>();
+
+        for (Playthrough playthrough : playthroughs) {
+            Long gameId = playthrough.getGame().getId();
+            statsByGame.computeIfAbsent(gameId, id -> new GameFavoriteAggregation(playthrough.getGame()))
+                .addPlaythrough(effectivePlaytimeSeconds(playthrough));
+        }
+
+        for (SessionHistory session : sessions) {
+            Long gameId = session.getPlaythrough().getGame().getId();
+            GameFavoriteAggregation stats = statsByGame.get(gameId);
+            if (stats != null) {
+                stats.addSession(session.getDurationSeconds());
+            }
+        }
+
+        GameFavoriteAggregation favorite = statsByGame.values().stream()
+            .max(Comparator.comparing(GameFavoriteAggregation::getPlaythroughCount)
+                .thenComparing(GameFavoriteAggregation::getTotalPlaytime))
             .orElse(null);
+
+        if (favorite == null) {
+            return null;
+        }
+
+        List<String> badges = new ArrayList<>();
+        Long favoriteGameId = favorite.getGame().getId();
+
+        if (favoriteGameId.equals(
+                statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getTotalPlaytime))
+                    .map(s -> s.getGame().getId()).orElse(null))) {
+            badges.add("mostPlaytime");
+        }
+        if (favorite.getSessionCount() > 0 && favoriteGameId.equals(
+                statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getSessionCount))
+                    .map(s -> s.getGame().getId()).orElse(null))) {
+            badges.add("mostSessions");
+        }
+        if (favorite.getLongestSessionSeconds() > 0 && favoriteGameId.equals(
+                statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getLongestSessionSeconds))
+                    .map(s -> s.getGame().getId()).orElse(null))) {
+            badges.add("longestSession");
+        }
+        if (favorite.getSessionCount() > 0 && favoriteGameId.equals(
+                statsByGame.values().stream().filter(s -> s.getSessionCount() > 0)
+                    .max(Comparator.comparing(GameFavoriteAggregation::getAverageSessionSeconds))
+                    .map(s -> s.getGame().getId()).orElse(null))) {
+            badges.add("longestAverageSession");
+        }
+
+        return UserStatisticsDto.GameRankingDto.builder()
+            .gameId(favorite.getGame().getId())
+            .gameName(favorite.getGame().getName())
+            .bannerImageUrl(favorite.getGame().getBannerImageUrl())
+            .playtimeSeconds(favorite.getTotalPlaytime())
+            .badges(badges)
+            .build();
     }
 
     private UserStatisticsDto.GameRankingDto findLongestToCompleteGame(List<Playthrough> playthroughs) {
@@ -648,6 +707,54 @@ public class UserStatisticsService {
 
         public int getPlaythroughCount() {
             return playthroughCount;
+        }
+    }
+
+    private static class GameFavoriteAggregation {
+        private final Game game;
+        private long totalPlaytime;
+        private int playthroughCount;
+        private int sessionCount;
+        private long longestSessionSeconds;
+        private long totalSessionSeconds;
+
+        public GameFavoriteAggregation(Game game) {
+            this.game = game;
+        }
+
+        public void addPlaythrough(long seconds) {
+            this.totalPlaytime += seconds;
+            this.playthroughCount++;
+        }
+
+        public void addSession(long seconds) {
+            this.sessionCount++;
+            this.totalSessionSeconds += seconds;
+            this.longestSessionSeconds = Math.max(this.longestSessionSeconds, seconds);
+        }
+
+        public Game getGame() {
+            return game;
+        }
+
+        public long getTotalPlaytime() {
+            return totalPlaytime;
+        }
+
+        public int getPlaythroughCount() {
+            return playthroughCount;
+        }
+
+        public int getSessionCount() {
+            return sessionCount;
+        }
+
+        public long getLongestSessionSeconds() {
+            return longestSessionSeconds;
+        }
+
+        public double getAverageSessionSeconds() {
+            return sessionCount == 0 ? 0.0 : (double) totalSessionSeconds / sessionCount;
         }
     }
 

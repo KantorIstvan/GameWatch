@@ -16,6 +16,7 @@ interface GameBannerCardProps {
   label?: string
   labelIcon?: ReactNode
   metric?: ReactNode
+  badges?: string[]
   className?: string
 }
 
@@ -42,7 +43,7 @@ const sizeStyles: Record<GameBannerCardSize, { root: string; name: string; metri
   },
 }
 
-function GameBannerCard({ game, size, rank, label, labelIcon, metric, className }: GameBannerCardProps) {
+function GameBannerCard({ game, size, rank, label, labelIcon, metric, badges, className }: GameBannerCardProps) {
   const styles = sizeStyles[size]
 
   return (
@@ -76,6 +77,16 @@ function GameBannerCard({ game, size, rank, label, labelIcon, metric, className 
           <p className={cn('mt-1 text-text-secondary', styles.metric)}>
             {metric}
           </p>
+        )}
+
+        {badges && badges.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {badges.map((badge) => (
+              <Badge key={badge} variant="outline" className="bg-surface-raised/80 text-caption font-medium">
+                {badge}
+              </Badge>
+            ))}
+          </div>
         )}
       </div>
     </div>
