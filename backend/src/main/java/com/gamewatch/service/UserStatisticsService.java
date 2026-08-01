@@ -167,8 +167,21 @@ public class UserStatisticsService {
 
     private Long calculateTotalPlaytime(List<Playthrough> playthroughs) {
         return playthroughs.stream()
-            .mapToLong(p -> p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L)
+            .mapToLong(this::effectivePlaytimeSeconds)
             .sum();
+    }
+
+    /**
+     * A playthrough that absorbed another one via "import" already had that chunk
+     * counted once through the source playthrough's own record, so aggregate totals
+     * must exclude it here (same approach as GameService's per-game totals) —
+     * otherwise the imported hours are counted twice: once via the source, once via
+     * the target that absorbed it.
+     */
+    private long effectivePlaytimeSeconds(Playthrough playthrough) {
+        long duration = playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
+        long imported = playthrough.getImportedDurationSeconds() != null ? playthrough.getImportedDurationSeconds() : 0L;
+        return Math.max(0L, duration - imported);
     }
 
     /**
@@ -193,7 +206,7 @@ public class UserStatisticsService {
 
         long manualOnlyTotal = playthroughs.stream()
             .filter(p -> !playthroughIdsWithSessionInRange.contains(p.getId()))
-            .mapToLong(p -> p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L)
+            .mapToLong(this::effectivePlaytimeSeconds)
             .sum();
 
         return sessionTotal + manualOnlyTotal;
@@ -354,7 +367,7 @@ public class UserStatisticsService {
             Game game = playthrough.getGame();
             if (game.getGenres() != null && !game.getGenres().isEmpty()) {
                 String[] genres = game.getGenres().split(",");
-                long playtime = playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
+                long playtime = effectivePlaytimeSeconds(playthrough);
                 
                 for (String genre : genres) {
                     String cleanGenre = genre.trim();
@@ -374,7 +387,7 @@ public class UserStatisticsService {
         for (Playthrough playthrough : playthroughs) {
             String platform = playthrough.getPlatform();
             if (platform != null && !platform.isEmpty()) {
-                long playtime = playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
+                long playtime = effectivePlaytimeSeconds(playthrough);
                 platformMap.merge(platform, playtime, Long::sum);
             }
         }
@@ -450,8 +463,8 @@ public class UserStatisticsService {
         
         for (Playthrough playthrough : playthroughs) {
             Long gameId = playthrough.getGame().getId();
-            long playtime = playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
-            
+            long playtime = effectivePlaytimeSeconds(playthrough);
+
             gameMap.computeIfAbsent(gameId, id -> new GamePlaytimeAggregation(playthrough.getGame()))
                 .addPlaythrough(playtime);
         }
@@ -534,7 +547,7 @@ public class UserStatisticsService {
                             k -> new DeveloperPublisherStats()
                         );
                         stats.gameIds.add(game.getId());
-                        stats.totalPlaytime += playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
+                        stats.totalPlaytime += effectivePlaytimeSeconds(playthrough);
                     }
                 }
             }
@@ -563,7 +576,7 @@ public class UserStatisticsService {
                             k -> new DeveloperPublisherStats()
                         );
                         stats.gameIds.add(game.getId());
-                        stats.totalPlaytime += playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
+                        stats.totalPlaytime += effectivePlaytimeSeconds(playthrough);
                     }
                 }
             }
