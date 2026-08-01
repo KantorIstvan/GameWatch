@@ -185,7 +185,7 @@
     "comingSoonDescription": "게임 습관에 대한 자세한 통계를 제공하기 위해 노력하고 있습니다!",
     "userStats": {
       "totalPlaytime": "총 플레이 시간",
-      "totalGames": "플레이한 게임 총 개수",
+      "totalGames": "보유 게임",
       "completed": "완료",
       "inProgress": "진행 중",
       "totalSessions": "총 세션 수",

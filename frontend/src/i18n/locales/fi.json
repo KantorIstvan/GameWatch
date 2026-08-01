@@ -185,7 +185,7 @@
     "comingSoonDescription": "Työskentelemme yksityiskohtaisten tilastojen parissa pelitottumuksistasi!",
     "userStats": {
       "totalPlaytime": "Kokonaispeliaika",
-      "totalGames": "Pelin määrä yhteensä",
+      "totalGames": "Omistetut Pelit",
       "completed": "Valmiit",
       "inProgress": "Käynnissä",
       "totalSessions": "Istunnot yhteensä",

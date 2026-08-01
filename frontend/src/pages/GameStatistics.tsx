@@ -187,59 +187,10 @@ function GameStatisticsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedSessions.length / rowsPerPage))
 
-  const exportToCSV = () => {
+  const handleExport = async () => {
     if (!statistics) return
-
-    const rows: (string | number)[][] = []
-
-    rows.push(['GameWatch Game Statistics Export'])
-    rows.push(['Game', statistics.gameName])
-    rows.push(['Export Date', new Date().toLocaleString()])
-    rows.push([])
-
-    rows.push(['Overview'])
-    rows.push(['Total Playtime', formatDuration(statistics.totalPlayTimeSeconds)])
-    rows.push(['Total Sessions', statistics.totalSessions.toString()])
-    rows.push(['Average Session Time', formatDuration(Math.round(statistics.averageSessionTimeSeconds))])
-    rows.push(['Longest Session', formatDuration(statistics.longestSessionSeconds)])
-    rows.push(['Number of Replays', statistics.replaysCount.toString()])
-    if (statistics.firstStartedDate) rows.push(['First Started', formatDateOnly(statistics.firstStartedDate)])
-    if (statistics.lastPlayedDate) rows.push(['Last Played', formatDateOnly(statistics.lastPlayedDate)])
-    if (statistics.longestCompletionSeconds) rows.push(['Longest Completion', formatDuration(statistics.longestCompletionSeconds)])
-    if (statistics.shortestCompletionSeconds) rows.push(['Shortest Completion', formatDuration(statistics.shortestCompletionSeconds)])
-    rows.push([])
-
-    rows.push(['Session Details'])
-    rows.push(['Session #', 'Playthrough', 'Date', 'Duration', 'Pause Count'])
-    filteredAndSortedSessions.forEach(session => {
-      rows.push([
-        session.sessionNumber,
-        session.playthroughTitle || 'N/A',
-        formatDateOnly(session.sessionDate),
-        formatDuration(session.sessionTimeSeconds),
-        session.pauseCount || 0
-      ])
-    })
-
-    const csvContent = rows.map(row =>
-      row.map(cell => {
-        const cellStr = String(cell ?? '')
-        if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
-          return `"${cellStr.replace(/"/g, '""')}"`
-        }
-        return cellStr
-      }).join(',')
-    ).join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `gamewatch-${statistics.gameName.replace(/[^a-z0-9]/gi, '_')}-${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const { exportGameStatisticsToXlsx } = await import('../utils/xlsxExport')
+    exportGameStatisticsToXlsx(statistics, filteredAndSortedSessions, t)
   }
 
   if (loading) return <Loading />
@@ -285,7 +236,7 @@ function GameStatisticsPage() {
             <p className="mt-1 text-body-sm text-text-secondary">{t('statistics.gameStats.title')}</p>
           </div>
         </div>
-        <Button onClick={exportToCSV} className="bg-success text-white hover:bg-success/90">
+        <Button onClick={handleExport} className="bg-success text-white hover:bg-success/90">
           <Download className="size-4" />
           {t('statistics.exportCSV')}
         </Button>

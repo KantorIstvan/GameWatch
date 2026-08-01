@@ -185,7 +185,7 @@
     "comingSoonDescription": "हम आपके खेलने की आदतों पर विस्तृत आँकड़े बना रहे हैं!",
     "userStats": {
       "totalPlaytime": "कुल खेल समय",
-      "totalGames": "कुल गेम",
+      "totalGames": "स्वामित्व वाले गेम",
       "completed": "पूर्ण",
       "inProgress": "प्रगति पर",
       "totalSessions": "कुल सत्र",

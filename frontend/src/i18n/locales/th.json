@@ -185,7 +185,7 @@
     "comingSoonDescription": "เรากำลังพัฒนาสถิติรายละเอียดเกี่ยวกับนิสัยการเล่นเกมของคุณ!",
     "userStats": {
       "totalPlaytime": "เวลาการเล่นทั้งหมด",
-      "totalGames": "จำนวนเกมที่เล่นทั้งหมด",
+      "totalGames": "เกมที่เป็นเจ้าของ",
       "completed": "เสร็จสิ้น",
       "inProgress": "กำลังเล่น",
       "totalSessions": "จำนวนเซสชันทั้งหมด",

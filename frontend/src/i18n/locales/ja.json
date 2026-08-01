@@ -185,7 +185,7 @@
     "comingSoonDescription": "ゲーム習慣に関する詳細な統計を提供できるよう取り組んでいます！",
     "userStats": {
       "totalPlaytime": "総プレイ時間",
-      "totalGames": "プレイしたゲーム総数",
+      "totalGames": "所有ゲーム数",
       "completed": "完了",
       "inProgress": "進行中",
       "totalSessions": "総セッション数",

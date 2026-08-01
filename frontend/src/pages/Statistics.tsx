@@ -3,7 +3,7 @@ import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Bu
 import { useTranslation } from 'react-i18next'
 import { useAuthContext } from '../contexts/AuthContext'
 import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/formatters'
-import { exportStatisticsToCSV } from '../utils/csvExport'
+import { getISOWeekNumber } from '../utils/dateUtils'
 import { useStatistics } from '../hooks/useStatistics'
 import { useStatisticsCharts } from '../hooks/useStatisticsCharts'
 import StatCard from '../components/StatCard'
@@ -25,9 +25,17 @@ const palette = {
 }
 
 function Statistics() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { isAuthReady } = useAuthContext()
   const [interval, setInterval] = useState<'week' | 'month' | 'year' | 'all'>('all')
+
+  const periodLabel = interval === 'week'
+    ? t('statistics.userStats.currentWeekLabel', { number: getISOWeekNumber() })
+    : interval === 'month'
+      ? new Date().toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })
+      : interval === 'year'
+        ? new Date().getFullYear().toString()
+        : null
 
   const { statistics, recommendations, loading, error } = useStatistics(interval, isAuthReady)
   const chartData = useStatisticsCharts(statistics)
@@ -38,11 +46,12 @@ function Statistics() {
     }
   }, [])
 
-  const handleExportCSV = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (statistics) {
-      exportStatisticsToCSV(statistics, interval)
+      const { exportStatisticsToXlsx } = await import('../utils/xlsxExport')
+      exportStatisticsToXlsx(statistics, interval, t)
     }
-  }, [statistics, interval])
+  }, [statistics, interval, t])
 
   const hasData = statistics ? statistics.totalPlaytimeSeconds > 0 : false
 
@@ -84,7 +93,10 @@ function Statistics() {
   return (
     <div>
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <h1 className="text-h2 font-bold">{t('statistics.title')}</h1>
+        <div>
+          <h1 className="text-h2 font-bold">{t('statistics.title')}</h1>
+          {periodLabel && <p className="mt-1 text-body-sm text-text-secondary">{periodLabel}</p>}
+        </div>
         <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
           <ToggleGroup
             type="single"
@@ -99,7 +111,7 @@ function Statistics() {
             <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">{t('statistics.userStats.allTime')}</ToggleGroupItem>
           </ToggleGroup>
           <Button
-            onClick={handleExportCSV}
+            onClick={handleExport}
             disabled={!hasData}
             className="bg-success text-white hover:bg-success/90 disabled:bg-success/30"
           >
@@ -274,21 +286,12 @@ function Statistics() {
 
           <SpecialGameCards
             favoriteGame={statistics.favoriteGame}
+            longestSessionSeconds={statistics.longestSessionSeconds}
             longestToComplete={statistics.longestToCompleteGame}
             fastestToComplete={statistics.fastestToCompleteGame}
+            formatDuration={formatTimeDetailed}
             t={t}
           />
-
-          <div className="mb-8">
-            <div className={cardClass}>
-              <p className="mb-1 text-body-sm font-medium text-text-secondary">
-                {t('statistics.userStats.longestSession')}
-              </p>
-              <p className="text-h2 font-bold text-text-primary">
-                {formatTimeDetailed(statistics.longestSessionSeconds)}
-              </p>
-            </div>
-          </div>
 
           {statistics.topMostPlayedGames.length > 0 && (
             <div className="mb-8">
