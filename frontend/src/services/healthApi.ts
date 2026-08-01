@@ -116,6 +116,10 @@ const healthApi = {
   updateUserAge: (age: number | null) => {
     return apiClient.put('/users/me/age', { age })
   },
+
+  getYearlyHeatmap: (year: number) => {
+    return apiClient.get<Record<string, number>>('/user-health/heatmap', { params: { year } })
+  },
 }
 
 export default healthApi
