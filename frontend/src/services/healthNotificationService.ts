@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 import i18n from '../i18n/i18n'
 import { HealthSettings } from './healthApi'
 
@@ -95,12 +95,7 @@ class HealthNotificationService {
     const playSound = this.settings?.soundsEnabled
 
     toast.info(i18n.t('notifications.breakReminder'), {
-      autoClose: 10000,
-      pauseOnHover: true,
-      draggable: true,
-      onClick: () => {
-        // User acknowledged the break
-      },
+      duration: 10000,
     })
 
     if (playSound) {
@@ -112,9 +107,7 @@ class HealthNotificationService {
     const playSound = this.settings?.soundsEnabled
 
     toast.info(i18n.t('notifications.hydrationReminder'), {
-      autoClose: 8000,
-      pauseOnHover: true,
-      draggable: true,
+      duration: 8000,
     })
 
     if (playSound) {
@@ -126,9 +119,7 @@ class HealthNotificationService {
     const playSound = this.settings?.soundsEnabled
 
     toast.info(i18n.t('notifications.standReminder'), {
-      autoClose: 8000,
-      pauseOnHover: true,
-      draggable: true,
+      duration: 8000,
     })
 
     if (playSound) {
@@ -147,9 +138,7 @@ class HealthNotificationService {
         : i18n.t('notifications.goalReachedSessions', { current, max })
 
     toast.warning(message, {
-      autoClose: 15000,
-      pauseOnHover: true,
-      draggable: true,
+      duration: 15000,
     })
 
     if (this.settings?.soundsEnabled) {
@@ -168,9 +157,7 @@ class HealthNotificationService {
         : i18n.t('notifications.goalExceededSessions', { current, max })
 
     toast.error(message, {
-      autoClose: false, // Don't auto-close for exceeded goals
-      pauseOnHover: true,
-      draggable: true,
+      duration: Infinity, // Don't auto-close for exceeded goals
     })
 
     if (this.settings?.soundsEnabled) {
@@ -184,9 +171,7 @@ class HealthNotificationService {
     }
 
     toast.warning(i18n.t('notifications.lateNightWarning'), {
-      autoClose: 12000,
-      pauseOnHover: true,
-      draggable: true,
+      duration: 12000,
     })
 
     if (this.settings?.soundsEnabled) {

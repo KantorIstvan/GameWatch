@@ -9,7 +9,7 @@ import healthApi, { HealthSettings as HealthSettingsType } from '../services/hea
 import backupApi, { BackupData } from '../services/backupApi'
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../contexts/AuthContext'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 import { User } from '../types'
 import { COMMON_TIMEZONES } from '../utils/timezones'
 import { Button } from '@/components/ui/button'
@@ -66,7 +66,9 @@ function Settings() {
   const [deleting, setDeleting] = useState(false)
 
   const [age, setAge] = useState<number | ''>('')
+  const [savingAge, setSavingAge] = useState(false)
   const [timezone, setTimezone] = useState<string>('')
+  const [savingTimezone, setSavingTimezone] = useState(false)
   const [timezonePickerOpen, setTimezonePickerOpen] = useState(false)
   const [healthSettings, setHealthSettings] = useState<HealthSettingsType | null>(null)
   const [healthExpanded, setHealthExpanded] = useState(false)
@@ -116,21 +118,29 @@ function Settings() {
   }
 
   const handleSaveAge = async () => {
+    if (savingAge) return
     try {
+      setSavingAge(true)
       await healthApi.updateUserAge(age === '' ? null : Number(age))
       toast.success(t('settings.ageUpdated'))
     } catch (error) {
       toast.error(t('settings.ageUpdateFailed'))
+    } finally {
+      setSavingAge(false)
     }
   }
 
   const handleSaveTimezone = async () => {
+    if (savingTimezone) return
     try {
+      setSavingTimezone(true)
       await userApi.updateTimezone(timezone)
       setTimezoneContext(timezone)
       toast.success(t('settings.timezoneUpdated'))
     } catch (error) {
       toast.error(t('settings.timezoneUpdateFailed'))
+    } finally {
+      setSavingTimezone(false)
     }
   }
 
@@ -338,7 +348,7 @@ function Settings() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <Button onClick={handleSaveTimezone} disabled={!timezone} className="h-14 whitespace-nowrap px-6">
+              <Button onClick={handleSaveTimezone} disabled={!timezone || savingTimezone} className="h-14 whitespace-nowrap px-6">
                 {t('settings.save')}
               </Button>
             </div>
@@ -375,7 +385,7 @@ function Settings() {
                         placeholder={t('settings.enterAge')}
                         className="w-37.5"
                       />
-                      <Button variant="outline" size="sm" onClick={handleSaveAge}>
+                      <Button variant="outline" size="sm" onClick={handleSaveAge} disabled={savingAge}>
                         {t('settings.saveAge')}
                       </Button>
                     </div>

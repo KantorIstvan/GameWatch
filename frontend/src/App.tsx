@@ -2,8 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { Toaster } from '@/components/ui/sonner'
 import Layout from './components/Layout'
 import Timers from './pages/Timers'
 import Statistics from './pages/Statistics'
@@ -54,17 +53,10 @@ function AppContent() {
           <Route path="help" element={<Help />} />
         </Route>
       </Routes>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={8000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={['ar', 'fa', 'ur'].includes(i18n.language)}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
+      <Toaster
+        duration={8000}
+        dir={['ar', 'fa', 'ur'].includes(i18n.language) ? 'rtl' : 'ltr'}
+        closeButton
       />
     </>
   )

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 import { ArrowLeft, Clock, Pencil } from 'lucide-react'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
@@ -61,17 +61,22 @@ function PlaythroughDetail() {
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [availablePlaythroughs, setAvailablePlaythroughs] = useState<Playthrough[]>([])
   const [selectedImportPlaythrough, setSelectedImportPlaythrough] = useState<number | ''>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { showMoodPrompt, lastSessionId, promptForMood, closeMoodPrompt, required } = useMoodPrompt()
 
   const handleEndSessionWithMood = useCallback(async () => {
+    if (isSubmitting) return
     try {
+      setIsSubmitting(true)
       const sessionHistoryId = await handlers.handleEndSession()
       promptForMood(sessionHistoryId)
     } catch (error) {
-      toast.error('Failed to end session')
+      toast.error(t('playthrough.failedToEndSession'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [handlers, promptForMood])
+  }, [isSubmitting, handlers, promptForMood, t])
 
   const handleOpenEditDialog = useCallback(() => {
     const hrs = Math.floor(elapsedTime / 3600)
@@ -84,6 +89,7 @@ function PlaythroughDetail() {
   }, [elapsedTime])
 
   const handleSaveTime = useCallback(async () => {
+    if (isSubmitting) return
     const totalSeconds = (Number(editHours) || 0) * 3600 + (Number(editMinutes) || 0) * 60 + (Number(editSeconds) || 0)
 
     if (totalSeconds > elapsedTime) {
@@ -92,25 +98,31 @@ function PlaythroughDetail() {
     }
 
     try {
+      setIsSubmitting(true)
       await handlers.updateDuration(totalSeconds)
       setEditDialogOpen(false)
       toast.success(t('common.success'))
     } catch (err: any) {
-      toast.error('Failed to update time.')
+      toast.error(t('playthrough.failedToUpdateTime'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [editHours, editMinutes, editSeconds, elapsedTime, handlers, t])
+  }, [isSubmitting, editHours, editMinutes, editSeconds, elapsedTime, handlers, t])
 
   const handleUpdatePlatform = useCallback(async () => {
-    if (!selectedPlatform) return
+    if (!selectedPlatform || isSubmitting) return
 
     try {
+      setIsSubmitting(true)
       await handlers.updatePlatform(selectedPlatform)
       setPlatformDialogOpen(false)
       toast.success(t('common.success'))
     } catch (err: any) {
-      toast.error('Failed to update platform.')
+      toast.error(t('playthrough.failedToUpdatePlatform'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [selectedPlatform, handlers, t])
+  }, [isSubmitting, selectedPlatform, handlers, t])
 
   const handleOpenTitleDialog = useCallback(() => {
     setEditedTitle(playthrough?.title || '')
@@ -118,30 +130,39 @@ function PlaythroughDetail() {
   }, [playthrough])
 
   const handleUpdateTitle = useCallback(async () => {
+    if (isSubmitting) return
     try {
+      setIsSubmitting(true)
       await handlers.updateTitle(editedTitle)
       setTitleDialogOpen(false)
       toast.success(t('common.success'))
     } catch (err: any) {
-      toast.error('Failed to update title.')
+      toast.error(t('playthrough.failedToUpdateTitle'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [editedTitle, handlers, t])
+  }, [isSubmitting, editedTitle, handlers, t])
 
   const handleLogManualSession = useCallback(async (startedAt: string, endedAt: string) => {
+    if (isSubmitting) return
     try {
+      setIsSubmitting(true)
       const sessionHistoryId = await handlers.logManualSession(startedAt, endedAt)
       setManualSessionDialogOpen(false)
-      toast.success('Session logged successfully!')
+      toast.success(t('playthrough.sessionLoggedSuccess'))
       promptForMood(sessionHistoryId)
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to log manual session.')
+      toast.error(err.response?.data?.message || t('playthrough.failedToLogManualSession'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [handlers, promptForMood])
+  }, [isSubmitting, handlers, promptForMood, t])
 
   const handleOpenImportDialog = useCallback(async () => {
-    if (!playthrough || !game) return
+    if (!playthrough || !game || isSubmitting) return
 
     try {
+      setIsSubmitting(true)
       const response = await playthroughsApi.getAll()
       const filteredPlaythroughs = response.data.filter((pt: Playthrough) =>
         pt.gameId === game.id &&
@@ -152,25 +173,31 @@ function PlaythroughDetail() {
       setAvailablePlaythroughs(filteredPlaythroughs)
       setImportDialogOpen(true)
     } catch (err: any) {
-      toast.error('Failed to load available playthroughs.')
+      toast.error(t('playthrough.failedToLoadImportOptions'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [playthrough, game])
+  }, [isSubmitting, playthrough, game, t])
 
   const handleImportSessions = useCallback(async () => {
+    if (isSubmitting) return
     if (!selectedImportPlaythrough) {
-      toast.warning('Please select a playthrough to import from.')
+      toast.warning(t('playthrough.selectPlaythroughToImport'))
       return
     }
 
     try {
+      setIsSubmitting(true)
       await handlers.importSessions(Number(selectedImportPlaythrough))
       setImportDialogOpen(false)
       setSelectedImportPlaythrough('')
-      toast.success('Sessions imported successfully!')
+      toast.success(t('playthrough.sessionsImportedSuccess'))
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to import sessions.')
+      toast.error(err.response?.data?.message || t('playthrough.failedToImportSessions'))
+    } finally {
+      setIsSubmitting(false)
     }
-  }, [selectedImportPlaythrough, handlers])
+  }, [isSubmitting, selectedImportPlaythrough, handlers, t])
 
   if (loading) {
     return <Loading />
@@ -292,7 +319,7 @@ function PlaythroughDetail() {
                           variant="outline"
                           size="sm"
                           onClick={handleOpenImportDialog}
-                          disabled={alreadyImported}
+                          disabled={alreadyImported || isSubmitting}
                           className="text-caption disabled:border-success disabled:text-success disabled:opacity-70"
                         >
                           {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
@@ -519,7 +546,7 @@ function PlaythroughDetail() {
               <Button onClick={() => setEditDialogOpen(false)} variant="outline" size="lg" className="flex-1">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSaveTime} size="lg" className="flex-1">
+              <Button onClick={handleSaveTime} disabled={isSubmitting} size="lg" className="flex-1">
                 {t('common.save')}
               </Button>
             </div>
@@ -544,7 +571,7 @@ function PlaythroughDetail() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleUpdatePlatform} disabled={!selectedPlatform} className="w-full">
+            <Button onClick={handleUpdatePlatform} disabled={!selectedPlatform || isSubmitting} className="w-full">
               {t('common.save')}
             </Button>
           </DialogContent>
@@ -566,7 +593,7 @@ function PlaythroughDetail() {
               <Button onClick={() => setTitleDialogOpen(false)} variant="outline">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleUpdateTitle}>
+              <Button onClick={handleUpdateTitle} disabled={isSubmitting}>
                 {t('common.save')}
               </Button>
             </div>
@@ -605,7 +632,7 @@ function PlaythroughDetail() {
               <Button onClick={() => setImportDialogOpen(false)} variant="outline">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough}>
+              <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough || isSubmitting}>
                 Import
               </Button>
             </div>
@@ -674,6 +701,7 @@ function PlaythroughDetail() {
           playthroughStartDate={playthrough.startDate}
           isCompleted={playthrough.isCompleted}
           isDropped={playthrough.isDropped}
+          submitting={isSubmitting}
         />
 
         <MoodPromptModal
