@@ -22,6 +22,7 @@ interface ReusableBarChartProps {
   showLegend?: boolean
   isHourlyChart?: boolean
   highlightCurrentHour?: boolean
+  valueFormatter?: (value: number) => string
 }
 
 function ReusableBarChart({
@@ -34,7 +35,8 @@ function ReusableBarChart({
   noDataMessage = 'No data available',
   showLegend = false,
   isHourlyChart = false,
-  highlightCurrentHour = false
+  highlightCurrentHour = false,
+  valueFormatter
 }: ReusableBarChartProps) {
   const { timeFormat } = useTimeFormat()
 
@@ -119,6 +121,7 @@ function ReusableBarChart({
                   border: '1px solid var(--color-border)',
                   borderRadius: 8,
                 }}
+                formatter={valueFormatter ? (value: number | undefined, name: string | undefined) => [valueFormatter(value || 0), name || ''] : undefined}
               />
               {showLegend && <Legend />}
               {bars.map((bar, index) => (

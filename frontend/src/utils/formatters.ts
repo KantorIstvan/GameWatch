@@ -61,6 +61,28 @@ export const formatDuration = (seconds: number): string => {
 }
 
 /**
+ * Format duration as a localized long-form string, e.g. "1 hour 30 minutes" / "1 óra 30 perc".
+ * This is the single source of truth for duration text on the Statistics and Game Detail
+ * pages — add new call sites here instead of formatting hours/minutes inline per-page.
+ */
+export const formatDurationWords = (seconds: number, t: any): string => {
+  const totalMinutes = Math.round((seconds || 0) / 60)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours === 0) {
+    return t('common.duration.minutes', { count: minutes })
+  }
+  if (minutes === 0) {
+    return t('common.duration.hours', { count: hours })
+  }
+  return t('common.duration.combined', {
+    hours: t('common.duration.hours', { count: hours }),
+    minutes: t('common.duration.minutes', { count: minutes })
+  })
+}
+
+/**
  * Format date to string
  * Example: "2024-01-15" -> "Jan 15, 2024"
  */

@@ -10,6 +10,7 @@ import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTranslation } from 'react-i18next'
 import { getStartOfWeek, getStartOfMonth, getStartOfYear } from '../utils/dateUtils'
+import { formatDurationWords } from '../utils/formatters'
 import type { GameStatistics } from '../types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -69,20 +70,7 @@ function GameStatisticsPage() {
     }
   }
 
-  const formatDuration = (seconds: number): string => {
-    if (!seconds) return '0h 0m 0s'
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`
-    } else {
-      return `${secs}s`
-    }
-  }
+  const formatDuration = (seconds: number): string => formatDurationWords(seconds, t)
 
   const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return 'N/A'
@@ -373,7 +361,7 @@ function GameStatisticsPage() {
                     borderRadius: 8,
                   }}
                   labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
-                  formatter={(value: number | undefined) => [`${value || 0} ${t('statistics.gameStats.hours').toLowerCase()}`, t('statistics.gameStats.playtime')]}
+                  formatter={(value: number | undefined) => [formatDurationWords(Math.round((value || 0) * 3600), t), t('statistics.gameStats.playtime')]}
                 />
                 <Area
                   type="monotone"
