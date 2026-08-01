@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download } from 'lucide-react'
+import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download, Hourglass, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthContext } from '../contexts/AuthContext'
 import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/formatters'
@@ -13,7 +13,7 @@ import DailyPlaytimeChart from '../components/statistics/DailyPlaytimeChart'
 import DayOfWeekDualAxisChart from '../components/statistics/DayOfWeekDualAxisChart'
 import TopGamesSection from '../components/statistics/TopGamesSection'
 import GameRecommendations from '../components/statistics/GameRecommendations'
-import SpecialGameCards from '../components/statistics/SpecialGameCards'
+import GameBannerCard from '../components/statistics/GameBannerCard'
 import PeriodPicker from '../components/statistics/PeriodPicker'
 import { statColors, statForegrounds } from '../lib/statColors'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -134,6 +134,15 @@ function Statistics() {
           color={statColors.blue}
           foreground={statForegrounds.blue}
         />
+        {!!statistics.longestSessionSeconds && (
+          <StatCard
+            title={t('statistics.userStats.longestSession')}
+            value={formatTimeDetailed(statistics.longestSessionSeconds)}
+            icon={<Hourglass className="size-5" />}
+            color={statColors.aqua}
+            foreground={statForegrounds.aqua}
+          />
+        )}
         <StatCard
           title={t('statistics.userStats.totalGames')}
           value={statistics.totalGamesCount}
@@ -297,31 +306,63 @@ function Statistics() {
               />
             </div>
 
-            <div className={`${cardClass} flex flex-col justify-center`}>
+            <div className={`${cardClass} lg:col-span-2`}>
               <p className="mb-2 text-body-sm font-bold sm:text-body-lg">
                 {t('statistics.userStats.playtimeByDayOfWeek')}
               </p>
               <DayOfWeekDualAxisChart
                 data={dayOfWeekData}
                 noDataMessage={t('statistics.userStats.noData')}
+                height={280}
               />
             </div>
+          </div>
 
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2">
             <GameRecommendations
               recommendations={recommendations}
               title={t('statistics.userStats.recommendedGames')}
               noDataMessage={t('statistics.userStats.noRecommendations')}
             />
+
+            {statistics.favoriteGame && (
+              <GameBannerCard
+                game={statistics.favoriteGame}
+                size="hero"
+                label={t('statistics.userStats.favoriteGame')}
+                labelIcon={<TrendingUp className="size-4" />}
+                metric={formatTime(statistics.favoriteGame.playtimeSeconds)}
+              />
+            )}
           </div>
 
-          <SpecialGameCards
-            favoriteGame={statistics.favoriteGame}
-            longestSessionSeconds={statistics.longestSessionSeconds}
-            longestToComplete={statistics.longestToCompleteGame}
-            fastestToComplete={statistics.fastestToCompleteGame}
-            formatDuration={formatTimeDetailed}
-            t={t}
-          />
+          {(statistics.longestToCompleteGame || statistics.fastestToCompleteGame) && (
+            <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
+              {statistics.longestToCompleteGame && (
+                <GameBannerCard
+                  game={statistics.longestToCompleteGame}
+                  size="medium"
+                  label={t('statistics.userStats.longestToComplete')}
+                  labelIcon={<CalendarDays className="size-4" />}
+                  metric={statistics.longestToCompleteGame.daysToComplete !== undefined
+                    ? t('statistics.userStats.daysToComplete', { days: statistics.longestToCompleteGame.daysToComplete })
+                    : undefined}
+                />
+              )}
+
+              {statistics.fastestToCompleteGame && (
+                <GameBannerCard
+                  game={statistics.fastestToCompleteGame}
+                  size="medium"
+                  label={t('statistics.userStats.fastestCompletion')}
+                  labelIcon={<Timer className="size-4" />}
+                  metric={statistics.fastestToCompleteGame.daysToComplete !== undefined
+                    ? t('statistics.userStats.daysToComplete', { days: statistics.fastestToCompleteGame.daysToComplete })
+                    : undefined}
+                />
+              )}
+            </div>
+          )}
 
           {statistics.topMostPlayedGames.length > 0 && (
             <div className="mb-8">
