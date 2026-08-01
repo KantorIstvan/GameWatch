@@ -185,7 +185,7 @@
     "comingSoonDescription": "Ми працюємо над детальною статистикою про ваші ігрові звички!",
     "userStats": {
       "totalPlaytime": "Загальний час гри",
-      "totalGames": "Усього ігор",
+      "totalGames": "Ігри у Власності",
       "completed": "Завершено",
       "inProgress": "В процесі",
       "totalSessions": "Усього сесій",

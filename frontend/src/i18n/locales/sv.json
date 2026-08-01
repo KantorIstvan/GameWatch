@@ -185,7 +185,7 @@
     "comingSoonDescription": "Vi jobbar på att ge dig detaljerad statistik om dina spelvanor!",
     "userStats": {
       "totalPlaytime": "Total speltid",
-      "totalGames": "Totalt antal spel",
+      "totalGames": "Ägda Spel",
       "completed": "Slutförda",
       "inProgress": "Pågående",
       "totalSessions": "Totalt antal sessioner",
