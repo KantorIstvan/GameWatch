@@ -9,6 +9,7 @@ import com.gamewatch.entity.User;
 import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
+import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,7 @@ public class PlaythroughService {
             .orElseThrow(() -> new RuntimeException("Game not found"));
 
         // Validate start date is not in the future
-        if (request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now())) {
+        if (request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now(TimezoneUtils.resolveZone(user)))) {
             throw new RuntimeException("Cannot set a future start date for a playthrough");
         }
 
@@ -120,7 +122,7 @@ public class PlaythroughService {
         playthrough.setIsPaused(false);
         playthrough.setIsCompleted(true);
         playthrough.setIsDropped(false);
-        playthrough.setEndDate(stoppedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+        playthrough.setEndDate(stoppedAt.atZone(TimezoneUtils.resolveZone(user)).toLocalDate());
         playthrough.setLastPlayedAt(stoppedAt);
 
         if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
@@ -154,7 +156,7 @@ public class PlaythroughService {
         playthrough.setIsPaused(false);
         playthrough.setIsCompleted(false);
         playthrough.setIsDropped(true);
-        playthrough.setEndDate(droppedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+        playthrough.setEndDate(droppedAt.atZone(TimezoneUtils.resolveZone(user)).toLocalDate());
         playthrough.setLastPlayedAt(droppedAt);
 
         if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
@@ -285,7 +287,7 @@ public class PlaythroughService {
 
         // Recalculate health metrics for today
         try {
-            healthService.recalculateMetricsForDate(user, LocalDate.now());
+            healthService.recalculateMetricsForDate(user, LocalDate.now(TimezoneUtils.resolveZone(user)));
         } catch (Exception e) {
             log.error("Failed to recalculate health metrics for user {}", user.getId(), e);
         }
@@ -436,8 +438,10 @@ public class PlaythroughService {
             throw new RuntimeException("Cannot log manual session for a dropped playthrough");
         }
 
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+
         if (playthrough.getStartDate() != null) {
-            LocalDate sessionStartDate = request.getStartedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            LocalDate sessionStartDate = request.getStartedAt().atZone(zone).toLocalDate();
             if (sessionStartDate.isBefore(playthrough.getStartDate())) {
                 throw new RuntimeException("Cannot log session before playthrough start date: " + playthrough.getStartDate());
             }
@@ -491,7 +495,7 @@ public class PlaythroughService {
 
         // Recalculate health metrics for the day the session was logged
         try {
-            LocalDate sessionDate = request.getEndedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            LocalDate sessionDate = request.getEndedAt().atZone(zone).toLocalDate();
             healthService.recalculateMetricsForDate(user, sessionDate);
         } catch (Exception e) {
             log.error("Failed to recalculate health metrics for user {}", user.getId(), e);

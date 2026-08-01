@@ -5,6 +5,7 @@ import { Auth0Provider } from '@auth0/auth0-react'
 import App from './App'
 import './styles/tokens.css'
 import './i18n/i18n'
+import './lib/dayjsTz'
 
 const domain = import.meta.env.VITE_AUTH0_DOMAIN as string
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID as string

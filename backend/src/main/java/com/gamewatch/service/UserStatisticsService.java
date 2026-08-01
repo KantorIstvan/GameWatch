@@ -10,6 +10,7 @@ import com.gamewatch.entity.User;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
 import com.gamewatch.repository.UserGameRepository;
+import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,8 @@ public class UserStatisticsService {
 
     @Transactional(readOnly = true)
     public UserStatisticsDto getUserStatistics(User user, String interval, String date) {
-        DateRange range = getDateRange(user, interval, date);
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+        DateRange range = getDateRange(user, zone, interval, date);
 
         List<Playthrough> allPlaythroughs = playthroughRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
 
@@ -52,7 +54,7 @@ public class UserStatisticsService {
             return createEmptyStatistics();
         }
 
-        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, range);
+        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, range, zone);
 
         return UserStatisticsDto.builder()
             .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, range))
@@ -62,7 +64,7 @@ public class UserStatisticsService {
             .longestSessionSeconds(findLongestSession(sessions))
             .totalSessionCount(sessions.size())
             .totalGamesCount(totalGamesInLibrary)
-            .timeOfDayStats(calculateTimeOfDayStats(sessions))
+            .timeOfDayStats(calculateTimeOfDayStats(sessions, zone))
             .dailyPlaytime(dailyPlaytimeData)
             .genreDistribution(calculateGenreDistribution(playthroughs))
             .platformDistribution(calculatePlatformDistribution(playthroughs))
@@ -70,8 +72,8 @@ public class UserStatisticsService {
             .longestToCompleteGame(findLongestToCompleteGame(playthroughs))
             .fastestToCompleteGame(findFastestToCompleteGame(playthroughs))
             .topMostPlayedGames(findTopMostPlayedGames(playthroughs, 5))
-            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions))
-            .dayOfWeekTotalPlaytime(calculateDayOfWeekTotalPlaytime(sessions))
+            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, zone))
+            .dayOfWeekTotalPlaytime(calculateDayOfWeekTotalPlaytime(sessions, zone))
             .libraryCompletionPercentage(calculateLibraryCompletion(allPlaythroughs, totalGamesInLibrary))
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
             .favoritePublisher(findFavoritePublisher(playthroughs))
@@ -87,12 +89,12 @@ public class UserStatisticsService {
     private record DateRange(Instant start, Instant end) {
     }
 
-    private DateRange getDateRange(User user, String interval, String date) {
+    private DateRange getDateRange(User user, ZoneId zone, String interval, String date) {
         LocalDate referenceDate;
         try {
-            referenceDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now();
+            referenceDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now(zone);
         } catch (DateTimeParseException e) {
-            referenceDate = LocalDate.now();
+            referenceDate = LocalDate.now(zone);
         }
 
         return switch (interval.toLowerCase()) {
@@ -109,24 +111,24 @@ public class UserStatisticsService {
                 }
                 LocalDate weekEnd = weekStart.plusDays(6);
                 yield new DateRange(
-                    weekStart.atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                    weekEnd.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                    weekStart.atStartOfDay(zone).toInstant(),
+                    weekEnd.atTime(LocalTime.MAX).atZone(zone).toInstant()
                 );
             }
             case "month" -> {
                 LocalDate firstOfMonth = referenceDate.withDayOfMonth(1);
                 LocalDate lastOfMonth = referenceDate.withDayOfMonth(referenceDate.lengthOfMonth());
                 yield new DateRange(
-                    firstOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                    lastOfMonth.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                    firstOfMonth.atStartOfDay(zone).toInstant(),
+                    lastOfMonth.atTime(LocalTime.MAX).atZone(zone).toInstant()
                 );
             }
             case "year" -> {
                 LocalDate firstOfYear = referenceDate.withDayOfYear(1);
                 LocalDate lastOfYear = referenceDate.withDayOfYear(referenceDate.lengthOfYear());
                 yield new DateRange(
-                    firstOfYear.atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                    lastOfYear.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+                    firstOfYear.atStartOfDay(zone).toInstant(),
+                    lastOfYear.atTime(LocalTime.MAX).atZone(zone).toInstant()
                 );
             }
             default -> new DateRange(Instant.EPOCH, Instant.now());
@@ -253,7 +255,7 @@ public class UserStatisticsService {
             .count();
     }
 
-    private UserStatisticsDto.TimeOfDayStats calculateTimeOfDayStats(List<SessionHistory> sessions) {
+    private UserStatisticsDto.TimeOfDayStats calculateTimeOfDayStats(List<SessionHistory> sessions, ZoneId zone) {
         Map<String, Long> timeOfDayMap = new HashMap<>();
         timeOfDayMap.put("dawn", 0L);
         timeOfDayMap.put("morning", 0L);
@@ -272,8 +274,8 @@ public class UserStatisticsService {
             Instant end = session.getEndedAt();
             long totalSeconds = session.getDurationSeconds();
             
-            LocalDateTime startTime = LocalDateTime.ofInstant(start, ZoneId.systemDefault());
-            LocalDateTime endTime = LocalDateTime.ofInstant(end, ZoneId.systemDefault());
+            LocalDateTime startTime = LocalDateTime.ofInstant(start, zone);
+            LocalDateTime endTime = LocalDateTime.ofInstant(end, zone);
             
             if (startTime.getHour() == endTime.getHour() && 
                 startTime.getDayOfYear() == endTime.getDayOfYear() &&
@@ -327,25 +329,25 @@ public class UserStatisticsService {
         }
     }
 
-    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(List<SessionHistory> sessions, DateRange range) {
+    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(List<SessionHistory> sessions, DateRange range, ZoneId zone) {
         Map<LocalDate, Long> dailyMap = new HashMap<>();
 
         for (SessionHistory session : sessions) {
-            LocalDate date = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault()).toLocalDate();
+            LocalDate date = LocalDateTime.ofInstant(session.getStartedAt(), zone).toLocalDate();
             dailyMap.merge(date, session.getDurationSeconds(), Long::sum);
         }
 
         LocalDate startDate = range.start().equals(Instant.EPOCH)
             ? sessions.stream()
-                .map(s -> LocalDateTime.ofInstant(s.getStartedAt(), ZoneId.systemDefault()).toLocalDate())
+                .map(s -> LocalDateTime.ofInstant(s.getStartedAt(), zone).toLocalDate())
                 .min(LocalDate::compareTo)
-                .orElse(LocalDate.now())
-            : LocalDateTime.ofInstant(range.start(), ZoneId.systemDefault()).toLocalDate();
+                .orElse(LocalDate.now(zone))
+            : LocalDateTime.ofInstant(range.start(), zone).toLocalDate();
 
         // Cap at today: for the current period this stops the list at "now" (old
         // behavior); for a past period, range.end() is already before today.
-        LocalDate rangeEndDate = LocalDateTime.ofInstant(range.end(), ZoneId.systemDefault()).toLocalDate();
-        LocalDate endDate = rangeEndDate.isBefore(LocalDate.now()) ? rangeEndDate : LocalDate.now();
+        LocalDate rangeEndDate = LocalDateTime.ofInstant(range.end(), zone).toLocalDate();
+        LocalDate endDate = rangeEndDate.isBefore(LocalDate.now(zone)) ? rangeEndDate : LocalDate.now(zone);
 
         List<UserStatisticsDto.DailyPlaytime> result = new ArrayList<>();
         LocalDate current = startDate;
@@ -540,39 +542,39 @@ public class UserStatisticsService {
             .build();
     }
 
-    private Map<String, Double> calculateDayOfWeekAveragePlaytime(List<SessionHistory> sessions) {
-        Map<String, Long> totalPlaytimeByDay = calculateDayOfWeekTotalPlaytime(sessions);
+    private Map<String, Double> calculateDayOfWeekAveragePlaytime(List<SessionHistory> sessions, ZoneId zone) {
+        Map<String, Long> totalPlaytimeByDay = calculateDayOfWeekTotalPlaytime(sessions, zone);
         Map<String, Integer> countByDay = new HashMap<>();
-        
+
         for (SessionHistory session : sessions) {
-            String dayName = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault())
+            String dayName = LocalDateTime.ofInstant(session.getStartedAt(), zone)
                 .getDayOfWeek().toString();
             countByDay.merge(dayName, 1, Integer::sum);
         }
-        
+
         Map<String, Double> averagePlaytime = new HashMap<>();
         for (Map.Entry<String, Long> entry : totalPlaytimeByDay.entrySet()) {
             String day = entry.getKey();
             int count = countByDay.getOrDefault(day, 1);
             averagePlaytime.put(day, (double) entry.getValue() / count);
         }
-        
+
         return averagePlaytime;
     }
-    
-    private Map<String, Long> calculateDayOfWeekTotalPlaytime(List<SessionHistory> sessions) {
+
+    private Map<String, Long> calculateDayOfWeekTotalPlaytime(List<SessionHistory> sessions, ZoneId zone) {
         Map<String, Long> playtimeByDay = new HashMap<>();
-        
+
         for (DayOfWeek day : DayOfWeek.values()) {
             playtimeByDay.put(day.toString(), 0L);
         }
-        
+
         for (SessionHistory session : sessions) {
-            DayOfWeek dayOfWeek = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault())
+            DayOfWeek dayOfWeek = LocalDateTime.ofInstant(session.getStartedAt(), zone)
                 .getDayOfWeek();
             playtimeByDay.merge(dayOfWeek.toString(), session.getDurationSeconds(), Long::sum);
         }
-        
+
         return playtimeByDay;
     }
     

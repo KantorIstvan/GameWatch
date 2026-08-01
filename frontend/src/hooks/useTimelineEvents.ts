@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react'
+import dayjs from 'dayjs'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import { TimelineEvent } from '../types/timeline'
+import { useTimeFormat } from '../contexts/TimeFormatContext'
 
 export const useTimelineEvents = () => {
+  const { timezone } = useTimeFormat()
   const [playthroughs, setPlaythroughs] = useState<Playthrough[]>([])
   const [events, setEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // droppedAt/pickedUpAt are Instants; place them on the calendar day they fell on in
+  // the user's selected timezone, not the UTC day (what `new Date(x).toISOString()`
+  // would give) or the browser's zone.
+  const toLocalDateString = (instant: string) => dayjs.tz(instant, timezone).format('YYYY-MM-DD')
 
   const getEventColor = (playthrough: Playthrough) => {
     if (playthrough.isDropped) {
@@ -42,7 +50,7 @@ export const useTimelineEvents = () => {
         .filter((playthrough: Playthrough) => playthrough.startDate)
         .forEach((playthrough: Playthrough) => {
           if (playthrough.droppedAt && playthrough.pickedUpAt) {
-            const dropDate = new Date(playthrough.droppedAt).toISOString().split('T')[0]
+            const dropDate = toLocalDateString(playthrough.droppedAt)
             timelineEvents.push({
               id: `${playthrough.id}-dropped`,
               title: playthrough.gameName || '',
@@ -59,7 +67,7 @@ export const useTimelineEvents = () => {
               },
             })
 
-            const pickupDate = new Date(playthrough.pickedUpAt).toISOString().split('T')[0]
+            const pickupDate = toLocalDateString(playthrough.pickedUpAt)
             const endDate = playthrough.endDate
               ? new Date(new Date(playthrough.endDate).getTime() + 86400000).toISOString().split('T')[0]
               : undefined
@@ -80,7 +88,7 @@ export const useTimelineEvents = () => {
             })
           } else if (playthrough.isDropped && playthrough.droppedAt) {
             // For dropped games that were never picked up, only show event on the drop date
-            const dropDate = new Date(playthrough.droppedAt).toISOString().split('T')[0]
+            const dropDate = toLocalDateString(playthrough.droppedAt)
             timelineEvents.push({
               id: playthrough.id.toString(),
               title: playthrough.gameName || '',
@@ -128,7 +136,10 @@ export const useTimelineEvents = () => {
 
   useEffect(() => {
     fetchPlaythroughs()
-  }, [])
+    // Re-derive event days once the user's real stored timezone loads (it starts out
+    // as the browser's guess and is replaced asynchronously — see TimeFormatContext).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timezone])
 
   return { playthroughs, events, loading, error, refetch: fetchPlaythroughs }
 }

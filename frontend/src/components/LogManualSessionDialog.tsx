@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import DateTimePicker from './DateTimePicker'
+import { useTimeFormat } from '../contexts/TimeFormatContext'
 
 interface LogManualSessionDialogProps {
   open: boolean
@@ -17,6 +18,7 @@ interface LogManualSessionDialogProps {
 
 function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, isCompleted, isDropped, submitting }: LogManualSessionDialogProps) {
   const { t } = useTranslation()
+  const { timezone } = useTimeFormat()
   const [startDateTime, setStartDateTime] = useState('')
   const [endDateTime, setEndDateTime] = useState('')
   const [error, setError] = useState('')
@@ -29,26 +31,30 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
       return
     }
 
-    const start = new Date(startDateTime)
-    const end = new Date(endDateTime)
+    // startDateTime/endDateTime are naive "YYYY-MM-DDTHH:mm" wall-clock strings from
+    // the picker with no zone attached — interpret them in the user's selected
+    // timezone (not the browser's) so a manually-logged session lands on the same day
+    // the user actually experienced, even while traveling.
+    const start = dayjs.tz(startDateTime, timezone)
+    const end = dayjs.tz(endDateTime, timezone)
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    if (!start.isValid() || !end.isValid()) {
       setError('Invalid date/time format')
       return
     }
 
-    if (start >= end) {
+    if (!start.isBefore(end)) {
       setError('Start time must be before end time')
       return
     }
 
-    const now = new Date()
-    if (start > now) {
+    const now = dayjs()
+    if (start.isAfter(now)) {
       setError('Start time cannot be in the future')
       return
     }
 
-    if (end > now) {
+    if (end.isAfter(now)) {
       setError('End time cannot be in the future')
       return
     }
@@ -64,13 +70,11 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
     }
 
     if (playthroughStartDate) {
-      const playthroughStart = new Date(playthroughStartDate)
-      playthroughStart.setHours(0, 0, 0, 0)
-      const sessionStart = new Date(start)
-      sessionStart.setHours(0, 0, 0, 0)
+      const playthroughStart = dayjs.tz(playthroughStartDate, timezone).startOf('day')
+      const sessionStart = start.startOf('day')
 
-      if (sessionStart < playthroughStart) {
-        setError(`Cannot log session before playthrough start date: ${playthroughStart.toLocaleDateString()}`)
+      if (sessionStart.isBefore(playthroughStart)) {
+        setError(`Cannot log session before playthrough start date: ${playthroughStart.format('YYYY-MM-DD')}`)
         return
       }
     }
@@ -88,10 +92,10 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
 
   const duration = (() => {
     if (!startDateTime || !endDateTime || error) return null
-    const start = new Date(startDateTime)
-    const end = new Date(endDateTime)
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) return null
-    const durationSeconds = Math.floor((end.getTime() - start.getTime()) / 1000)
+    const start = dayjs.tz(startDateTime, timezone)
+    const end = dayjs.tz(endDateTime, timezone)
+    if (!start.isValid() || !end.isValid() || !start.isBefore(end)) return null
+    const durationSeconds = end.diff(start, 'second')
     const hours = Math.floor(durationSeconds / 3600)
     const minutes = Math.floor((durationSeconds % 3600) / 60)
     const seconds = durationSeconds % 60
