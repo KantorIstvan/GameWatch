@@ -20,18 +20,19 @@
   --gray-900: #1a1a1e;
   --gray-950: #0a0a0c;
 
-  /* Single confident accent — matches the app's existing brand hue */
-  --accent-100: #eaeefc;
-  --accent-500: #667eea;
-  --accent-600: #5468c9;
+  /* Monochrome accent — no hue anywhere in the app, only black/white/gray */
+  --accent-100: var(--gray-100);
+  --accent-500: var(--gray-900);
+  --accent-600: #000000;
 
-  --danger-500: #dc3d33;
-  --success-500: #1f9d55;
-  --warning-500: #ed6c02;
+  /* Status colors differentiated by weight (lightness), not hue */
+  --danger-500: var(--gray-950);
+  --success-500: var(--gray-700);
+  --warning-500: var(--gray-500);
 
   /* Signature brand gradient (logo wordmark) — one deliberate moment, not reused elsewhere */
-  --brand-start: #667eea;
-  --brand-end: #764ba2;
+  --brand-start: var(--gray-700);
+  --brand-end: var(--gray-950);
 }
 
 /* =========================================================================
@@ -136,14 +137,14 @@
   --color-text-primary: var(--gray-0);
   --color-text-secondary: #a1a1a6;
 
-  --color-accent: #8b9df5;
-  --color-accent-hover: #a5b4f7;
-  --color-accent-subtle: rgba(139, 157, 245, 0.16);
+  --color-accent: var(--gray-100);
+  --color-accent-hover: #ffffff;
+  --color-accent-subtle: rgba(255, 255, 255, 0.12);
   --color-accent-foreground: var(--gray-950);
 
-  --color-danger: #ef5350;
-  --color-success: #34c77a;
-  --color-warning: #ffa94d;
+  --color-danger: var(--gray-100);
+  --color-success: var(--gray-300);
+  --color-warning: var(--gray-500);
 
   --color-input: rgba(255, 255, 255, 0.12);
   --color-destructive-foreground: var(--gray-0);
