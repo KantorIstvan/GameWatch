@@ -500,7 +500,15 @@
     "calendarView": "Calendar",
     "listView": "List",
     "event": "event",
-    "events": "events"
+    "events": "events",
+    "filter": "Filter",
+    "all": "All",
+    "completed": "Completed",
+    "dropped": "Dropped",
+    "started": "Started",
+    "eventDetails": "Playthrough Details",
+    "viewFullDetails": "View Full Details",
+    "duration": "Duration"
   },
   "errors": {
     "failedLoadData": "Failed to load data. Please try again.",
