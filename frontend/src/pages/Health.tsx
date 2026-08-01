@@ -13,6 +13,9 @@ import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const HEATMAP_YEAR_OPTIONS = 5
 
 function getScoreColor(score: number | null) {
   if (score === null) return '#9e9e9e'
@@ -45,6 +48,8 @@ export default function Health() {
   const { timeFormat } = useTimeFormat()
   const [dashboard, setDashboard] = useState<HealthDashboard | null>(null)
   const [loading, setLoading] = useState(true)
+  const [heatmapYear, setHeatmapYear] = useState(new Date().getFullYear())
+  const [heatmapData, setHeatmapData] = useState<Record<string, number> | null>(null)
   const calHeatmapRef = useRef<HTMLDivElement>(null)
   const calInstanceRef = useRef<CalHeatmap | null>(null)
 
@@ -55,7 +60,13 @@ export default function Health() {
   }, [isAuthReady, isAuthenticated])
 
   useEffect(() => {
-    if (dashboard && calHeatmapRef.current) {
+    if (isAuthReady && isAuthenticated) {
+      loadHeatmap(heatmapYear)
+    }
+  }, [isAuthReady, isAuthenticated, heatmapYear])
+
+  useEffect(() => {
+    if (heatmapData && calHeatmapRef.current) {
       initializeHeatmap()
     }
 
@@ -64,16 +75,28 @@ export default function Health() {
         calInstanceRef.current.destroy()
       }
     }
-  }, [dashboard, mode])
+    // `loading` is included so this still runs once the heatmap container mounts,
+    // in case the heatmap request resolves before the (independent) dashboard request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heatmapData, mode, loading])
+
+  const loadHeatmap = async (year: number) => {
+    try {
+      const response = await healthApi.getYearlyHeatmap(year)
+      setHeatmapData(response.data)
+    } catch (error) {
+      // Silently fail
+    }
+  }
 
   const initializeHeatmap = () => {
-    if (!calHeatmapRef.current || !dashboard) return
+    if (!calHeatmapRef.current || !heatmapData) return
 
     if (calInstanceRef.current) {
       calInstanceRef.current.destroy()
     }
 
-    const heatmapData = Object.entries(dashboard.yearlyHeatmap).map(([dateStr, score]) => {
+    const heatmapPoints = Object.entries(heatmapData).map(([dateStr, score]) => {
       const [year, month, day] = dateStr.split('-').map(Number)
       const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
       const timestamp = date.getTime()
@@ -85,13 +108,12 @@ export default function Health() {
     const cal = new CalHeatmap()
     calInstanceRef.current = cal
 
-    const today = new Date()
-    const startDate = new Date(today.getFullYear(), 0, 1, 12, 0, 0)
+    const startDate = new Date(heatmapYear, 0, 1, 12, 0, 0)
 
     cal.paint({
       itemSelector: calHeatmapRef.current,
       data: {
-        source: heatmapData,
+        source: heatmapPoints,
         x: 'date',
         y: (d: any) => d.value,
       },
@@ -259,7 +281,19 @@ export default function Health() {
       <div
         className={`${cardClass} mb-6 [&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-plugin-legend-lite]:fill-text-secondary [&_.ch-subdomain-bg]:fill-surface`}
       >
-        <p className="mb-6 text-h4 font-semibold">{t('health.yearOverview')}</p>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-h4 font-semibold">{t('health.yearOverview')}</p>
+          <Select value={String(heatmapYear)} onValueChange={(v) => setHeatmapYear(Number(v))}>
+            <SelectTrigger className="w-30">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: HEATMAP_YEAR_OPTIONS }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div
           ref={calHeatmapRef}
           className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
