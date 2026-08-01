@@ -396,11 +396,13 @@ public class UserStatisticsService {
     }
 
     /**
-     * Total playtime is the single deciding criterion for "Favorite Game" — the other
-     * four candidate criteria (most replays, most sessions, longest session, longest
-     * average session) rarely land on the same game, so rather than picking among them
-     * they're surfaced as badges on the winning game whenever it also happens to lead
-     * in one of them.
+     * Most replays (playthrough count) is the single deciding criterion for "Favorite
+     * Game" — a game you've completed/started over again is a stronger "favorite"
+     * signal than raw total playtime, and unlike playtime it doesn't just duplicate
+     * the #1 spot in "Most Played Games". The other four candidate criteria (most
+     * playtime, most sessions, longest session, longest average session) rarely land
+     * on the same game, so rather than picking among them they're surfaced as badges
+     * on the winning game whenever it also happens to lead in one of them.
      */
     private UserStatisticsDto.GameRankingDto findFavoriteGame(List<Playthrough> playthroughs, List<SessionHistory> sessions) {
         Map<Long, GameFavoriteAggregation> statsByGame = new HashMap<>();
@@ -420,8 +422,8 @@ public class UserStatisticsService {
         }
 
         GameFavoriteAggregation favorite = statsByGame.values().stream()
-            .max(Comparator.comparing(GameFavoriteAggregation::getTotalPlaytime)
-                .thenComparing(GameFavoriteAggregation::getPlaythroughCount))
+            .max(Comparator.comparing(GameFavoriteAggregation::getPlaythroughCount)
+                .thenComparing(GameFavoriteAggregation::getTotalPlaytime))
             .orElse(null);
 
         if (favorite == null) {
@@ -431,10 +433,10 @@ public class UserStatisticsService {
         List<String> badges = new ArrayList<>();
         Long favoriteGameId = favorite.getGame().getId();
 
-        if (favorite.getPlaythroughCount() > 1 && favoriteGameId.equals(
-                statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getPlaythroughCount))
+        if (favoriteGameId.equals(
+                statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getTotalPlaytime))
                     .map(s -> s.getGame().getId()).orElse(null))) {
-            badges.add("mostReplays");
+            badges.add("mostPlaytime");
         }
         if (favorite.getSessionCount() > 0 && favoriteGameId.equals(
                 statsByGame.values().stream().max(Comparator.comparing(GameFavoriteAggregation::getSessionCount))
