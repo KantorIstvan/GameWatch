@@ -178,13 +178,7 @@
     "gameAll": "All Games",
     "filterByPlatform": "Filter by Platform",
     "platformAll": "All Platforms",
-    "searchTimers": "Search timers...",
-    "overview": {
-      "totalPlaytime": "Total Playtime",
-      "active": "Active",
-      "paused": "Paused",
-      "completed": "Completed"
-    }
+    "searchTimers": "Search timers..."
   },
   "statistics": {
     "title": "Statistics",
