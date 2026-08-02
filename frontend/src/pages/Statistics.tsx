@@ -238,6 +238,8 @@ function Statistics() {
                 <DailyPlaytimeChart
                   data={dailyPlaytimeData}
                   title={t('statistics.userStats.dailyPlaytime')}
+                  yAxisLabel={t('statistics.userStats.hours')}
+                  seriesName={t('statistics.userStats.hoursPlayed')}
                   valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
                 />
               </div>

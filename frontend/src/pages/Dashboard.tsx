@@ -42,7 +42,7 @@ function Dashboard() {
       setGames(gamesRes.data)
       setError(null)
     } catch (err: any) {
-      setError('Failed to load data. Please try again.')
+      setError(t('errors.failedLoadData'))
     } finally {
       setLoading(false)
     }
@@ -61,9 +61,9 @@ function Dashboard() {
       setPlaythroughType('story')
       setStartDate(new Date().toISOString().split('T')[0])
     } catch (err: any) {
-      setError('Failed to create playthrough. Please try again.')
+      setError(t('errors.failedCreatePlaythrough'))
     }
-  }, [selectedGameId, playthroughType, startDate, playthroughs])
+  }, [selectedGameId, playthroughType, startDate, playthroughs, t])
 
   const handleCloseDialog = useCallback(() => {
     setDialogOpen(false)
@@ -114,7 +114,7 @@ function Dashboard() {
 
       {games.length === 0 && (
         <Alert variant="info" className="mb-4">
-          <AlertDescription>No games found. Please add games first in the Games page.</AlertDescription>
+          <AlertDescription>{t('errors.noGamesFound')}</AlertDescription>
         </Alert>
       )}
 
@@ -154,10 +154,10 @@ function Dashboard() {
               <SelectValue placeholder={t('playthrough.type')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="story">Story</SelectItem>
-              <SelectItem value="100%">100%</SelectItem>
-              <SelectItem value="speedrun">Speedrun</SelectItem>
-              <SelectItem value="casual">Casual</SelectItem>
+              <SelectItem value="story">{t('playthrough.typeStory')}</SelectItem>
+              <SelectItem value="100%">{t('playthrough.type100')}</SelectItem>
+              <SelectItem value="speedrun">{t('playthrough.typeSpeedrun')}</SelectItem>
+              <SelectItem value="casual">{t('playthrough.typeCasual')}</SelectItem>
             </SelectContent>
           </Select>
 

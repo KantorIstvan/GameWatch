@@ -15,7 +15,7 @@ interface ReusablePieChartProps {
   minLabelPercent?: number
   showLabel?: boolean
   height?: number
-  noDataMessage?: string
+  noDataMessage: string
   valueFormatter?: (hours: number) => string
   /** Use for cards spanning extra grid width — grows the chart and lets the legend wrap into columns instead of leaving empty space. */
   wide?: boolean
@@ -25,7 +25,7 @@ function ReusablePieChart({
   data,
   title,
   height = 300,
-  noDataMessage = 'No data available',
+  noDataMessage,
   valueFormatter,
   wide = false
 }: ReusablePieChartProps) {

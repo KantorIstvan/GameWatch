@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Loader2, Smile, PersonStanding, MoonStar, TrendingUp, Info } from 'lucide-react'
+import { Smile, PersonStanding, MoonStar, TrendingUp, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import CalHeatmap from 'cal-heatmap'
 import 'cal-heatmap/cal-heatmap.css'
@@ -8,6 +8,7 @@ import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import healthApi, { HealthDashboard } from '../services/healthApi'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import Loading from '../components/Loading'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { Badge } from '@/components/ui/badge'
@@ -198,11 +199,7 @@ export default function Health() {
   }
 
   if (!isAuthReady || loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-accent" />
-      </div>
-    )
+    return <Loading />
   }
 
   if (!dashboard) {

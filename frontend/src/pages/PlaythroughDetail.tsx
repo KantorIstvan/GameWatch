@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Clock, Pencil } from 'lucide-react'
+import { ArrowLeft, Check, Clock, Pencil, Star } from 'lucide-react'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import Loading from '../components/Loading'
@@ -322,14 +322,21 @@ function PlaythroughDetail() {
                           disabled={alreadyImported || isSubmitting}
                           className="text-caption disabled:border-success disabled:text-success disabled:opacity-70"
                         >
-                          {playthrough.importedFromPlaythroughId ? 'Imported ✓' : 'Import Time'}
+                          {playthrough.importedFromPlaythroughId ? (
+                            <>
+                              <Check className="size-3.5" />
+                              {t('playthrough.imported')}
+                            </>
+                          ) : (
+                            t('playthrough.importTime')
+                          )}
                         </Button>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
                       {alreadyImported
-                        ? 'Already imported from another playthrough (one-time only)'
-                        : 'Import playtime from another playthrough'}
+                        ? t('playthrough.importTimeTooltipDone')
+                        : t('playthrough.importTimeTooltipAvailable')}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -342,7 +349,7 @@ function PlaythroughDetail() {
                   <div>
                     <div className="mb-1 flex items-center gap-1">
                       <span className="text-h4 font-bold">{game.rating}/5</span>
-                      <span className="text-h4">⭐</span>
+                      <Star className="size-4 fill-warning text-warning" />
                     </div>
                     <p className="text-body-sm text-text-secondary">
                       {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
@@ -355,7 +362,11 @@ function PlaythroughDetail() {
                     {(() => {
                       const score = game.metacritic ?? 0
                       const color = score >= 75 ? '#66cc33' : score >= 50 ? '#ffcc33' : '#ff6666'
-                      const label = score >= 75 ? 'Generally favorable' : score >= 50 ? 'Mixed or average' : 'Generally unfavorable'
+                      const label = score >= 75
+                        ? t('game.metacriticFavorable')
+                        : score >= 50
+                          ? t('game.metacriticMixed')
+                          : t('game.metacriticUnfavorable')
                       const Comp = game.metacriticUrl ? 'a' : 'div'
                       return (
                         <>
@@ -369,7 +380,7 @@ function PlaythroughDetail() {
                             {score}
                           </Comp>
                           <div>
-                            <p className="text-h4 font-semibold leading-tight">Metacritic</p>
+                            <p className="text-h4 font-semibold leading-tight">{t('game.metacriticLabel')}</p>
                             <p className="text-caption text-text-secondary">{label}</p>
                           </div>
                         </>
@@ -555,9 +566,9 @@ function PlaythroughDetail() {
 
         <Dialog open={platformDialogOpen} onOpenChange={() => {}}>
           <DialogContent showCloseButton={false}>
-            <DialogTitle>{t('playthrough.selectPlatform') || 'Select Platform'}</DialogTitle>
+            <DialogTitle>{t('playthrough.selectPlatform')}</DialogTitle>
             <p className="text-body-sm text-text-secondary">
-              This playthrough doesn't have a platform set. Please select which platform you're playing on.
+              {t('playthrough.selectPlatformDescription')}
             </p>
             <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
               <SelectTrigger className="w-full">
@@ -602,12 +613,12 @@ function PlaythroughDetail() {
 
         <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
           <DialogContent>
-            <DialogTitle>Import Time from Another Playthrough</DialogTitle>
+            <DialogTitle>{t('playthrough.importSessionsTitle')}</DialogTitle>
             <p className="text-body-sm text-text-secondary">
-              Import the playtime from another playthrough of the same game. Only the total time will be added to this 100% playthrough, without duplicating individual sessions.
+              {t('playthrough.importSessionsDescription')}
             </p>
             <p className="font-semibold text-warning">
-              Note: You can only import once per 100% playthrough. Choose carefully!
+              {t('playthrough.importSessionsWarning')}
             </p>
             <Select
               value={selectedImportPlaythrough ? String(selectedImportPlaythrough) : undefined}
@@ -615,7 +626,7 @@ function PlaythroughDetail() {
               disabled={availablePlaythroughs.length === 0}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Playthrough" />
+                <SelectValue placeholder={t('playthrough.selectPlaythroughPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
                 {availablePlaythroughs.map((pt) => (
@@ -633,7 +644,7 @@ function PlaythroughDetail() {
                 {t('common.cancel')}
               </Button>
               <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough || isSubmitting}>
-                Import
+                {t('playthrough.import')}
               </Button>
             </div>
           </DialogContent>
@@ -646,10 +657,10 @@ function PlaythroughDetail() {
             setFinishModalOpen(false)
             handlers.handleFinish()
           }}
-          title="Finish Game"
-          message="Are you sure you want to mark this game as finished? This action will move it to your completed games."
-          confirmText="Finish"
-          requiredText="Finish"
+          title={t('playthrough.finishPlaythrough')}
+          message={t('playthrough.finishConfirm')}
+          confirmText={t('playthrough.finish')}
+          requiredText={t('playthrough.finish')}
           destructive={false}
         />
 
@@ -660,10 +671,10 @@ function PlaythroughDetail() {
             setDropModalOpen(false)
             handlers.handleDrop()
           }}
-          title="Drop Game"
-          message="Are you sure you want to drop this game? It will be moved to your dropped games list."
-          confirmText="Drop"
-          requiredText="Drop"
+          title={t('playthrough.dropPlaythrough')}
+          message={t('playthrough.dropConfirm')}
+          confirmText={t('playthrough.drop')}
+          requiredText={t('playthrough.drop')}
           destructive
         />
 
@@ -687,10 +698,10 @@ function PlaythroughDetail() {
             setDeleteModalOpen(false)
             handlers.handleDelete()
           }}
-          title="Delete Playthrough"
-          message="Are you sure you want to permanently delete this playthrough? This will remove all session data and cannot be undone."
-          confirmText="Delete"
-          requiredText="Delete"
+          title={t('playthrough.delete')}
+          message={t('playthrough.deleteConfirm')}
+          confirmText={t('common.delete')}
+          requiredText={t('common.delete')}
           destructive
         />
 

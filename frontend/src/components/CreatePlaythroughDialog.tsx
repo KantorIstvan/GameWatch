@@ -162,10 +162,10 @@ function CreatePlaythroughDialog({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="story">Story</SelectItem>
-              <SelectItem value="100%">100%</SelectItem>
-              <SelectItem value="speedrun">Speedrun</SelectItem>
-              <SelectItem value="casual">Casual</SelectItem>
+              <SelectItem value="story">{t('playthrough.typeStory')}</SelectItem>
+              <SelectItem value="100%">{t('playthrough.type100')}</SelectItem>
+              <SelectItem value="speedrun">{t('playthrough.typeSpeedrun')}</SelectItem>
+              <SelectItem value="casual">{t('playthrough.typeCasual')}</SelectItem>
             </SelectContent>
           </Select>
         </div>

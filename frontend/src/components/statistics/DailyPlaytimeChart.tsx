@@ -3,10 +3,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 interface DailyPlaytimeChartProps {
   data: Array<{ date: string; hours: number }>
   title: string
+  yAxisLabel: string
+  seriesName: string
   valueFormatter?: (hours: number) => string
 }
 
-function DailyPlaytimeChart({ data, title, valueFormatter }: DailyPlaytimeChartProps) {
+function DailyPlaytimeChart({ data, title, yAxisLabel, seriesName, valueFormatter }: DailyPlaytimeChartProps) {
   if (data.length === 0) return null
 
   // Thin out date labels as the range grows so they never overlap, instead of
@@ -48,7 +50,7 @@ function DailyPlaytimeChart({ data, title, valueFormatter }: DailyPlaytimeChartP
             />
             <YAxis
               label={window.innerWidth >= 600 ? {
-                value: 'Hours',
+                value: yAxisLabel,
                 angle: -90,
                 position: 'insideLeft',
                 style: { fill: 'var(--color-text-secondary)', fontSize: 12 }
@@ -72,7 +74,7 @@ function DailyPlaytimeChart({ data, title, valueFormatter }: DailyPlaytimeChartP
               stroke="var(--color-accent)"
               strokeWidth={2}
               fill="url(#colorHours)"
-              name="Hours Played"
+              name={seriesName}
             />
           </AreaChart>
         </ResponsiveContainer>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import axios from 'axios'
+import { useTranslation } from 'react-i18next'
 import { statisticsApi } from '../services/api'
 import { UserStatistics, GameRecommendation } from '../types'
 import { apiCache, createCacheKey } from '../utils/apiCache'
@@ -10,6 +11,7 @@ export function useStatistics(
   referenceDate: Date,
   isAuthReady: boolean
 ) {
+  const { t } = useTranslation()
   const [statistics, setStatistics] = useState<UserStatistics | null>(null)
   const [recommendations, setRecommendations] = useState<GameRecommendation[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,13 +43,13 @@ export function useStatistics(
       setStatistics(response.data)
     } catch (err: any) {
       if (axios.isCancel(err)) return
-      setError(err.response?.data?.message || 'Failed to load statistics')
+      setError(err.response?.data?.message || t('statistics.failedToLoad'))
     } finally {
       if (abortControllerRef.current === controller) {
         setLoading(false)
       }
     }
-  }, [interval, referenceDate])
+  }, [interval, referenceDate, t])
 
   const fetchRecommendations = useCallback(async (gamesHash: string) => {
     try {
