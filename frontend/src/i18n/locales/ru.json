@@ -553,9 +553,6 @@
     "noResultsDescription": "Попробуйте изменить поисковые запросы",
     "expandAll": "Развернуть всё",
     "collapseAll": "Свернуть всё",
-    "stillNeedHelp": "Нужна дополнительная помощь?",
-    "contactSupport": "Связаться с поддержкой",
-    "responseTime": "Обычно мы отвечаем в течение 24–48 часов",
     "categories": {
       "gettingStarted": "Начало работы",
       "sessionTracking": "Отслеживание сессий",

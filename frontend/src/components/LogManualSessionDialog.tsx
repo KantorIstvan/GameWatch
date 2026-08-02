@@ -115,14 +115,14 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
 
         <div className="flex flex-col gap-6">
           <DateTimePicker
-            label="Start Date & Time"
+            label={t('playthrough.startDateTime')}
             value={startDateTime}
             onChange={setStartDateTime}
             maxDateTime={dayjs()}
           />
 
           <DateTimePicker
-            label="End Date & Time"
+            label={t('playthrough.endDateTime')}
             value={endDateTime}
             onChange={setEndDateTime}
             maxDateTime={dayjs()}

@@ -19,6 +19,8 @@
     "title": "Settings",
     "language": "Language",
     "languageDescription": "Choose your preferred language",
+    "searchLanguage": "Search languages...",
+    "noLanguageFound": "No language found.",
     "afrikaans": "Afrikaans",
     "arabic": "Arabic",
     "bengali": "Bengali",
@@ -71,6 +73,7 @@
     "timezone": "Time Zone",
     "timezoneDescription": "Set your time zone for accurate time displays",
     "selectTimezone": "Select timezone",
+    "noTimezoneFound": "No timezone found.",
     "save": "Save",
     "theme": "Theme",
     "themeDescription": "Choose your preferred theme",
@@ -176,7 +179,8 @@
     "gameAll": "All Games",
     "filterByPlatform": "Filter by Platform",
     "platformAll": "All Platforms",
-    "searchTimers": "Search timers..."
+    "searchTimers": "Search timers...",
+    "clearFilters": "Clear Filters"
   },
   "statistics": {
     "title": "Statistics",
@@ -286,6 +290,7 @@
       "filterByPlaythrough": "Filter by Playthrough",
       "allPlaythroughs": "All Playthroughs",
       "searchSessions": "Search sessions...",
+      "clearFilters": "Clear Filters",
       "oneWeek": "Week",
       "oneMonth": "Month",
       "oneYear": "Year",
@@ -470,6 +475,8 @@
     "minutes": "Minutes",
     "seconds": "Seconds",
     "logManualSession": "Log Session Manually",
+    "startDateTime": "Start Date & Time",
+    "endDateTime": "End Date & Time",
     "editTitle": "Edit Title",
     "noTitle": "No title",
     "failedToEndSession": "Failed to end session",
@@ -530,6 +537,13 @@
       "combined": "{{hours}} {{minutes}}"
     }
   },
+  "timePicker": {
+    "selectHour": "Select hour",
+    "selectMinute": "Select minute",
+    "selectDateTime": "Select date & time",
+    "am": "AM",
+    "pm": "PM"
+  },
   "game": {
     "released": "Released",
     "rating": "Rating",
@@ -570,6 +584,7 @@
     "calendarView": "Timeline",
     "listView": "List",
     "filter": "Filter",
+    "clearFilters": "Clear Filters",
     "all": "All",
     "completed": "Completed",
     "dropped": "Dropped",
@@ -654,14 +669,12 @@
   },
   "faq": {
     "title": "Help & FAQ",
+    "subtitle": "Find answers to common questions about GameWatch",
     "searchPlaceholder": "Search questions...",
     "noResults": "No results found",
     "noResultsDescription": "Try adjusting your search terms",
     "expandAll": "Expand All",
     "collapseAll": "Collapse All",
-    "stillNeedHelp": "Still need help?",
-    "contactSupport": "Contact Support",
-    "responseTime": "We typically respond within 24-48 hours",
     "categories": {
       "gettingStarted": "Getting Started",
       "sessionTracking": "Session Tracking",

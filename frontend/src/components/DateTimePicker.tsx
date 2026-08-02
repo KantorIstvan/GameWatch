@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import dayjs, { Dayjs } from 'dayjs'
 import { CalendarIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { TimePickerClock } from '@/components/ui/time-picker-clock'
 import { cn } from '@/lib/utils'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -34,6 +34,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   maxDateTime,
   minDateTime,
 }) => {
+  const { t } = useTranslation()
   const { timeFormat } = useTimeFormat()
   const { getFirstDayNumber } = useWeekStart()
   const [open, setOpen] = useState(false)
@@ -45,8 +46,6 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const is12h = timeFormat === '12h'
   const hour24 = isValid ? parsedValue!.hour() : 0
   const minute = isValid ? parsedValue!.minute() : 0
-  const period = hour24 >= 12 ? 'PM' : 'AM'
-  const hour12 = ((hour24 + 11) % 12) + 1
 
   const commit = (next: Dayjs) => {
     onChange(next.format('YYYY-MM-DDTHH:mm'))
@@ -58,39 +57,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     commit(dayjs(date).hour(base.hour()).minute(base.minute()).second(0))
   }
 
-  const handleHourChange = (raw: string) => {
+  const handleTimeChange = (newHour24: number, newMinute: number) => {
     const base = isValid ? parsedValue! : dayjs()
-    let n = parseInt(raw, 10)
-    if (Number.isNaN(n)) return
-    if (is12h) {
-      n = Math.min(12, Math.max(1, n))
-      const newHour24 = period === 'PM' ? (n % 12) + 12 : n % 12
-      commit(base.hour(newHour24))
-    } else {
-      n = Math.min(23, Math.max(0, n))
-      commit(base.hour(n))
-    }
-  }
-
-  const handleMinuteChange = (raw: string) => {
-    const base = isValid ? parsedValue! : dayjs()
-    let n = parseInt(raw, 10)
-    if (Number.isNaN(n)) return
-    n = Math.min(59, Math.max(0, n))
-    commit(base.minute(n))
-  }
-
-  const handlePeriodChange = (next: string) => {
-    if (!next) return
-    const base = isValid ? parsedValue! : dayjs()
-    const currentHour12 = ((base.hour() + 11) % 12) + 1
-    const newHour24 = next === 'PM' ? (currentHour12 % 12) + 12 : currentHour12 % 12
-    commit(base.hour(newHour24))
+    commit(base.hour(newHour24).minute(newMinute))
   }
 
   const display = isValid
     ? parsedValue!.format(is12h ? 'YYYY-MM-DD hh:mm A' : 'YYYY-MM-DD HH:mm')
-    : 'Select date & time'
+    : t('timePicker.selectDateTime')
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -129,37 +103,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             }
             autoFocus
           />
-          <div className="flex items-center gap-2 border-t border-border p-3">
-            <Input
-              type="number"
-              inputMode="numeric"
-              className="w-16"
-              min={is12h ? 1 : 0}
-              max={is12h ? 12 : 23}
-              value={is12h ? hour12 : hour24}
-              onChange={(e) => handleHourChange(e.target.value)}
-            />
-            <span className="text-muted-foreground">:</span>
-            <Input
-              type="number"
-              inputMode="numeric"
-              className="w-16"
-              min={0}
-              max={59}
-              value={minute.toString().padStart(2, '0')}
-              onChange={(e) => handleMinuteChange(e.target.value)}
-            />
-            {is12h && (
-              <ToggleGroup
-                type="single"
-                value={period}
-                onValueChange={handlePeriodChange}
-                variant="outline"
-              >
-                <ToggleGroupItem value="AM">AM</ToggleGroupItem>
-                <ToggleGroupItem value="PM">PM</ToggleGroupItem>
-              </ToggleGroup>
-            )}
+          <div className="border-t border-border p-4">
+            <TimePickerClock hour24={hour24} minute={minute} is12h={is12h} onChange={handleTimeChange} />
           </div>
         </PopoverContent>
       </Popover>

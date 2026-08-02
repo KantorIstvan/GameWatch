@@ -576,9 +576,6 @@
     "noResultsDescription": "검색어를 조정해 보세요",
     "expandAll": "모두 펼치기",
     "collapseAll": "모두 접기",
-    "stillNeedHelp": "여전히 도움이 필요하신가요?",
-    "contactSupport": "고객 지원 문의",
-    "responseTime": "일반적으로 24-48시간 내에 응답합니다",
     "categories": {
       "gettingStarted": "시작하기",
       "sessionTracking": "세션 추적",
