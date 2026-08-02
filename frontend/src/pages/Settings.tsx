@@ -70,6 +70,7 @@ function Settings() {
   const [timezone, setTimezone] = useState<string>('')
   const [savingTimezone, setSavingTimezone] = useState(false)
   const [timezonePickerOpen, setTimezonePickerOpen] = useState(false)
+  const [languagePickerOpen, setLanguagePickerOpen] = useState(false)
   const [healthSettings, setHealthSettings] = useState<HealthSettingsType | null>(null)
   const [healthExpanded, setHealthExpanded] = useState(false)
   const [loadingHealth, setLoadingHealth] = useState(true)
@@ -255,6 +256,8 @@ function Settings() {
     fileInputRef.current?.click()
   }
 
+  const selectedLanguage = LANGUAGES.find((lang) => lang.code === i18n.language)
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="my-8">
@@ -264,18 +267,40 @@ function Settings() {
           <div className="mb-8">
             <SectionHeader icon={<Languages className="size-5" />} title={t('settings.language')} />
             <p className="mb-4 text-body-sm text-text-secondary">{t('settings.languageDescription')}</p>
-            <Select value={i18n.language} onValueChange={(v) => i18n.changeLanguage(v)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('settings.language')} />
-              </SelectTrigger>
-              <SelectContent className="max-h-62.5">
-                {LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
-                    {lang.flag} {t(`settings.${lang.key}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={languagePickerOpen} onOpenChange={setLanguagePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" className="h-14 w-full justify-between font-normal">
+                  <span>
+                    {selectedLanguage
+                      ? `${selectedLanguage.flag} ${t(`settings.${selectedLanguage.key}`)}`
+                      : t('settings.language')}
+                  </span>
+                  <ChevronsUpDown className="size-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                <Command>
+                  <CommandInput placeholder={t('settings.searchLanguage')} />
+                  <CommandList className="max-h-75">
+                    <CommandEmpty>{t('settings.noLanguageFound')}</CommandEmpty>
+                    <CommandGroup>
+                      {LANGUAGES.map((lang) => (
+                        <CommandItem
+                          key={lang.code}
+                          value={`${t(`settings.${lang.key}`)} ${lang.code}`}
+                          onSelect={() => {
+                            i18n.changeLanguage(lang.code)
+                            setLanguagePickerOpen(false)
+                          }}
+                        >
+                          {lang.flag} {t(`settings.${lang.key}`)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <Separator className="my-8" />
@@ -329,7 +354,7 @@ function Settings() {
                   <Command>
                     <CommandInput placeholder={t('settings.selectTimezone')} />
                     <CommandList className="max-h-75">
-                      <CommandEmpty>No timezone found.</CommandEmpty>
+                      <CommandEmpty>{t('settings.noTimezoneFound')}</CommandEmpty>
                       <CommandGroup>
                         {COMMON_TIMEZONES.map((tz) => (
                           <CommandItem
