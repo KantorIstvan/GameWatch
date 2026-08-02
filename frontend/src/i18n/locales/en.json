@@ -457,6 +457,8 @@
     "minutes": "Minutes",
     "seconds": "Seconds",
     "logManualSession": "Log Session Manually",
+    "startDateTime": "Start Date & Time",
+    "endDateTime": "End Date & Time",
     "editTitle": "Edit Title",
     "noTitle": "No title",
     "failedToEndSession": "Failed to end session",
@@ -497,6 +499,13 @@
       "minutes_other": "{{count}} minutes",
       "combined": "{{hours}} {{minutes}}"
     }
+  },
+  "timePicker": {
+    "selectHour": "Select hour",
+    "selectMinute": "Select minute",
+    "selectDateTime": "Select date & time",
+    "am": "AM",
+    "pm": "PM"
   },
   "game": {
     "released": "Released",
