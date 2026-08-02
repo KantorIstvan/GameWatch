@@ -576,9 +576,6 @@
     "noResultsDescription": "Kokeile muuttaa hakutermejä",
     "expandAll": "Laajenna kaikki",
     "collapseAll": "Tiivistä kaikki",
-    "stillNeedHelp": "Tarvitsetko vielä apua?",
-    "contactSupport": "Ota yhteyttä tukeen",
-    "responseTime": "Vastaamme yleensä 24-48 tunnin kuluessa",
     "categories": {
       "gettingStarted": "Aloittaminen",
       "sessionTracking": "Istuntojen seuranta",

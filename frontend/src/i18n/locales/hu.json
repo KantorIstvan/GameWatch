@@ -602,9 +602,6 @@
     "noResultsDescription": "Próbáld módosítani a keresési kifejezéseket",
     "expandAll": "Összes kibontása",
     "collapseAll": "Összes összecsukása",
-    "stillNeedHelp": "Még mindig segítségre van szükséged?",
-    "contactSupport": "Kapcsolatfelvétel az ügyfélszolgálattal",
-    "responseTime": "Általában 24-48 órán belül válaszolunk",
     "categories": {
       "gettingStarted": "Első lépések",
       "sessionTracking": "Alkalom követés",
