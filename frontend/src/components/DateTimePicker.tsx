@@ -92,19 +92,21 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleSelectDate}
-            weekStartsOn={getFirstDayNumber() as 0 | 1}
-            disabled={(date) =>
-              (!!maxDateTime && date > maxDateTime.endOf('day').toDate()) ||
-              (!!minDateTime && date < minDateTime.startOf('day').toDate())
-            }
-            autoFocus
-          />
-          <div className="border-t border-border p-4">
-            <TimePickerClock hour24={hour24} minute={minute} is12h={is12h} onChange={handleTimeChange} />
+          <div className="flex flex-col sm:flex-row">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleSelectDate}
+              weekStartsOn={getFirstDayNumber() as 0 | 1}
+              disabled={(date) =>
+                (!!maxDateTime && date > maxDateTime.endOf('day').toDate()) ||
+                (!!minDateTime && date < minDateTime.startOf('day').toDate())
+              }
+              autoFocus
+            />
+            <div className="flex items-center justify-center border-t border-border p-4 sm:border-t-0 sm:border-l">
+              <TimePickerClock hour24={hour24} minute={minute} is12h={is12h} onChange={handleTimeChange} />
+            </div>
           </div>
         </PopoverContent>
       </Popover>

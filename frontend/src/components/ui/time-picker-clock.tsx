@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -33,7 +33,7 @@ function pointForMinute(minuteValue: number, radius: number) {
   return { x: CENTER + radius * Math.cos(angleRad), y: CENTER + radius * Math.sin(angleRad) }
 }
 
-function angleAndDistanceFromClick(svg: SVGSVGElement, clientX: number, clientY: number) {
+function angleAndDistanceFromPoint(svg: SVGSVGElement, clientX: number, clientY: number) {
   const rect = svg.getBoundingClientRect()
   const x = ((clientX - rect.left) / rect.width) * SIZE
   const y = ((clientY - rect.top) / rect.height) * SIZE
@@ -56,6 +56,7 @@ function hourFromSlot(slot: number, ring: ClockRing, is12h: boolean, currentPeri
 export function TimePickerClock({ hour24, minute, is12h, onChange, className }: TimePickerClockProps) {
   const { t } = useTranslation()
   const [mode, setMode] = useState<ClockMode>('hour')
+  const [dragMode, setDragMode] = useState<ClockMode | null>(null)
 
   const period: 'AM' | 'PM' = hour24 >= 12 ? 'PM' : 'AM'
   const hour12 = ((hour24 + 11) % 12) + 1
@@ -93,17 +94,35 @@ export function TimePickerClock({ hour24, minute, is12h, onChange, className }: 
       ? pointForSlot(selectedSlot, selectedRing === 'inner' ? INNER_RADIUS : OUTER_RADIUS)
       : pointForMinute(minute, OUTER_RADIUS)
 
-  const handleDialClick = (e: ReactMouseEvent<SVGSVGElement>) => {
-    const { deg, distance } = angleAndDistanceFromClick(e.currentTarget, e.clientX, e.clientY)
+  /** Applies a pointer position without switching mode — used continuously while dragging. */
+  const applyPointToMode = (svg: SVGSVGElement, clientX: number, clientY: number, activeMode: ClockMode) => {
+    const { deg, distance } = angleAndDistanceFromPoint(svg, clientX, clientY)
 
-    if (mode === 'minute') {
+    if (activeMode === 'minute') {
       commitMinute(Math.round(deg / 6) % 60)
       return
     }
 
     const slot = Math.round(deg / 30) % 12
     const ring: ClockRing = !is12h && distance < (OUTER_RADIUS + INNER_RADIUS) / 2 ? 'inner' : 'outer'
-    commitHour(hourFromSlot(slot, ring, is12h, period))
+    onChange(hourFromSlot(slot, ring, is12h, period), minute)
+  }
+
+  const handlePointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setDragMode(mode)
+    applyPointToMode(e.currentTarget, e.clientX, e.clientY, mode)
+  }
+
+  const handlePointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (!dragMode) return
+    applyPointToMode(e.currentTarget, e.clientX, e.clientY, dragMode)
+  }
+
+  /** Releasing after dragging the hour hand auto-advances to minute selection, matching the discrete-tap behavior. */
+  const handlePointerUp = () => {
+    if (dragMode === 'hour') setMode('minute')
+    setDragMode(null)
   }
 
   const renderNumberGroup = (
@@ -264,7 +283,10 @@ export function TimePickerClock({ hour24, minute, is12h, onChange, className }: 
       <svg
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="h-70 w-70 touch-none select-none"
-        onClick={handleDialClick}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => setDragMode(null)}
         role="group"
         aria-label={mode === 'hour' ? t('timePicker.selectHour') : t('timePicker.selectMinute')}
       >
