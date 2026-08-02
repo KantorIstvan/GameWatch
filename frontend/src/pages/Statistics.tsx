@@ -265,7 +265,7 @@ function Statistics() {
               <ReusablePieChart
                 data={platformData}
                 title={t('statistics.userStats.platformDistribution')}
-                minLabelPercent={0.2}
+                wide
                 noDataMessage={t('statistics.userStats.noData')}
                 valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
