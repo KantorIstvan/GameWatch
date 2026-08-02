@@ -66,7 +66,7 @@ function Games() {
       setGames(response.data)
       setError(null)
     } catch (err: any) {
-      setError('Failed to load games. Please try again.')
+      setError(t('games.failedToLoad'))
     } finally {
       setLoading(false)
     }
@@ -81,15 +81,15 @@ function Games() {
       setSelectedGame(null)
       setError(null)
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.response?.data || 'Failed to create game. Please try again.'
+      const errorMessage = err.response?.data?.message || err.response?.data || t('games.failedToCreate')
       setError(errorMessage)
     }
-  }, [selectedGame])
+  }, [selectedGame, t])
 
   const handleGameSelect = useCallback((game: any) => {
     const isDuplicate = games.some((g: Game) => g.externalId === game.id)
     if (isDuplicate) {
-      setError('This game is already in your library!')
+      setError(t('games.duplicateGame'))
       return
     }
 
@@ -139,7 +139,7 @@ function Games() {
       dominantColor1: game.dominantColor1,
       dominantColor2: game.dominantColor2,
     })
-  }, [games])
+  }, [games, t])
 
   const handleDeleteGame = useCallback((game: Game) => {
     setGameToDelete(game)
@@ -155,10 +155,10 @@ function Games() {
       setGames(prevGames => prevGames.filter((g: Game) => g.id !== gameToDelete.id))
       setGameToDelete(null)
     } catch (err: any) {
-      setError('Failed to delete game. Please try again.')
+      setError(t('games.failedToDelete'))
       setGameToDelete(null)
     }
-  }, [gameToDelete])
+  }, [gameToDelete, t])
 
   const clearFilters = useCallback(() => {
     setSearchQuery('')
@@ -440,7 +440,7 @@ function Games() {
         title={t('games.deleteGame')}
         message={t('games.confirmDelete', { gameName: gameToDelete?.name })}
         confirmText={t('games.yesDelete')}
-        requiredText="Delete"
+        requiredText={t('common.delete')}
         destructive
       />
     </div>

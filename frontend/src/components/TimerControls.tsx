@@ -28,7 +28,7 @@ function TimerControls({
   onOpenManualSession,
   t
 }: TimerControlsProps) {
-  const buttonClass = 'text-[0.8125rem] px-4 border-none text-white'
+  const buttonClass = 'text-body-sm px-4 border-none text-white'
   const secondaryButtonClass = 'border border-white/30 bg-white/15 text-white hover:bg-white/25'
 
   return (
@@ -60,7 +60,7 @@ function TimerControls({
         {(playthrough.isActive || playthrough.isPaused) && (
           <Button
             onClick={onEndSession}
-            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] sm:min-w-30')}
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-body-sm sm:min-w-30')}
           >
             <Clock className="size-4" />
             {t('playthrough.endSession')}
@@ -71,7 +71,7 @@ function TimerControls({
           <Button
             onClick={onFinish}
             disabled={playthrough.isCompleted || playthrough.isDropped || playthrough.isActive}
-            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] disabled:opacity-30 sm:min-w-25')}
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-body-sm disabled:opacity-30 sm:min-w-25')}
           >
             <Square className="size-4" />
             {t('playthrough.finish')}
@@ -96,7 +96,7 @@ function TimerControls({
             variant="outline"
             onClick={onOpenManualSession}
             disabled={playthrough.isCompleted}
-            className="min-w-auto border-white/50 px-4 text-[0.8125rem] text-white hover:border-white hover:bg-white/10 disabled:border-white/20 disabled:text-white/30 sm:min-w-45"
+            className="min-w-auto border-white/50 px-4 text-body-sm text-white hover:border-white hover:bg-white/10 disabled:border-white/20 disabled:text-white/30 sm:min-w-45"
           >
             <Clock className="size-4" />
             {t('playthrough.logManualSession')}
@@ -108,7 +108,7 @@ function TimerControls({
         <div className="mt-2 flex justify-center px-4 sm:px-0">
           <Button
             onClick={onPickup}
-            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-[0.8125rem] sm:min-w-45')}
+            className={cn(secondaryButtonClass, 'min-w-auto px-4 text-body-sm sm:min-w-45')}
           >
             <Play className="size-4" />
             {t('playthrough.pickup')}

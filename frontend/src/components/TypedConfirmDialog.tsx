@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { CircleAlert, TriangleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -30,9 +31,10 @@ function TypedConfirmDialog({
   message,
   confirmText,
   requiredText,
-  cancelText = 'Cancel',
+  cancelText,
   destructive = true,
 }: TypedConfirmDialogProps) {
+  const { t } = useTranslation()
   const [inputValue, setInputValue] = useState('')
   const isValid = inputValue === requiredText
 
@@ -70,31 +72,31 @@ function TypedConfirmDialog({
 
           <p className="mb-3 text-h3 font-semibold">{title}</p>
 
-          <p className="mb-6 max-w-[90%] text-body text-text-secondary">{message}</p>
+          <p className="mb-6 max-w-full text-body text-text-secondary">{message}</p>
 
           <p className="mb-1 block w-full text-left text-caption text-text-secondary">
-            Please type <strong>{requiredText}</strong> to confirm
+            {t('common.typeToConfirm', { text: requiredText })}
           </p>
 
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Type '${requiredText}' here`}
+            placeholder={t('common.typePlaceholder', { text: requiredText })}
             autoFocus
             aria-invalid={inputValue !== '' && !isValid}
             className={cn('font-mono', inputValue !== '' && !isValid && 'border-destructive')}
           />
           <p className="mt-1 block w-full text-left text-caption text-destructive">
             {inputValue !== '' && !isValid
-              ? `Please type '${requiredText}' exactly as shown`
+              ? t('common.typeMismatch', { text: requiredText })
               : ' '}
           </p>
         </div>
 
         <div className="flex gap-3">
           <Button onClick={handleClose} variant="outline" className="flex-1">
-            {cancelText}
+            {cancelText ?? t('common.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}

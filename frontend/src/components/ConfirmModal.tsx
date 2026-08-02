@@ -1,5 +1,6 @@
 import React from 'react'
 import { CircleAlert, TriangleAlert, CircleCheck, Info, CircleHelp } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
@@ -29,10 +30,12 @@ function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
   confirmColor = 'primary',
 }: ConfirmModalProps) {
+  const { t } = useTranslation()
+
   const getIcon = () => {
     switch (confirmColor) {
       case 'error':
@@ -80,7 +83,7 @@ function ConfirmModal({
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row">
           <Button onClick={onClose} variant="outline" size="lg" className="flex-1">
-            {cancelText}
+            {cancelText ?? t('common.cancel')}
           </Button>
           <Button
             onClick={onConfirm}
@@ -88,7 +91,7 @@ function ConfirmModal({
             className="flex-1 text-white"
             style={{ backgroundColor: color }}
           >
-            {confirmText}
+            {confirmText ?? t('common.confirm')}
           </Button>
         </div>
       </DialogContent>

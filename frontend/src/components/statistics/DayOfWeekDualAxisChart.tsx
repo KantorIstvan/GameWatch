@@ -12,7 +12,7 @@ interface DayOfWeekData {
 interface DayOfWeekDualAxisChartProps {
   data: DayOfWeekData[]
   height?: number
-  noDataMessage?: string
+  noDataMessage: string
 }
 
 // Monochromatic by default — only today's bar/line gets the brand accent
@@ -30,7 +30,7 @@ const vibrantPrimaryBg = 'color-mix(in srgb, var(--color-accent) 10%, transparen
 function DayOfWeekDualAxisChart({
   data,
   height = 400,
-  noDataMessage = 'No data available'
+  noDataMessage
 }: DayOfWeekDualAxisChartProps) {
   const { weekStart } = useWeekStart()
   const { t } = useTranslation()
@@ -69,7 +69,7 @@ function DayOfWeekDualAxisChart({
             {label}
             {isCurrentDay && (
               <span
-                className="inline-flex size-4 items-center justify-center rounded-full text-[0.65rem] font-bold sm:size-5 sm:text-caption"
+                className="inline-flex size-4 items-center justify-center rounded-full text-caption font-bold sm:size-5"
                 style={{ backgroundColor: vibrantPrimaryBg, color: vibrantPrimary }}
               >
                 ●
@@ -84,7 +84,7 @@ function DayOfWeekDualAxisChart({
                   : `linear-gradient(135deg, ${normalPrimary} 0%, ${normalPrimaryLight} 100%)`,
               }} />
               <span className="text-caption text-text-secondary sm:text-body-sm">
-                Total: <strong className="font-semibold text-text-primary">{formatDuration(payload[0]?.value || 0)}</strong>
+                {t('statistics.userStats.total')}: <strong className="font-semibold text-text-primary">{formatDuration(payload[0]?.value || 0)}</strong>
               </span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
@@ -93,7 +93,7 @@ function DayOfWeekDualAxisChart({
                 style={{ backgroundColor: isCurrentDay ? vibrantSecondary : normalSecondary }}
               />
               <span className="text-caption text-text-secondary sm:text-body-sm">
-                Avg: <strong className="font-semibold text-text-primary">{formatDuration(payload[1]?.value || 0)}</strong>
+                {t('statistics.userStats.avg')}: <strong className="font-semibold text-text-primary">{formatDuration(payload[1]?.value || 0)}</strong>
               </span>
             </div>
           </div>
@@ -184,7 +184,7 @@ function DayOfWeekDualAxisChart({
               <Bar
                 yAxisId="left"
                 dataKey="hours"
-                name="Total Hours"
+                name={t('statistics.userStats.totalHours')}
                 radius={[8, 8, 0, 0]}
                 maxBarSize={window.innerWidth < 600 ? 40 : 60}
               >
@@ -202,7 +202,7 @@ function DayOfWeekDualAxisChart({
                 dataKey="avgHours"
                 stroke={normalSecondary}
                 strokeWidth={window.innerWidth < 600 ? 2.5 : 3}
-                name="Avg Session"
+                name={t('statistics.userStats.avgSession')}
                 dot={(dotProps: any) => {
                   const isCurrentDay = dotProps.index === currentDayMappedIndex
                   const isMobile = window.innerWidth < 600

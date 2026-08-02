@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { playthroughsApi, gamesApi } from '../services/api'
 import healthApi from '../services/healthApi'
 import { Playthrough, Game } from '../types'
@@ -8,6 +9,7 @@ import { useSessionTimer } from '../contexts/SessionTimerContext'
 
 export function usePlaythrough(id: number, isAuthReady: boolean) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const sessionTimer = useSessionTimer()
   const [playthrough, setPlaythrough] = useState<Playthrough | null>(null)
   const [game, setGame] = useState<Game | null>(null)
@@ -42,11 +44,11 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setIsRunning(ptResponse.data.isActive === true)
       setError(null)
     } catch (err: any) {
-      setError('Failed to load playthrough. Please try again.')
+      setError(t('playthrough.failedToLoadPlaythrough'))
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -116,9 +118,9 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Start health notifications
       healthNotificationService.startSession()
     } catch (err: any) {
-      setError('Failed to start timer.')
+      setError(t('playthrough.failedToStartTimer'))
     }
-  }, [id])
+  }, [id, t])
 
   const handlePause = useCallback(async () => {
     if (!playthrough?.isActive) return
@@ -132,10 +134,10 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Stop notifications while paused
       healthNotificationService.stopAllReminders()
     } catch (err: any) {
-      setError('Failed to pause.')
+      setError(t('playthrough.failedToPause'))
       setIsRunning(playthrough.isActive)
     }
-  }, [id, playthrough])
+  }, [id, playthrough, t])
 
   const handleEndSession = useCallback(async () => {
     if (!playthrough?.isActive && !playthrough?.isPaused) return
@@ -156,14 +158,14 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       // Return the lastSessionHistoryId for mood prompt
       return response.data.lastSessionHistoryId
     } catch (err: any) {
-      setError('Failed to end session.')
+      setError(t('playthrough.failedToEndSession'))
       if (playthrough) {
         setIsRunning(playthrough.isActive)
         setPlaythrough(playthrough)
       }
       throw err
     }
-  }, [id, playthrough, sessionTimer])
+  }, [id, playthrough, sessionTimer, t])
 
   const handleFinish = useCallback(async () => {
     try {
@@ -171,9 +173,9 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      setError('Failed to finish playthrough.')
+      setError(t('playthrough.failedToFinishPlaythrough'))
     }
-  }, [id])
+  }, [id, t])
 
   const handleDrop = useCallback(async () => {
     try {
@@ -181,9 +183,9 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      setError('Failed to drop playthrough.')
+      setError(t('playthrough.failedToDropPlaythrough'))
     }
-  }, [id])
+  }, [id, t])
 
   const handlePickup = useCallback(async () => {
     try {
@@ -191,18 +193,18 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
       setPlaythrough(response.data)
       setIsRunning(false)
     } catch (err) {
-      setError('Failed to pickup playthrough.')
+      setError(t('playthrough.failedToPickupPlaythrough'))
     }
-  }, [id])
+  }, [id, t])
 
   const handleDelete = useCallback(async () => {
     try {
       await playthroughsApi.delete(id)
       navigate('/')
     } catch (err: any) {
-      setError('Failed to delete playthrough.')
+      setError(t('playthrough.failedToDeletePlaythrough'))
     }
-  }, [id, navigate])
+  }, [id, navigate, t])
 
   const updateDuration = useCallback(async (totalSeconds: number) => {
     const response = await playthroughsApi.updateDuration(id, totalSeconds)

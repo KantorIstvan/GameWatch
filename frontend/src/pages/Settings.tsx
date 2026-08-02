@@ -181,7 +181,7 @@ function Settings() {
       logout()
       navigate('/')
     } catch (err: any) {
-      setDeleteError(err.response?.data?.message || 'Failed to delete account. Please try again.')
+      setDeleteError(err.response?.data?.message || t('settings.deleteAccountFailed'))
       setDeleting(false)
     }
   }

@@ -141,8 +141,8 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
           {localPlaythrough.isActive || localPlaythrough.isPaused ? (
             <div className="flex flex-col gap-2">
               <div>
-                <p className="mb-1 text-center text-[0.65rem] uppercase tracking-wide opacity-70">
-                  Current Session
+                <p className="mb-1 text-center text-caption uppercase tracking-wide opacity-70">
+                  {t('playthrough.currentSession')}
                 </p>
                 <p
                   className="text-center font-mono text-h2 font-bold tracking-wide"
@@ -153,8 +153,8 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
               </div>
 
               <div className="opacity-60">
-                <p className="mb-0.5 text-center text-[0.6rem] uppercase tracking-wide">
-                  Total
+                <p className="mb-0.5 text-center text-caption uppercase tracking-wide">
+                  {t('playthrough.total')}
                 </p>
                 <p className="text-center font-mono text-body-sm font-semibold tracking-wide">
                   {formatTimeHMS(elapsedTime)}

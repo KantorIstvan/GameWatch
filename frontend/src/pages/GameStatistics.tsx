@@ -56,7 +56,7 @@ function GameStatisticsPage() {
       setStatistics(response.data)
       setError(null)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load game statistics')
+      setError(err.response?.data?.message || t('statistics.gameStats.failedToLoad'))
     } finally {
       setLoading(false)
     }
@@ -70,19 +70,19 @@ function GameStatisticsPage() {
       await fetchStatistics()
       setSessionToDelete(null)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete session')
+      setError(err.response?.data?.message || t('statistics.gameStats.failedToDeleteSession'))
     }
   }
 
   const formatDuration = (seconds: number): string => formatDurationWords(seconds, t)
 
   const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return t('statistics.gameStats.na')
     return formatDateTime(dateString)
   }
 
   const formatDateOnly = (dateString: string | undefined): string => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return t('statistics.gameStats.na')
     const date = new Date(dateString)
     return date.toLocaleDateString(undefined, {
       year: 'numeric',
@@ -244,7 +244,7 @@ function GameStatisticsPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-[1800px] px-4 py-2">
+    <div className="mx-auto max-w-8xl px-4 py-2">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={() => navigate('/games')} className="mr-3">
@@ -414,8 +414,8 @@ function GameStatisticsPage() {
                   </TableRow>
                 ) : (
                   paginatedSessions.map((session) => {
-                    const startTime = session.startedAt ? formatTime(session.startedAt) : 'N/A'
-                    const endTime = session.endedAt ? formatTime(session.endedAt) : 'N/A'
+                    const startTime = session.startedAt ? formatTime(session.startedAt) : t('statistics.gameStats.na')
+                    const endTime = session.endedAt ? formatTime(session.endedAt) : t('statistics.gameStats.na')
 
                     return (
                       <TableRow key={`${session.playthroughId}-${session.sessionNumber}`}>
@@ -503,10 +503,10 @@ function GameStatisticsPage() {
         open={sessionToDelete !== null}
         onClose={() => setSessionToDelete(null)}
         onConfirm={handleDeleteSession}
-        title="Delete Session"
-        message={`Are you sure you want to delete session #${sessionToDelete?.sessionNumber}? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('statistics.gameStats.deleteSessionTitle')}
+        message={t('statistics.gameStats.deleteSessionConfirm', { sessionNumber: sessionToDelete?.sessionNumber })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         confirmColor="error"
       />
     </div>

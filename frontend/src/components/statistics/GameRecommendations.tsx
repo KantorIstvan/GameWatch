@@ -29,7 +29,7 @@ function GameRecommendations({ recommendations, title, noDataMessage }: GameReco
                   {game.matchingDevelopers?.slice(0, 2).map((developer, idx) => (
                     <Badge
                       key={`dev-${idx}`}
-                      className="h-4.5 bg-success/20 px-1.5 text-[0.65rem] text-success"
+                      className="h-4.5 bg-success/20 px-1.5 text-caption text-success"
                     >
                       {developer}
                     </Badge>
@@ -37,7 +37,7 @@ function GameRecommendations({ recommendations, title, noDataMessage }: GameReco
                   {game.matchingPublishers?.slice(0, 2).map((publisher, idx) => (
                     <Badge
                       key={`pub-${idx}`}
-                      className="h-4.5 bg-accent/20 px-1.5 text-[0.65rem] text-accent"
+                      className="h-4.5 bg-accent/20 px-1.5 text-caption text-accent"
                     >
                       {publisher}
                     </Badge>

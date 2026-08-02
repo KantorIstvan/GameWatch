@@ -18,7 +18,7 @@ interface ReusableBarChartProps {
   yAxisLabel?: string
   bars: BarConfig[]
   height?: number
-  noDataMessage?: string
+  noDataMessage: string
   showLegend?: boolean
   isHourlyChart?: boolean
   highlightCurrentHour?: boolean
@@ -32,7 +32,7 @@ function ReusableBarChart({
   yAxisLabel,
   bars,
   height = 300,
-  noDataMessage = 'No data available',
+  noDataMessage,
   showLegend = false,
   isHourlyChart = false,
   highlightCurrentHour = false,

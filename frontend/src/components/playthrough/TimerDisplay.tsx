@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatTimeHMS } from '../../utils/formatters'
@@ -25,6 +26,7 @@ function TimerDisplay({
   children,
   statusText
 }: TimerDisplayProps) {
+  const { t } = useTranslation()
   const showDualTimers = (playthrough.isActive || playthrough.isPaused) && currentSessionTime !== undefined
 
   const overallTime = (playthrough.isActive || playthrough.isPaused)
@@ -49,13 +51,13 @@ function TimerDisplay({
             <Trash2 className="size-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Delete playthrough</TooltipContent>
+        <TooltipContent>{t('playthrough.delete')}</TooltipContent>
       </Tooltip>
 
       {showDualTimers ? (
         <>
           <p className="text-caption font-semibold uppercase tracking-wide opacity-90">
-            Current Session
+            {t('playthrough.currentSession')}
           </p>
           <div className="my-4 flex flex-col items-center justify-center gap-4">
             <p className="text-center font-mono text-4xl font-bold tracking-widest sm:text-5xl md:text-6xl">
@@ -63,7 +65,7 @@ function TimerDisplay({
             </p>
 
             <div className="flex flex-col items-center gap-1 opacity-80">
-              <p className="text-caption uppercase tracking-wide">Total Playtime</p>
+              <p className="text-caption uppercase tracking-wide">{t('playthrough.totalPlaytime')}</p>
               <p className="text-center font-mono text-h4 font-semibold tracking-wide sm:text-h3">
                 {formatTimeHMS(overallTime)}
               </p>
@@ -72,7 +74,7 @@ function TimerDisplay({
         </>
       ) : (
         <>
-          <p className="text-caption opacity-90">Time Played</p>
+          <p className="text-caption opacity-90">{t('playthrough.timePlayed')}</p>
           <div className="my-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-0">
             <p className="text-center font-mono text-4xl font-bold tracking-widest sm:text-5xl md:text-6xl">
               {formatTimeHMS(elapsedTime)}
@@ -82,7 +84,7 @@ function TimerDisplay({
                 variant="ghost"
                 size="icon"
                 onClick={onEdit}
-                title="Edit time manually"
+                title={t('playthrough.editTimeManually')}
                 className="size-12 bg-white/15 text-white hover:bg-white/25 sm:ml-4 sm:size-auto sm:bg-transparent sm:hover:bg-white/20"
               >
                 <Pencil className="size-6 sm:size-5" />

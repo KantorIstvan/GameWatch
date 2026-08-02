@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useTimelineEvents } from '../hooks/useTimelineEvents'
 import { useTimelineFilters } from '../hooks/useTimelineFilters'
 import { useTimelineView } from '../hooks/useTimelineView'
+import Loading from '../components/Loading'
 import { TimelineToolbar } from '../components/timeline/TimelineToolbar'
 import { TimelineFilters } from '../components/timeline/TimelineFilters'
 import { TimelineListView } from '../components/timeline/TimelineListView'
@@ -47,11 +47,7 @@ function Timeline() {
     : undefined
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-accent" />
-      </div>
-    )
+    return <Loading />
   }
 
   return (

@@ -14,7 +14,7 @@ interface ReusablePieChartProps {
   minLabelPercent?: number
   showLabel?: boolean
   height?: number
-  noDataMessage?: string
+  noDataMessage: string
   valueFormatter?: (hours: number) => string
 }
 
@@ -22,7 +22,7 @@ function ReusablePieChart({
   data,
   title,
   height = 300,
-  noDataMessage = 'No data available',
+  noDataMessage,
   valueFormatter
 }: ReusablePieChartProps) {
   const hasData = data.length > 0 && data.some(item => item.value > 0)
