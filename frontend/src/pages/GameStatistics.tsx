@@ -219,22 +219,23 @@ function GameStatisticsPage() {
 
   if (!statistics) return null
 
-  // Only the two headline metrics get a color accent, matching the Statistics page's
-  // pattern of highlighting a card or two and leaving the rest neutral rather than
-  // coloring every tile (which just becomes visual noise).
+  // Bento hierarchy matching the Statistics page's pattern: one hero tile for the
+  // single most important number (total play time), one wide secondary tile for the
+  // next most important (total sessions), and the rest as uniform, neutral small
+  // tiles rather than coloring or sizing every stat the same.
+  const heroStat = {
+    label: t('statistics.gameStats.totalPlayTime'),
+    value: formatDuration(statistics.totalPlayTimeSeconds),
+    icon: <Timer className="size-6" />,
+  }
+
+  const secondaryStat = {
+    label: t('statistics.gameStats.totalSessions'),
+    value: statistics.totalSessions.toString(),
+    icon: <CalendarDays className="size-5" />,
+  }
+
   const statCards = [
-    {
-      label: t('statistics.gameStats.totalPlayTime'),
-      value: formatDuration(statistics.totalPlayTimeSeconds),
-      icon: <Timer className="size-5" />,
-      color: 'var(--color-success)'
-    },
-    {
-      label: t('statistics.gameStats.totalSessions'),
-      value: statistics.totalSessions.toString(),
-      icon: <CalendarDays className="size-5" />,
-      color: 'var(--color-accent)'
-    },
     { label: t('statistics.gameStats.averageSession'), value: formatDuration(statistics.averageSessionTimeSeconds), icon: <Clock className="size-5" /> },
     { label: t('statistics.gameStats.longestSession'), value: formatDuration(statistics.longestSessionSeconds), icon: <Trophy className="size-5" /> },
     { label: t('statistics.gameStats.replays'), value: statistics.replaysCount.toString(), icon: <RotateCcw className="size-5" /> },
@@ -271,9 +272,24 @@ function GameStatisticsPage() {
         </Button>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
+        <StatCard
+          hero
+          className="col-span-2 md:row-span-2"
+          title={heroStat.label}
+          value={heroStat.value}
+          icon={heroStat.icon}
+          color="var(--color-success)"
+        />
+        <StatCard
+          className="md:col-span-2"
+          title={secondaryStat.label}
+          value={secondaryStat.value}
+          icon={secondaryStat.icon}
+          color="var(--color-accent)"
+        />
         {statCards.map((stat, index) => (
-          <StatCard key={index} title={stat.label} value={stat.value} icon={stat.icon} color={stat.color} />
+          <StatCard key={index} title={stat.label} value={stat.value} icon={stat.icon} />
         ))}
       </div>
 
