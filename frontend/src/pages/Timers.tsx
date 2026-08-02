@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Plus, Search, X } from 'lucide-react'
 import { playthroughsApi, gamesApi } from '../services/api'
 import StopwatchCard from '../components/StopwatchCard'
@@ -147,6 +147,19 @@ function Timers() {
     return filtered
   }, [playthroughs, games, sortBy, filterStatus, filterType, filterGame, filterPlatform, searchQuery])
 
+  const hasActiveFilters = Boolean(
+    searchQuery || filterStatus || filterType || filterGame || filterPlatform || sortBy !== 'date-desc'
+  )
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('')
+    setSortBy('date-desc')
+    setFilterStatus('')
+    setFilterType('')
+    setFilterGame('')
+    setFilterPlatform('')
+  }, [])
+
   if (loading) {
     return <Loading />
   }
@@ -276,6 +289,12 @@ function Timers() {
                   ))}
               </SelectContent>
             </Select>
+
+            {hasActiveFilters && (
+              <Button size="sm" variant="ghost" onClick={clearFilters} className="w-full sm:ml-auto sm:w-auto">
+                {t('timers.clearFilters')}
+              </Button>
+            )}
           </div>
         </div>
       )}

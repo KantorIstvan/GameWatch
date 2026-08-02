@@ -1,5 +1,6 @@
 import { Filter, Search, CircleCheck, CircleX, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
@@ -8,6 +9,8 @@ interface TimelineFiltersProps {
   setStatusFilter: (filter: string) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
+  hasActiveFilters: boolean
+  onClearFilters: () => void
 }
 
 export const TimelineFilters = ({
@@ -15,14 +18,23 @@ export const TimelineFilters = ({
   setStatusFilter,
   searchQuery,
   setSearchQuery,
+  hasActiveFilters,
+  onClearFilters,
 }: TimelineFiltersProps) => {
   const { t } = useTranslation()
 
   return (
     <div className="mb-6">
-      <div className="mb-2 flex items-center gap-1">
-        <Filter className="size-5 text-accent" />
-        <p className="font-semibold text-text-secondary">{t('calendar.filter')}</p>
+      <div className="mb-2 flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1">
+          <Filter className="size-5 text-accent" />
+          <p className="font-semibold text-text-secondary">{t('calendar.filter')}</p>
+        </div>
+        {hasActiveFilters && (
+          <Button size="sm" variant="ghost" onClick={onClearFilters}>
+            {t('calendar.clearFilters')}
+          </Button>
+        )}
       </div>
 
       <div className="relative mb-4">

@@ -176,7 +176,8 @@
     "gameAll": "All Games",
     "filterByPlatform": "Filter by Platform",
     "platformAll": "All Platforms",
-    "searchTimers": "Search timers..."
+    "searchTimers": "Search timers...",
+    "clearFilters": "Clear Filters"
   },
   "statistics": {
     "title": "Statistics",
@@ -280,6 +281,7 @@
       "filterByPlaythrough": "Filter by Playthrough",
       "allPlaythroughs": "All Playthroughs",
       "searchSessions": "Search sessions...",
+      "clearFilters": "Clear Filters",
       "oneWeek": "Week",
       "oneMonth": "Month",
       "oneYear": "Year",
@@ -529,6 +531,7 @@
     "calendarView": "Timeline",
     "listView": "List",
     "filter": "Filter",
+    "clearFilters": "Clear Filters",
     "all": "All",
     "completed": "Completed",
     "dropped": "Dropped",

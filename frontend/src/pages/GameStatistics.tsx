@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Search, Trash2, Download, ChevronLeft, ChevronRight,
@@ -184,6 +184,16 @@ function GameStatisticsPage() {
 
     return sessions
   }, [statistics, sessionSortBy, sessionFilterPlaythrough, sessionSearchQuery])
+
+  const hasActiveSessionFilters = Boolean(
+    sessionSearchQuery || sessionFilterPlaythrough || sessionSortBy !== 'date-desc'
+  )
+
+  const clearSessionFilters = useCallback(() => {
+    setSessionSearchQuery('')
+    setSessionFilterPlaythrough('')
+    setSessionSortBy('date-desc')
+  }, [])
 
   const paginatedSessions = useMemo(() => {
     return filteredAndSortedSessions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -387,6 +397,12 @@ function GameStatisticsPage() {
                 ))}
               </SelectContent>
             </Select>
+          )}
+
+          {hasActiveSessionFilters && (
+            <Button size="sm" variant="ghost" onClick={clearSessionFilters} className="sm:ml-auto">
+              {t('statistics.gameStats.clearFilters')}
+            </Button>
           )}
         </div>
 
