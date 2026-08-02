@@ -25,6 +25,8 @@ function Timeline() {
     setSearchQuery,
     filteredEvents,
     groupedEventsByMonth,
+    hasActiveFilters,
+    clearFilters,
   } = useTimelineFilters(events)
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
@@ -73,6 +75,8 @@ function Timeline() {
         setStatusFilter={setStatusFilter}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
       />
 
       {viewMode === 'list' ? (

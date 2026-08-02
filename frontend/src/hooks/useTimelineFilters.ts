@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { TimelineEvent } from '../types/timeline'
 
 export const useTimelineFilters = (events: TimelineEvent[]) => {
@@ -55,6 +55,13 @@ export const useTimelineFilters = (events: TimelineEvent[]) => {
     return grouped
   }, [filteredEvents])
 
+  const hasActiveFilters = statusFilter !== 'all' || searchQuery.trim() !== ''
+
+  const clearFilters = useCallback(() => {
+    setStatusFilter('all')
+    setSearchQuery('')
+  }, [])
+
   return {
     statusFilter,
     setStatusFilter,
@@ -62,5 +69,7 @@ export const useTimelineFilters = (events: TimelineEvent[]) => {
     setSearchQuery,
     filteredEvents,
     groupedEventsByMonth,
+    hasActiveFilters,
+    clearFilters,
   }
 }
