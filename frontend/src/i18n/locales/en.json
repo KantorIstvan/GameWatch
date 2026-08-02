@@ -613,14 +613,12 @@
   },
   "faq": {
     "title": "Help & FAQ",
+    "subtitle": "Find answers to common questions about GameWatch",
     "searchPlaceholder": "Search questions...",
     "noResults": "No results found",
     "noResultsDescription": "Try adjusting your search terms",
     "expandAll": "Expand All",
     "collapseAll": "Collapse All",
-    "stillNeedHelp": "Still need help?",
-    "contactSupport": "Contact Support",
-    "responseTime": "We typically respond within 24-48 hours",
     "categories": {
       "gettingStarted": "Getting Started",
       "sessionTracking": "Session Tracking",

@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react'
-import { Search, CircleHelp, Mail, ChevronUp } from 'lucide-react'
+import { Search, CircleHelp, ChevronUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
 interface FAQ {
@@ -111,7 +110,7 @@ function Help() {
         </div>
         <h1 className="mb-2 text-h1 font-semibold">{t('faq.title')}</h1>
         <p className="mx-auto max-w-150 text-body text-text-secondary">
-          Find answers to common questions about GameWatch
+          {t('faq.subtitle')}
         </p>
       </div>
 
@@ -175,19 +174,6 @@ function Help() {
             ))}
           </Accordion>
         )}
-      </div>
-
-      <Separator className="my-8" />
-
-      <div className="rounded-md border border-accent/20 bg-accent/5 p-8 text-center">
-        <p className="mb-2 text-h3 font-semibold">{t('faq.stillNeedHelp')}</p>
-        <p className="mb-6 text-body-sm text-text-secondary">{t('faq.responseTime')}</p>
-        <Button asChild size="lg" className="px-8">
-          <a href="mailto:kantoristvan13@gmail.com">
-            <Mail className="size-4" />
-            {t('faq.contactSupport')}
-          </a>
-        </Button>
       </div>
 
       {!isMobile && (

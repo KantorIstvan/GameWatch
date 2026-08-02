@@ -576,9 +576,6 @@
     "noResultsDescription": "検索条件を調整してみてください",
     "expandAll": "すべて展開",
     "collapseAll": "すべて折りたたむ",
-    "stillNeedHelp": "まだヘルプが必要ですか？",
-    "contactSupport": "サポートに連絡",
-    "responseTime": "通常24〜48時間以内に返信いたします",
     "categories": {
       "gettingStarted": "はじめに",
       "sessionTracking": "セッショントラッキング",
