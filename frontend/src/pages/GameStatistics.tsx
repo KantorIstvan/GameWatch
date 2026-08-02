@@ -282,7 +282,7 @@ function GameStatisticsPage() {
           color="var(--color-success)"
         />
         <StatCard
-          className="md:col-span-2"
+          className="col-span-2 md:row-span-2"
           title={secondaryStat.label}
           value={secondaryStat.value}
           icon={secondaryStat.icon}

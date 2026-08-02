@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/lib/utils'
 
 interface GameBannerCardGame {
@@ -45,15 +46,25 @@ const sizeStyles: Record<GameBannerCardSize, { root: string; name: string; metri
 
 function GameBannerCard({ game, size, rank, label, labelIcon, metric, badges, className }: GameBannerCardProps) {
   const styles = sizeStyles[size]
+  const { mode } = useTheme()
+  const isDark = mode === 'dark'
 
   return (
     <div className={cn('relative overflow-hidden rounded-xl border border-border bg-surface-raised shadow-2', styles.root, className)}>
       <img
         src={game.bannerImageUrl || '/placeholder-game.png'}
         alt=""
-        className="absolute inset-0 size-full object-cover opacity-40"
+        className={cn('absolute inset-0 size-full object-cover', isDark ? 'opacity-40' : 'opacity-90')}
       />
-      <div className="absolute inset-0 bg-linear-to-t from-surface-raised via-surface-raised/55 to-transparent" />
+      <div
+        className={cn(
+          'absolute inset-0 bg-linear-to-t from-surface-raised to-transparent',
+          isDark ? 'via-surface-raised/55' : 'via-surface-raised/10'
+        )}
+      />
+      {!isDark && (
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-surface-raised via-surface-raised/60 to-transparent" />
+      )}
 
       <div className="relative flex h-full flex-col justify-end">
         {rank !== undefined && (
@@ -63,7 +74,7 @@ function GameBannerCard({ game, size, rank, label, labelIcon, metric, badges, cl
         )}
 
         {label && (
-          <div className="mb-1 flex items-center gap-1.5 text-caption font-medium text-text-secondary">
+          <div className="mb-1 flex items-center gap-1.5 text-caption font-semibold text-text-primary">
             {labelIcon}
             <span>{label}</span>
           </div>
@@ -74,7 +85,7 @@ function GameBannerCard({ game, size, rank, label, labelIcon, metric, badges, cl
         </p>
 
         {metric && (
-          <p className={cn('mt-1 text-text-secondary', styles.metric)}>
+          <p className={cn('mt-1 text-text-primary', styles.metric)}>
             {metric}
           </p>
         )}
