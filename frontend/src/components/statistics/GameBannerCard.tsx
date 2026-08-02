@@ -47,7 +47,7 @@ function GameBannerCard({ game, size, rank, label, labelIcon, metric, badges, cl
   const styles = sizeStyles[size]
 
   return (
-    <div className={cn('relative overflow-hidden rounded-xl border border-border', styles.root, className)}>
+    <div className={cn('relative overflow-hidden rounded-xl border border-border bg-surface-raised shadow-2', styles.root, className)}>
       <img
         src={game.bannerImageUrl || '/placeholder-game.png'}
         alt=""
