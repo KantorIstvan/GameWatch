@@ -40,6 +40,33 @@ public class UserStatisticsDto {
     private String favoritePublisher;
 
     private ConsistencyStats consistencyStats;
+    private BacklogStats backlogStats;
+
+    /**
+     * The state of the library as a whole, rather than of the selected period.
+     *
+     * These deliberately ignore the period picker: a backlog is a fact about right now, and
+     * "you have 41 unplayed games" does not become a different number because the chart
+     * above is showing March.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BacklogStats {
+        private Integer gamesInLibrary;
+        private Integer gamesStarted;
+        private Integer gamesPastFirstHour;
+        private Integer gamesFinished;
+        private Integer gamesNeverStarted;
+        /** Median days between adding a game and first playing it; null with no data. */
+        private Long medianShelfTimeDays;
+        /** Added against finished over the same recent window, so the two are comparable. */
+        private Integer gamesAddedRecently;
+        private Integer gamesFinishedRecently;
+        private Integer backlogWindowMonths;
+        private List<GameRankingDto> stalePlaythroughs;
+    }
 
     /**
      * How regularly the period was played, and how long a typical session runs.
@@ -99,6 +126,8 @@ public class UserStatisticsDto {
         private String bannerImageUrl;
         private Long playtimeSeconds;
         private Long daysToComplete;
+        /** Only populated for stale playthroughs, where it is the point of the entry. */
+        private Long daysSinceLastPlayed;
         private LocalDate startDate;
         private LocalDate endDate;
         // Other categories (most playtime, most sessions, longest session, longest
