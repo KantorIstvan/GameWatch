@@ -3,6 +3,7 @@ package com.gamewatch.service;
 import com.gamewatch.dto.*;
 import com.gamewatch.entity.*;
 import com.gamewatch.repository.*;
+import com.gamewatch.util.TimezoneUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -102,7 +103,7 @@ public class HealthService {
         log.info("Saved mood entry for user {}: rating={}", user.getId(), request.getMoodRating());
 
         // Recalculate today's metrics
-        recalculateMetricsForDate(user, LocalDate.now());
+        recalculateMetricsForDate(user, LocalDate.now(TimezoneUtils.resolveZone(user)));
 
         return mapToMoodEntryDto(moodEntry);
     }
@@ -116,7 +117,8 @@ public class HealthService {
         log.info("Saved mood entry for user {}: rating={}", moodEntry.getUser().getId(), moodEntry.getMoodRating());
         
         // Recalculate today's metrics
-        LocalDate date = LocalDateTime.ofInstant(moodEntry.getRecordedAt(), ZoneId.systemDefault()).toLocalDate();
+        LocalDate date = LocalDateTime.ofInstant(moodEntry.getRecordedAt(),
+            TimezoneUtils.resolveZone(moodEntry.getUser())).toLocalDate();
         recalculateMetricsForDate(moodEntry.getUser(), date);
         
         return moodEntry;
@@ -126,11 +128,11 @@ public class HealthService {
     public void recalculateMetricsForDate(User user, LocalDate date) {
         log.info("Recalculating health metrics for user {} on {}", user.getId(), date);
 
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+
         // Get all sessions for this date
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-        Instant startInstant = startOfDay.atZone(ZoneId.systemDefault()).toInstant();
-        Instant endInstant = endOfDay.atZone(ZoneId.systemDefault()).toInstant();
+        Instant startInstant = date.atStartOfDay(zone).toInstant();
+        Instant endInstant = date.plusDays(1).atStartOfDay(zone).toInstant();
 
         List<SessionHistory> sessions = sessionHistoryRepository
             .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
@@ -159,11 +161,10 @@ public class HealthService {
         int lateNightSessions = 0;
 
         for (SessionHistory session : sessions) {
-            LocalTime startTime = LocalDateTime.ofInstant(session.getStartedAt(), ZoneId.systemDefault()).toLocalTime();
-            LocalTime endTime = LocalDateTime.ofInstant(session.getEndedAt(), ZoneId.systemDefault()).toLocalTime();
+            LocalTime startTime = LocalDateTime.ofInstant(session.getStartedAt(), zone).toLocalTime();
 
             // Count late-night minutes (22:00 - 06:00)
-            lateNightMinutes += calculateLateNightMinutes(session.getStartedAt(), session.getEndedAt());
+            lateNightMinutes += calculateLateNightMinutes(session.getStartedAt(), session.getEndedAt(), zone);
 
             // Categorize by start time
             int hour = startTime.getHour();
@@ -231,9 +232,9 @@ public class HealthService {
             user.getId(), date, healthScore, totalHours, sessionCount);
     }
 
-    private long calculateLateNightMinutes(Instant startInstant, Instant endInstant) {
-        LocalDateTime start = LocalDateTime.ofInstant(startInstant, ZoneId.systemDefault());
-        LocalDateTime end = LocalDateTime.ofInstant(endInstant, ZoneId.systemDefault());
+    private long calculateLateNightMinutes(Instant startInstant, Instant endInstant, ZoneId zone) {
+        LocalDateTime start = LocalDateTime.ofInstant(startInstant, zone);
+        LocalDateTime end = LocalDateTime.ofInstant(endInstant, zone);
         
         long lateNightMinutes = 0;
         LocalDateTime current = start;
@@ -267,11 +268,11 @@ public class HealthService {
     public void backfillMissingMetrics(User user, LocalDate startDate, LocalDate endDate) {
         log.debug("Checking for missing health metrics for user {} from {} to {}", user.getId(), startDate, endDate);
         
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+
         // Get all session dates in the range
-        LocalDateTime startOfPeriod = startDate.atStartOfDay();
-        LocalDateTime endOfPeriod = endDate.plusDays(1).atStartOfDay();
-        Instant startInstant = startOfPeriod.atZone(ZoneId.systemDefault()).toInstant();
-        Instant endInstant = endOfPeriod.atZone(ZoneId.systemDefault()).toInstant();
+        Instant startInstant = startDate.atStartOfDay(zone).toInstant();
+        Instant endInstant = endDate.plusDays(1).atStartOfDay(zone).toInstant();
         
         List<SessionHistory> sessions = sessionHistoryRepository
             .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
@@ -281,10 +282,12 @@ public class HealthService {
             return;
         }
         
-        // Group sessions by date
+        // Group sessions by date. This used to group in UTC while recalculateMetricsForDate
+        // bucketed in the server's zone, so the backfill could ask for metrics on a date
+        // that the recalculation then attributed elsewhere.
         Map<LocalDate, List<SessionHistory>> sessionsByDate = sessions.stream()
-            .collect(Collectors.groupingBy(session -> 
-                LocalDateTime.ofInstant(session.getEndedAt(), ZoneOffset.UTC).toLocalDate()
+            .collect(Collectors.groupingBy(session ->
+                LocalDateTime.ofInstant(session.getEndedAt(), zone).toLocalDate()
             ));
         
         // Check each date for missing metrics
@@ -381,11 +384,14 @@ public class HealthService {
 
     @Transactional
     public HealthDashboardDto getHealthDashboard(User user) {
-        LocalDate today = LocalDate.now();
-        
-        // Calendar week: Monday of current week (ISO 8601)
-        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
-        
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+        LocalDate today = LocalDate.now(zone);
+
+        // Calendar week, honouring the user's Monday/Sunday preference - the statistics
+        // page already respects it, and a week that starts on a different day on each of
+        // the two pages makes their weekly totals impossible to reconcile.
+        LocalDate weekStart = TimezoneUtils.startOfWeek(user, today);
+
         // Calendar year: January 1st of current year
         LocalDate yearStart = LocalDate.of(today.getYear(), 1, 1);
 
@@ -423,7 +429,7 @@ public class HealthService {
         HealthDashboardDto.WeeklyMetricsDto weekMetrics = calculateWeeklyMetrics(weekData);
 
         // Get recent moods (current week)
-        Instant weekStartInstant = weekStart.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+        Instant weekStartInstant = weekStart.atStartOfDay(zone).toInstant();
         List<MoodEntry> recentMoodEntries = moodEntryRepository
             .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), weekStartInstant, Instant.now());
         List<MoodEntryDto> recentMoods = recentMoodEntries.stream()
@@ -459,7 +465,7 @@ public class HealthService {
      */
     @Transactional
     public Map<LocalDate, Integer> getYearlyHeatmap(User user, int year) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(TimezoneUtils.resolveZone(user));
         LocalDate yearStart = LocalDate.of(year, 1, 1);
         LocalDate yearEnd = year == today.getYear() ? today : LocalDate.of(year, 12, 31);
 
@@ -510,8 +516,9 @@ public class HealthService {
     }
 
     private List<HealthDashboardDto.SessionWithMoodDto> getRecentSessionsWithMood(User user, LocalDate weekStart, LocalDate today) {
-        Instant startInstant = weekStart.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
-        Instant endInstant = today.plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+        Instant startInstant = weekStart.atStartOfDay(zone).toInstant();
+        Instant endInstant = today.plusDays(1).atStartOfDay(zone).toInstant();
         
         List<SessionHistory> sessions = sessionHistoryRepository
             .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
@@ -545,8 +552,7 @@ public class HealthService {
             .findByUserIdAndMetricDate(user.getId(), today)
             .orElse(null);
 
-        // Calendar week: Monday of current week
-        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+        LocalDate weekStart = TimezoneUtils.startOfWeek(user, today);
         List<DailyHealthMetrics> weekMetrics = dailyHealthMetricsRepository
             .findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(user.getId(), weekStart, today);
 

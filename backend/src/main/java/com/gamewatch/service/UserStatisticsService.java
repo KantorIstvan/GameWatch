@@ -102,16 +102,7 @@ public class UserStatisticsService {
 
         return switch (interval.toLowerCase()) {
             case "week" -> {
-                // Get first day of week based on user preference
-                String firstDayOfWeek = user.getFirstDayOfWeek() != null ? user.getFirstDayOfWeek() : "MONDAY";
-                java.time.DayOfWeek startDay = firstDayOfWeek.equals("SUNDAY")
-                    ? java.time.DayOfWeek.SUNDAY
-                    : java.time.DayOfWeek.MONDAY;
-                LocalDate weekStart = referenceDate.with(startDay);
-                // If the reference date is before the start day, go back a week
-                if (weekStart.isAfter(referenceDate)) {
-                    weekStart = weekStart.minusWeeks(1);
-                }
+                LocalDate weekStart = TimezoneUtils.startOfWeek(user, referenceDate);
                 LocalDate weekEnd = weekStart.plusDays(6);
                 yield new DateRange(
                     weekStart.atStartOfDay(zone).toInstant(),
