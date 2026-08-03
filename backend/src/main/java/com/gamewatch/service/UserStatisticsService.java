@@ -81,6 +81,7 @@ public class UserStatisticsService {
             .libraryCompletionPercentage(calculateLibraryCompletion(allPlaythroughs, totalGamesInLibrary))
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
             .favoritePublisher(findFavoritePublisher(playthroughs))
+            .consistencyStats(calculateConsistencyStats(sessions, dailyPlaytimeData, span, zone))
             .build();
     }
 
@@ -416,6 +417,107 @@ public class UserStatisticsService {
      * and so still looked plausible, but the hour figures in the legend were inflated and
      * heavily-tagged games crowded out single-genre ones purely on tag count.
      */
+    /**
+     * Streaks, regularity and typical session length for the period.
+     *
+     * Built on the already-computed daily series so it can never disagree with the chart
+     * above it: a day counts as played when that series shows time against it.
+     */
+    private UserStatisticsDto.ConsistencyStats calculateConsistencyStats(
+            List<SessionHistory> sessions, List<UserStatisticsDto.DailyPlaytime> dailyPlaytime,
+            DaySpan span, ZoneId zone) {
+
+        List<Boolean> played = dailyPlaytime.stream()
+            .map(day -> day.getPlaytimeSeconds() != null && day.getPlaytimeSeconds() > 0)
+            .collect(Collectors.toList());
+
+        int daysPlayed = (int) played.stream().filter(Boolean::booleanValue).count();
+        int daysInPeriod = played.size();
+
+        int longestStreak = 0;
+        int longestGap = 0;
+        int runOfPlayed = 0;
+        int runOfIdle = 0;
+        for (int i = 0; i < played.size(); i++) {
+            if (played.get(i)) {
+                runOfPlayed++;
+                longestStreak = Math.max(longestStreak, runOfPlayed);
+                // Only count a gap that sits between two played days; leading idle days are
+                // simply the period starting before this user did.
+                if (runOfIdle > 0 && anyPlayedBefore(played, i)) {
+                    longestGap = Math.max(longestGap, runOfIdle);
+                }
+                runOfIdle = 0;
+            } else {
+                runOfIdle++;
+                runOfPlayed = 0;
+            }
+        }
+
+        List<Long> durations = sessions.stream()
+            .map(SessionHistory::getDurationSeconds)
+            .sorted()
+            .collect(Collectors.toList());
+
+        return UserStatisticsDto.ConsistencyStats.builder()
+            .currentStreakDays(calculateCurrentStreak(played, span, zone))
+            .longestStreakDays(longestStreak)
+            .daysPlayed(daysPlayed)
+            .daysInPeriod(daysInPeriod)
+            .consistencyPercentage(daysInPeriod == 0 ? 0.0 : (double) daysPlayed / daysInPeriod * 100.0)
+            .longestGapDays(longestGap)
+            .medianSessionSeconds(percentile(durations, 0.50))
+            .percentile90SessionSeconds(percentile(durations, 0.90))
+            .sessionsPerActiveDay(daysPlayed == 0 ? 0.0 : (double) sessions.size() / daysPlayed)
+            .build();
+    }
+
+    private boolean anyPlayedBefore(List<Boolean> played, int index) {
+        for (int i = 0; i < index; i++) {
+            if (played.get(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Days played in an unbroken run up to now, or null for a period that has already ended
+     * - a "current" streak inside last March is not a thing.
+     *
+     * Today counts when it has time on it, but an empty today does not end the run: a
+     * streak breaks when a whole day passes unplayed, not the moment midnight arrives.
+     */
+    private Integer calculateCurrentStreak(List<Boolean> played, DaySpan span, ZoneId zone) {
+        if (!span.end().equals(LocalDate.now(zone)) || played.isEmpty()) {
+            return null;
+        }
+
+        int index = played.size() - 1;
+        if (!played.get(index)) {
+            index--;
+        }
+
+        int streak = 0;
+        while (index >= 0 && played.get(index)) {
+            streak++;
+            index--;
+        }
+        return streak;
+    }
+
+    /**
+     * Nearest-rank percentile over an ascending list. Returns 0 for an empty list so the
+     * tiles render a zero rather than a gap.
+     */
+    private Long percentile(List<Long> ascending, double fraction) {
+        if (ascending.isEmpty()) {
+            return 0L;
+        }
+        int rank = (int) Math.ceil(fraction * ascending.size()) - 1;
+        return ascending.get(Math.max(0, Math.min(ascending.size() - 1, rank)));
+    }
+
     private Map<String, Long> calculateGenreDistribution(List<Playthrough> playthroughs) {
         Map<String, Long> genreMap = new HashMap<>();
 
@@ -752,6 +854,17 @@ public class UserStatisticsService {
             .libraryCompletionPercentage(0.0)
             .favoriteDeveloper(null)
             .favoritePublisher(null)
+            .consistencyStats(UserStatisticsDto.ConsistencyStats.builder()
+                .currentStreakDays(0)
+                .longestStreakDays(0)
+                .daysPlayed(0)
+                .daysInPeriod(0)
+                .consistencyPercentage(0.0)
+                .longestGapDays(0)
+                .medianSessionSeconds(0L)
+                .percentile90SessionSeconds(0L)
+                .sessionsPerActiveDay(0.0)
+                .build())
             .build();
     }
 

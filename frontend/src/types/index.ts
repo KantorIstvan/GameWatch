@@ -147,8 +147,22 @@ export interface UserStatistics {
   dayOfWeekPlaytime: Record<string, number>
   dayOfWeekTotalPlaytime: Record<string, number>
   libraryCompletionPercentage: number
+  consistencyStats?: ConsistencyStats
   favoriteDeveloper?: string
   favoritePublisher?: string
+}
+
+export interface ConsistencyStats {
+  /** Null when the selected period does not contain today. */
+  currentStreakDays: number | null
+  longestStreakDays: number
+  daysPlayed: number
+  daysInPeriod: number
+  consistencyPercentage: number
+  longestGapDays: number
+  medianSessionSeconds: number
+  percentile90SessionSeconds: number
+  sessionsPerActiveDay: number
 }
 
 export interface TimeOfDayStats {
