@@ -93,7 +93,7 @@ class HealthServiceTest {
 
         ArgumentCaptor<Instant> start = ArgumentCaptor.forClass(Instant.class);
         ArgumentCaptor<Instant> end = ArgumentCaptor.forClass(Instant.class);
-        when(sessionHistoryRepository.findSessionsByUserAndDateRange(
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(
                 anyLong(), start.capture(), end.capture()))
             .thenReturn(List.of());
 
@@ -114,7 +114,7 @@ class HealthServiceTest {
         User user = User.builder()
             .id(1L).auth0UserId("auth0|123").timezone("UTC").firstDayOfWeek("SUNDAY").build();
 
-        when(sessionHistoryRepository.findSessionsByUserAndDateRange(anyLong(), any(), any()))
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
             .thenReturn(List.of());
         when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(anyLong(), any()))
             .thenReturn(Optional.empty());

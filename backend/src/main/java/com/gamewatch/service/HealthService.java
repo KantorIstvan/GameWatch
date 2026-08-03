@@ -135,7 +135,7 @@ public class HealthService {
         Instant endInstant = date.plusDays(1).atStartOfDay(zone).toInstant();
 
         List<SessionHistory> sessions = sessionHistoryRepository
-            .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
+            .findSessionsStartedByUserBetween(user.getId(), startInstant, endInstant);
 
         if (sessions.isEmpty()) {
             log.debug("No sessions found for user {} on {}", user.getId(), date);
@@ -275,7 +275,7 @@ public class HealthService {
         Instant endInstant = endDate.plusDays(1).atStartOfDay(zone).toInstant();
         
         List<SessionHistory> sessions = sessionHistoryRepository
-            .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
+            .findSessionsStartedByUserBetween(user.getId(), startInstant, endInstant);
         
         if (sessions.isEmpty()) {
             log.debug("No sessions found for user {} in the period", user.getId());
@@ -521,7 +521,7 @@ public class HealthService {
         Instant endInstant = today.plusDays(1).atStartOfDay(zone).toInstant();
         
         List<SessionHistory> sessions = sessionHistoryRepository
-            .findSessionsByUserAndDateRange(user.getId(), startInstant, endInstant);
+            .findSessionsStartedByUserBetween(user.getId(), startInstant, endInstant);
 
         return sessions.stream()
             .sorted(Comparator.comparing(SessionHistory::getEndedAt).reversed())

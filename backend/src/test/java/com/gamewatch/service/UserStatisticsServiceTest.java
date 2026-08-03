@@ -90,7 +90,7 @@ class UserStatisticsServiceTest {
 
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
         when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
-        when(sessionHistoryRepository.findSessionsByUserAndDateRange(anyLong(), any(), any()))
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
             .thenReturn(List.of());
         // It does have session rows - they simply sit in other periods.
         when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of(1L));
@@ -115,7 +115,7 @@ class UserStatisticsServiceTest {
 
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
         when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
-        when(sessionHistoryRepository.findSessionsByUserAndDateRange(anyLong(), any(), any()))
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
             .thenReturn(List.of(sessionThisWeek));
         when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of(1L));
 
@@ -135,7 +135,7 @@ class UserStatisticsServiceTest {
 
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
         when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
-        when(sessionHistoryRepository.findSessionsByUserAndDateRange(anyLong(), any(), any()))
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
             .thenReturn(List.of());
         when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of());
 
