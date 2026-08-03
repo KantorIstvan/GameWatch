@@ -101,6 +101,11 @@ export const userApi = {
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 
+export const profilesApi = {
+  getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
+  search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
+}
+
 export const followsApi = {
   getState: (handle: string) => apiClient.get(`/follows/${handle}`),
   follow: (handle: string) => apiClient.post(`/follows/${handle}`),

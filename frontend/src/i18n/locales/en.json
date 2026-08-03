@@ -167,6 +167,20 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "profile": {
+    "notFound": "That profile does not exist, or is not shared with you.",
+    "followers_one": "{{count}} follower",
+    "followers_other": "{{count}} followers",
+    "following_one": "{{count}} following",
+    "following_other": "{{count}} following",
+    "joined": "Joined {{date}}",
+    "totalPlaytime": "Total Playtime",
+    "gamesInLibrary": "Games",
+    "gamesCompleted": "Completed",
+    "totalSessions": "Sessions",
+    "topGames": "Most Played",
+    "libraryHidden": "This library is not shared with you."
+  },
   "social": {
     "follow": {
       "follow": "Follow",
