@@ -79,14 +79,15 @@ public class HealthService {
 
     @Transactional
     public MoodEntryDto submitMood(User user, SubmitMoodRequest request) {
-        if (request.getMoodRating() < 1 || request.getMoodRating() > 5) {
+        if (request.getMoodRating() == null || request.getMoodRating() < 1 || request.getMoodRating() > 5) {
             throw new RuntimeException("Mood rating must be between 1 and 5");
         }
 
         SessionHistory sessionHistory = null;
         if (request.getSessionHistoryId() != null) {
-            sessionHistory = sessionHistoryRepository.findById(request.getSessionHistoryId())
-                .orElse(null);
+            sessionHistory = sessionHistoryRepository
+                .findByIdAndPlaythroughUserId(request.getSessionHistoryId(), user.getId())
+                .orElseThrow(() -> new RuntimeException("Session not found or access denied"));
         }
 
         MoodEntry moodEntry = MoodEntry.builder()

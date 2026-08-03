@@ -67,3 +67,6 @@ rawg:
   api:
     key: ${RAWG_API_KEY:}
     base-url: https://api.rawg.io/api
+
+rate-limit:
+  requests-per-minute: ${RATE_LIMIT_RPM:120}

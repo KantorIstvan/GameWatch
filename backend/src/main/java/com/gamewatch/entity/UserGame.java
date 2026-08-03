@@ -27,9 +27,6 @@ public class UserGame {
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
-    @Column(name = "total_playtime_seconds")
-    private Long totalPlaytimeSeconds = 0L;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
