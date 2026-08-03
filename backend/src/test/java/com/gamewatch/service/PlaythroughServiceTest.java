@@ -411,6 +411,58 @@ class PlaythroughServiceTest {
     }
 
     @Test
+    void deleteSession_RecalculatesTheHealthMetricsForThatDay() {
+        // Deleting a session never triggered a recalculation, so its hours stayed in the
+        // heatmap, the weekly totals and the day's score indefinitely.
+        Instant startedAt = Instant.parse("2026-03-10T20:00:00Z");
+        SessionHistory session = SessionHistory.builder()
+            .id(7L)
+            .playthrough(testPlaythrough)
+            .sessionNumber(1)
+            .durationSeconds(3600L)
+            .pauseCount(0)
+            .startedAt(startedAt)
+            .endedAt(startedAt.plusSeconds(3600L))
+            .build();
+
+        testPlaythrough.setSessionCount(1);
+        testPlaythrough.setDurationSeconds(3600L);
+        testUser.setTimezone("UTC");
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findById(7L)).thenReturn(Optional.of(session));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of());
+
+        playthroughService.deleteSession(testUser, 1L, 7L);
+
+        verify(sessionHistoryRepository).delete(session);
+        verify(healthService).recalculateMetricsForDate(testUser, LocalDate.of(2026, 3, 10));
+        assertThat(testPlaythrough.getSessionCount()).isZero();
+        assertThat(testPlaythrough.getDurationSeconds()).isZero();
+    }
+
+    @Test
+    void deletePlaythrough_RecalculatesEveryDayItContributedTo() {
+        Instant dayOne = Instant.parse("2026-03-10T20:00:00Z");
+        Instant dayTwo = Instant.parse("2026-03-12T09:00:00Z");
+        testUser.setTimezone("UTC");
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of(
+            SessionHistory.builder().id(1L).playthrough(testPlaythrough).sessionNumber(1)
+                .durationSeconds(3600L).pauseCount(0).startedAt(dayOne).endedAt(dayOne.plusSeconds(3600)).build(),
+            SessionHistory.builder().id(2L).playthrough(testPlaythrough).sessionNumber(2)
+                .durationSeconds(1800L).pauseCount(0).startedAt(dayTwo).endedAt(dayTwo.plusSeconds(1800)).build()
+        ));
+
+        playthroughService.deletePlaythrough(testUser, 1L);
+
+        verify(playthroughRepository).delete(testPlaythrough);
+        verify(healthService).recalculateMetricsForDate(testUser, LocalDate.of(2026, 3, 10));
+        verify(healthService).recalculateMetricsForDate(testUser, LocalDate.of(2026, 3, 12));
+    }
+
+    @Test
     void logManualSession_Success() {
         Instant sessionStart = Instant.now().minus(2, ChronoUnit.HOURS);
         Instant sessionEnd = Instant.now().minus(1, ChronoUnit.HOURS);
