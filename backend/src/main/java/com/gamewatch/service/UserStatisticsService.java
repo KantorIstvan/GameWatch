@@ -57,7 +57,8 @@ public class UserStatisticsService {
             return createEmptyStatistics();
         }
 
-        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, range, zone);
+        DaySpan span = resolveDaySpan(sessions, range, zone);
+        List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, span, zone);
 
         return UserStatisticsDto.builder()
             .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, playthroughIdsWithAnySession, range))
@@ -75,7 +76,7 @@ public class UserStatisticsService {
             .longestToCompleteGame(findLongestToCompleteGame(playthroughs))
             .fastestToCompleteGame(findFastestToCompleteGame(playthroughs))
             .topMostPlayedGames(findTopMostPlayedGames(playthroughs, 5))
-            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, zone))
+            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, span, zone))
             .dayOfWeekTotalPlaytime(calculateDayOfWeekTotalPlaytime(sessions, zone))
             .libraryCompletionPercentage(calculateLibraryCompletion(allPlaythroughs, totalGamesInLibrary))
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
@@ -250,8 +251,13 @@ public class UserStatisticsService {
     }
 
     private Integer countInProgressGames(List<Playthrough> playthroughs) {
+        // A dropped playthrough is explicitly not in progress - it is the state a user
+        // picks to say they have stopped. Counting it here meant abandoned games kept
+        // inflating "In Progress" with no way to clear them short of deleting the record.
         return (int) playthroughs.stream()
-            .filter(p -> !Boolean.TRUE.equals(p.getIsCompleted()) && p.getDurationSeconds() > 0)
+            .filter(p -> !Boolean.TRUE.equals(p.getIsCompleted())
+                && !Boolean.TRUE.equals(p.getIsDropped())
+                && p.getDurationSeconds() > 0)
             .map(p -> p.getGame().getId())
             .distinct()
             .count();
@@ -286,35 +292,36 @@ public class UserStatisticsService {
         }
         
         for (SessionHistory session : sessions) {
-            Instant start = session.getStartedAt();
-            Instant end = session.getEndedAt();
-            long totalSeconds = session.getDurationSeconds();
-            
-            LocalDateTime startTime = LocalDateTime.ofInstant(start, zone);
-            LocalDateTime endTime = LocalDateTime.ofInstant(end, zone);
-            
-            if (startTime.getHour() == endTime.getHour() && 
-                startTime.getDayOfYear() == endTime.getDayOfYear() &&
-                startTime.getYear() == endTime.getYear()) {
+            LocalDateTime startTime = LocalDateTime.ofInstant(session.getStartedAt(), zone);
+            LocalDateTime endTime = LocalDateTime.ofInstant(session.getEndedAt(), zone);
+            long playedSeconds = session.getDurationSeconds();
+
+            Map<Integer, Long> wallClockByHour = spreadAcrossClockHours(startTime, endTime);
+            long wallClockSeconds = wallClockByHour.values().stream().mapToLong(Long::longValue).sum();
+
+            if (wallClockSeconds <= 0) {
                 int hour = startTime.getHour();
-                hourlyDistribution.merge(hour, totalSeconds, Long::sum);
-                addToTimeOfDay(timeOfDayMap, hour, totalSeconds);
-            } else {
-                LocalDateTime current = startTime;
-                while (current.isBefore(endTime)) {
-                    LocalDateTime nextHour = current.plusHours(1).withMinute(0).withSecond(0).withNano(0);
-                    if (nextHour.isAfter(endTime)) {
-                        nextHour = endTime;
-                    }
-                    
-                    long secondsInThisHour = ChronoUnit.SECONDS.between(current, nextHour);
-                    int hour = current.getHour();
-                    
-                    hourlyDistribution.merge(hour, secondsInThisHour, Long::sum);
-                    addToTimeOfDay(timeOfDayMap, hour, secondsInThisHour);
-                    
-                    current = nextHour;
-                }
+                hourlyDistribution.merge(hour, playedSeconds, Long::sum);
+                addToTimeOfDay(timeOfDayMap, hour, playedSeconds);
+                continue;
+            }
+
+            // Scale the wall-clock spread down to the time actually played. A session that
+            // ran 20:00-01:00 with three hours paused occupies five hours of clock but is
+            // only two hours of play; spreading the raw span put time the user did not
+            // spend playing into the evening and night buckets, and made those buckets sum
+            // to more than the session's own duration.
+            long distributed = 0;
+            int remaining = wallClockByHour.size();
+            for (Map.Entry<Integer, Long> entry : wallClockByHour.entrySet()) {
+                remaining--;
+                long scaled = remaining == 0
+                    ? playedSeconds - distributed // last bucket absorbs the rounding drift
+                    : Math.round(playedSeconds * (double) entry.getValue() / wallClockSeconds);
+                distributed += scaled;
+
+                hourlyDistribution.merge(entry.getKey(), scaled, Long::sum);
+                addToTimeOfDay(timeOfDayMap, entry.getKey(), scaled);
             }
         }
         
@@ -327,6 +334,26 @@ public class UserStatisticsService {
             .nightSeconds(timeOfDayMap.get("night"))
             .hourlyDistribution(hourlyDistribution)
             .build();
+    }
+
+    /**
+     * Wall-clock seconds the span occupies in each clock hour, keyed by hour-of-day and
+     * kept in the order the span passes through them.
+     */
+    private Map<Integer, Long> spreadAcrossClockHours(LocalDateTime start, LocalDateTime end) {
+        Map<Integer, Long> byHour = new LinkedHashMap<>();
+        LocalDateTime current = start;
+
+        while (current.isBefore(end)) {
+            LocalDateTime nextHour = current.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+            if (nextHour.isAfter(end)) {
+                nextHour = end;
+            }
+            byHour.merge(current.getHour(), ChronoUnit.SECONDS.between(current, nextHour), Long::sum);
+            current = nextHour;
+        }
+
+        return byHour;
     }
 
     private void addToTimeOfDay(Map<String, Long> map, int hour, long seconds) {
@@ -345,14 +372,11 @@ public class UserStatisticsService {
         }
     }
 
-    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(List<SessionHistory> sessions, DateRange range, ZoneId zone) {
-        Map<LocalDate, Long> dailyMap = new HashMap<>();
+    /** The inclusive span of calendar days a period actually covers. */
+    private record DaySpan(LocalDate start, LocalDate end) {
+    }
 
-        for (SessionHistory session : sessions) {
-            LocalDate date = LocalDateTime.ofInstant(session.getStartedAt(), zone).toLocalDate();
-            dailyMap.merge(date, session.getDurationSeconds(), Long::sum);
-        }
-
+    private DaySpan resolveDaySpan(List<SessionHistory> sessions, DateRange range, ZoneId zone) {
         LocalDate startDate = range.start().equals(Instant.EPOCH)
             ? sessions.stream()
                 .map(s -> LocalDateTime.ofInstant(s.getStartedAt(), zone).toLocalDate())
@@ -360,42 +384,75 @@ public class UserStatisticsService {
                 .orElse(LocalDate.now(zone))
             : LocalDateTime.ofInstant(range.start(), zone).toLocalDate();
 
-        // Cap at today: for the current period this stops the list at "now" (old
-        // behavior); for a past period, range.end() is already before today.
+        // Cap at today: for the current period this stops the span at "now"; for a past
+        // period, range.end() is already before today. Without the cap, an average over a
+        // month in progress would be divided by days that have not happened yet.
         LocalDate rangeEndDate = LocalDateTime.ofInstant(range.end(), zone).toLocalDate();
-        LocalDate endDate = rangeEndDate.isBefore(LocalDate.now(zone)) ? rangeEndDate : LocalDate.now(zone);
+        LocalDate today = LocalDate.now(zone);
+        LocalDate endDate = rangeEndDate.isBefore(today) ? rangeEndDate : today;
+
+        return new DaySpan(startDate, endDate.isBefore(startDate) ? startDate : endDate);
+    }
+
+    private List<UserStatisticsDto.DailyPlaytime> calculateDailyPlaytime(
+            List<SessionHistory> sessions, DaySpan span, ZoneId zone) {
+        Map<LocalDate, Long> dailyMap = new HashMap<>();
+
+        for (SessionHistory session : sessions) {
+            LocalDate date = LocalDateTime.ofInstant(session.getStartedAt(), zone).toLocalDate();
+            dailyMap.merge(date, session.getDurationSeconds(), Long::sum);
+        }
 
         List<UserStatisticsDto.DailyPlaytime> result = new ArrayList<>();
-        LocalDate current = startDate;
-        while (!current.isAfter(endDate)) {
+        LocalDate current = span.start();
+        while (!current.isAfter(span.end())) {
             result.add(UserStatisticsDto.DailyPlaytime.builder()
                 .date(current)
                 .playtimeSeconds(dailyMap.getOrDefault(current, 0L))
                 .build());
             current = current.plusDays(1);
         }
-        
+
         return result;
     }
 
+    /**
+     * Splits each playthrough's time evenly across its game's genres, so the distribution
+     * sums to the playtime it is describing.
+     *
+     * Each genre used to receive the playthrough's <em>full</em> playtime, so a game tagged
+     * Action/RPG/Adventure contributed three times its hours. The pie normalises its slices
+     * and so still looked plausible, but the hour figures in the legend were inflated and
+     * heavily-tagged games crowded out single-genre ones purely on tag count.
+     */
     private Map<String, Long> calculateGenreDistribution(List<Playthrough> playthroughs) {
         Map<String, Long> genreMap = new HashMap<>();
-        
+
         for (Playthrough playthrough : playthroughs) {
             Game game = playthrough.getGame();
-            if (game.getGenres() != null && !game.getGenres().isEmpty()) {
-                String[] genres = game.getGenres().split(",");
-                long playtime = effectivePlaytimeSeconds(playthrough);
-                
-                for (String genre : genres) {
-                    String cleanGenre = genre.trim();
-                    if (!cleanGenre.isEmpty()) {
-                        genreMap.merge(cleanGenre, playtime, Long::sum);
-                    }
-                }
+            if (game.getGenres() == null || game.getGenres().isEmpty()) {
+                continue;
+            }
+
+            List<String> genres = Arrays.stream(game.getGenres().split(","))
+                .map(String::trim)
+                .filter(genre -> !genre.isEmpty())
+                .collect(Collectors.toList());
+            if (genres.isEmpty()) {
+                continue;
+            }
+
+            long playtime = effectivePlaytimeSeconds(playthrough);
+            long share = playtime / genres.size();
+            // Hand the integer-division remainder to the first few genres so the parts add
+            // back up to exactly the playtime, rather than losing a second or two per game.
+            long remainder = playtime % genres.size();
+
+            for (int i = 0; i < genres.size(); i++) {
+                genreMap.merge(genres.get(i), share + (i < remainder ? 1 : 0), Long::sum);
             }
         }
-        
+
         return genreMap;
     }
 
@@ -558,21 +615,29 @@ public class UserStatisticsService {
             .build();
     }
 
-    private Map<String, Double> calculateDayOfWeekAveragePlaytime(List<SessionHistory> sessions, ZoneId zone) {
+    /**
+     * Average playtime per occurrence of each weekday in the period - "how long do I
+     * typically play on a Monday".
+     *
+     * This used to divide each weekday's total by the number of <em>sessions</em> that
+     * landed on it, which is average session length, a different statistic entirely. Shown
+     * beside "Total Hours" on the same chart it read as hours-per-Monday, and it moved in
+     * the opposite direction to the truth: playing more often on Mondays lowered the line.
+     */
+    private Map<String, Double> calculateDayOfWeekAveragePlaytime(
+            List<SessionHistory> sessions, DaySpan span, ZoneId zone) {
         Map<String, Long> totalPlaytimeByDay = calculateDayOfWeekTotalPlaytime(sessions, zone);
-        Map<String, Integer> countByDay = new HashMap<>();
 
-        for (SessionHistory session : sessions) {
-            String dayName = LocalDateTime.ofInstant(session.getStartedAt(), zone)
-                .getDayOfWeek().toString();
-            countByDay.merge(dayName, 1, Integer::sum);
+        Map<String, Integer> occurrencesByDay = new HashMap<>();
+        for (LocalDate date = span.start(); !date.isAfter(span.end()); date = date.plusDays(1)) {
+            occurrencesByDay.merge(date.getDayOfWeek().toString(), 1, Integer::sum);
         }
 
         Map<String, Double> averagePlaytime = new HashMap<>();
         for (Map.Entry<String, Long> entry : totalPlaytimeByDay.entrySet()) {
-            String day = entry.getKey();
-            int count = countByDay.getOrDefault(day, 1);
-            averagePlaytime.put(day, (double) entry.getValue() / count);
+            int occurrences = occurrencesByDay.getOrDefault(entry.getKey(), 0);
+            averagePlaytime.put(entry.getKey(),
+                occurrences == 0 ? 0.0 : (double) entry.getValue() / occurrences);
         }
 
         return averagePlaytime;
