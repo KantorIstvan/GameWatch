@@ -122,6 +122,12 @@ public class PlaythroughService {
             }
         }
 
+        // Bank and record the in-flight session before the playthrough becomes terminal.
+        // This must happen first: it is what adds any still-running time to the total, and
+        // the old code did the equivalent check *after* clearing isActive, so the branch
+        // could never fire and a running session's time was dropped on the floor.
+        SessionHistory closedSession = closeOpenSession(playthrough);
+
         Instant stoppedAt = Instant.now();
         playthrough.setStoppedAt(stoppedAt);
         playthrough.setIsActive(false);
@@ -131,15 +137,10 @@ public class PlaythroughService {
         playthrough.setEndDate(stoppedAt.atZone(TimezoneUtils.resolveZone(user)).toLocalDate());
         playthrough.setLastPlayedAt(stoppedAt);
 
-        if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
-            long elapsedSeconds = Duration.between(playthrough.getStartedAt(), stoppedAt).getSeconds();
-            playthrough.setDurationSeconds(playthrough.getDurationSeconds() + elapsedSeconds);
-        }
-
-        playthrough.setStartedAt(null);
-
         playthrough = playthroughRepository.save(playthrough);
         log.info("Stopped playthrough {} with duration {} seconds", playthroughId, playthrough.getDurationSeconds());
+
+        recalculateHealthForClosedSession(user, closedSession);
 
         return mapToDto(playthrough);
     }
@@ -155,6 +156,10 @@ public class PlaythroughService {
             }
         }
 
+        // Same as finishing: the session the user was part-way through still happened and
+        // still has to be recorded, even though the playthrough is being abandoned.
+        SessionHistory closedSession = closeOpenSession(playthrough);
+
         Instant droppedAt = Instant.now();
         playthrough.setStoppedAt(droppedAt);
         playthrough.setDroppedAt(droppedAt);
@@ -165,15 +170,10 @@ public class PlaythroughService {
         playthrough.setEndDate(droppedAt.atZone(TimezoneUtils.resolveZone(user)).toLocalDate());
         playthrough.setLastPlayedAt(droppedAt);
 
-        if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
-            long elapsedSeconds = Duration.between(playthrough.getStartedAt(), droppedAt).getSeconds();
-            playthrough.setDurationSeconds(playthrough.getDurationSeconds() + elapsedSeconds);
-        }
-
-        playthrough.setStartedAt(null);
-
         playthrough = playthroughRepository.save(playthrough);
         log.info("Dropped playthrough {} with duration {} seconds", playthroughId, playthrough.getDurationSeconds());
+
+        recalculateHealthForClosedSession(user, closedSession);
 
         return mapToDto(playthrough);
     }
@@ -240,67 +240,104 @@ public class PlaythroughService {
             throw new RuntimeException("Playthrough is not active or paused");
         }
 
-        Instant sessionStartTime = playthrough.getSessionStartTime();
-        long sessionStartDuration = playthrough.getSessionStartDurationSeconds();
-        
-        if (playthrough.getIsActive() && playthrough.getStartedAt() != null) {
-            long elapsedSeconds = Duration.between(playthrough.getStartedAt(), Instant.now()).getSeconds();
-            playthrough.setDurationSeconds(playthrough.getDurationSeconds() + elapsedSeconds);
-        }
-
-        Instant endedAt;
-        if (playthrough.getManualTimeSet() && sessionStartTime != null) {
-            endedAt = sessionStartTime.plusSeconds(playthrough.getDurationSeconds());
-            log.info("Using calculated end time for playthrough {} (manual time set): {} + {} sec = {}", 
-                playthroughId, sessionStartTime, playthrough.getDurationSeconds(), endedAt);
-        } else {
-            endedAt = Instant.now();
-        }
-
-        long sessionDuration = playthrough.getDurationSeconds() - sessionStartDuration;
-        
-        int newSessionNumber = playthrough.getSessionCount() + 1;
-        playthrough.setSessionCount(newSessionNumber);
-        
-        Long lastSessionHistoryId = null;
-        if (sessionStartTime != null) {
-            SessionHistory sessionHistory = SessionHistory.builder()
-                .playthrough(playthrough)
-                .sessionNumber(newSessionNumber)
-                .durationSeconds(sessionDuration)
-                .pauseCount(playthrough.getPauseCount())
-                .startedAt(sessionStartTime)
-                .endedAt(endedAt)
-                .build();
-            sessionHistory = sessionHistoryRepository.save(sessionHistory);
-            lastSessionHistoryId = sessionHistory.getId();
-            log.info("Saved session history for playthrough {}, session {}: duration={} sec, pauses={}", 
-                playthroughId, newSessionNumber, sessionDuration, playthrough.getPauseCount());
-        }
+        SessionHistory closedSession = closeOpenSession(playthrough);
 
         playthrough.setIsActive(false);
         playthrough.setIsPaused(false);
-        playthrough.setStartedAt(null);
-        playthrough.setSessionStartTime(null);
-        playthrough.setLastPlayedAt(endedAt);
-        
-        playthrough.setPauseCount(0);
-        
-        playthrough.setManualTimeSet(false);
 
         playthrough = playthroughRepository.save(playthrough);
         log.info("Ended session for playthrough {}, session count: {}", playthroughId, playthrough.getSessionCount());
 
-        // Recalculate health metrics for today
+        recalculateHealthForClosedSession(user, closedSession);
+
+        PlaythroughDto dto = mapToDto(playthrough);
+        dto.setLastSessionHistoryId(closedSession != null ? closedSession.getId() : null);
+        return dto;
+    }
+
+    /**
+     * Closes whatever session is currently open on this playthrough: banks any
+     * still-running time into the total, writes the session_history row, and clears the
+     * in-flight session fields. Returns the row it wrote, or null when there was no open
+     * session to close.
+     *
+     * Every terminal transition — end session, finish, drop — must go through here.
+     * Finish and drop used to skip it entirely, which left a paused session's time inside
+     * durationSeconds but with no session_history row behind it. That time was then
+     * invisible to the per-game session list, the calendar and every health metric (all of
+     * which read session_history), while the period statistics saw a playthrough with no
+     * session in the window and fell back to counting its entire lifetime playtime.
+     */
+    private SessionHistory closeOpenSession(Playthrough playthrough) {
+        if (Boolean.TRUE.equals(playthrough.getIsActive()) && playthrough.getStartedAt() != null) {
+            long elapsedSeconds = Duration.between(playthrough.getStartedAt(), Instant.now()).getSeconds();
+            playthrough.setDurationSeconds(playthrough.getDurationSeconds() + elapsedSeconds);
+        }
+        playthrough.setStartedAt(null);
+
+        Instant sessionStartTime = playthrough.getSessionStartTime();
+        if (sessionStartTime == null) {
+            // Nothing was ever opened on the timer — e.g. a playthrough whose time only
+            // came from manual logging. There is no session to write, so sessionCount must
+            // not move either; it used to be incremented here regardless, which drifted it
+            // permanently out of step with the actual number of session_history rows.
+            playthrough.setLastPlayedAt(Instant.now());
+            return null;
+        }
+
+        long sessionStartDuration = playthrough.getSessionStartDurationSeconds() != null
+            ? playthrough.getSessionStartDurationSeconds()
+            : 0L;
+        long sessionDuration = Math.max(0L, playthrough.getDurationSeconds() - sessionStartDuration);
+
+        Instant endedAt;
+        if (Boolean.TRUE.equals(playthrough.getManualTimeSet())) {
+            endedAt = sessionStartTime.plusSeconds(playthrough.getDurationSeconds());
+            log.info("Using calculated end time for playthrough {} (manual time set): {} + {} sec = {}",
+                playthrough.getId(), sessionStartTime, playthrough.getDurationSeconds(), endedAt);
+        } else {
+            endedAt = Instant.now();
+        }
+
+        int newSessionNumber = playthrough.getSessionCount() + 1;
+        playthrough.setSessionCount(newSessionNumber);
+
+        SessionHistory sessionHistory = sessionHistoryRepository.save(SessionHistory.builder()
+            .playthrough(playthrough)
+            .sessionNumber(newSessionNumber)
+            .durationSeconds(sessionDuration)
+            .pauseCount(playthrough.getPauseCount())
+            .startedAt(sessionStartTime)
+            .endedAt(endedAt)
+            .build());
+        log.info("Saved session history for playthrough {}, session {}: duration={} sec, pauses={}",
+            playthrough.getId(), newSessionNumber, sessionDuration, playthrough.getPauseCount());
+
+        playthrough.setSessionStartTime(null);
+        playthrough.setPauseCount(0);
+        playthrough.setManualTimeSet(false);
+        playthrough.setLastPlayedAt(endedAt);
+
+        return sessionHistory;
+    }
+
+    /**
+     * Recomputes the health metrics for the day the closed session actually ended on,
+     * rather than for "today" — finishing on Monday a session that ran on Sunday night
+     * has to update Sunday.
+     */
+    private void recalculateHealthForClosedSession(User user, SessionHistory closedSession) {
+        if (closedSession == null) {
+            return;
+        }
         try {
-            healthService.recalculateMetricsForDate(user, LocalDate.now(TimezoneUtils.resolveZone(user)));
+            LocalDate sessionDate = closedSession.getEndedAt()
+                .atZone(TimezoneUtils.resolveZone(user))
+                .toLocalDate();
+            healthService.recalculateMetricsForDate(user, sessionDate);
         } catch (Exception e) {
             log.error("Failed to recalculate health metrics for user {}", user.getId(), e);
         }
-
-        PlaythroughDto dto = mapToDto(playthrough);
-        dto.setLastSessionHistoryId(lastSessionHistoryId);
-        return dto;
     }
 
     @Transactional
