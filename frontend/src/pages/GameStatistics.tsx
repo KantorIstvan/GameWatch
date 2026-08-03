@@ -10,6 +10,7 @@ import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StatCard from '../components/StatCard'
 import GameRatingPanel from '../components/ratings/GameRatingPanel'
+import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -296,8 +297,9 @@ function GameStatisticsPage() {
         ))}
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
         <GameRatingPanel gameId={statistics.gameId} />
+        <GameReviewsPanel gameId={statistics.gameId} />
       </div>
 
       <div className="mb-8 rounded-lg border border-border bg-surface/60 p-6 backdrop-blur-xl">

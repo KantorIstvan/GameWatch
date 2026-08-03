@@ -154,6 +154,24 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface GameReview {
+  id: number
+  authorHandle: string | null
+  authorDisplayName: string | null
+  authorPictureUrl: string | null
+  /** The author's own score, when they left one. */
+  authorScore: number | null
+  authorPlaytimeSeconds: number
+  authorFinished: boolean
+  body: string
+  containsSpoilers: boolean
+  language: string | null
+  helpfulCount: number
+  viewerFoundHelpful: boolean
+  isOwnReview: boolean
+  createdAt: string
+}
+
 export interface GameRatingSummary {
   gameId: number
   ratingCount: number

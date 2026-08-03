@@ -167,6 +167,25 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "reviews": {
+    "title": "Reviews",
+    "writeOne": "Write a review",
+    "editYours": "Your review",
+    "placeholder": "What did you think? What worked, what didn't?",
+    "containsSpoilers": "Contains spoilers",
+    "save": "Save review",
+    "delete": "Delete",
+    "saved": "Review saved",
+    "deleted": "Review deleted",
+    "failed": "Could not save your review",
+    "minLength": "{{count}}/5000 · at least 20 characters",
+    "sortHelpful": "Most helpful",
+    "sortRecent": "Most recent",
+    "onlyMyLanguage": "My language only",
+    "spoilerHidden": "This review mentions spoilers. Click to read it.",
+    "finished": "Finished",
+    "none": "No reviews yet."
+  },
   "ratings": {
     "title": "Rating",
     "noRatingsYet": "Nobody has rated this game yet. Be the first.",
