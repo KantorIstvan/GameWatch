@@ -3,6 +3,7 @@ package com.gamewatch.service;
 import com.gamewatch.dto.CreateGameRequest;
 import com.gamewatch.dto.GameDto;
 import com.gamewatch.entity.Game;
+import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.UserGame;
 import com.gamewatch.repository.GameRepository;
@@ -145,6 +146,34 @@ class GameServiceTest {
         assertThat(results.get(0).getName()).isEqualTo("Test Game");
 
         verify(userGameRepository).findGamesByUser(testUser);
+    }
+
+    @Test
+    void getAllGames_ReportsHowManyPlaythroughsAGameCarries() {
+        // Deleting a game cascades to its playthroughs and their sessions. The frontend
+        // type already declared playthroughCount, but nothing ever populated it, so the
+        // confirmation dialog had no way to say how much was about to be destroyed.
+        Playthrough first = Playthrough.builder()
+            .id(1L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(3600L).importedDurationSeconds(0L).sessionCount(2)
+            .isActive(false).isCompleted(true).isDropped(false).isPaused(false)
+            .build();
+        Playthrough second = Playthrough.builder()
+            .id(2L).user(testUser).game(testGame).playthroughType("100%")
+            .durationSeconds(1800L).importedDurationSeconds(0L).sessionCount(1)
+            .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+            .build();
+
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(playthroughRepository.findByUserIdAndGameIdIn(eq(1L), anyList()))
+            .thenReturn(List.of(first, second));
+
+        List<GameDto> results = gameService.getAllGames(testUser);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getPlaythroughCount()).isEqualTo(2);
+        assertThat(results.get(0).getSessionCount()).isEqualTo(3);
+        assertThat(results.get(0).getTotalPlaytimeSeconds()).isEqualTo(5400L);
     }
 
     @Test
