@@ -101,6 +101,12 @@ export const userApi = {
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 
+export const ratingsApi = {
+  getSummary: (gameId: number) => apiClient.get(`/games/${gameId}/rating`),
+  rate: (gameId: number, score: number) => apiClient.put(`/games/${gameId}/rating`, { score }),
+  removeRating: (gameId: number) => apiClient.delete(`/games/${gameId}/rating`),
+}
+
 export const profilesApi = {
   getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),

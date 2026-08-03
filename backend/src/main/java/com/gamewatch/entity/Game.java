@@ -156,6 +156,22 @@ public class Game {
     @Column(name = "dominant_color_2", length = 7)
     private String dominantColor2;
 
+    /**
+     * Cached aggregates of game_ratings. Recomputed from the rating rows on every write -
+     * they are a cache, never the source, so they are rebuilt rather than adjusted.
+     */
+    @Column(name = "rating_count", nullable = false)
+    @Builder.Default
+    private Integer ratingCount = 0;
+
+    @Column(name = "rating_sum", nullable = false)
+    @Builder.Default
+    private Long ratingSum = 0L;
+
+    /** Shrunk score this game is ranked by. Null until anyone rates it. */
+    @Column(name = "bayesian_score")
+    private Double bayesianScore;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
