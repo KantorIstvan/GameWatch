@@ -9,6 +9,7 @@ import com.gamewatch.entity.User;
 import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
+import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class PlaythroughService {
 
     private final PlaythroughRepository playthroughRepository;
     private final GameRepository gameRepository;
+    private final UserGameRepository userGameRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final HealthService healthService;
     private final ColorExtractionService colorExtractionService;
@@ -37,6 +39,10 @@ public class PlaythroughService {
     public PlaythroughDto createPlaythrough(User user, CreatePlaythroughRequest request) {
         Game game = gameRepository.findById(request.getGameId())
             .orElseThrow(() -> new RuntimeException("Game not found"));
+
+        if (!userGameRepository.existsByUserAndGame(user, game)) {
+            throw new RuntimeException("Game not found");
+        }
 
         // Validate start date is not in the future
         if (request.getStartDate() != null && request.getStartDate().isAfter(LocalDate.now(TimezoneUtils.resolveZone(user)))) {
