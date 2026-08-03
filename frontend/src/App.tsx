@@ -13,6 +13,7 @@ import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import Feed from './pages/Feed'
 import Help from './pages/Help'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
+          <Route path="feed" element={<Feed />} />
           <Route path="u/:handle" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />

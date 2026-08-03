@@ -167,6 +167,17 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "feed": {
+    "title": "Activity",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Follow someone to see what they are playing. Their activity appears here once they share their library.",
+    "action": {
+      "FINISHED": "finished",
+      "DROPPED": "dropped",
+      "PICKED_UP": "picked up",
+      "STARTED": "started playing"
+    }
+  },
   "community": {
     "title": "How others played it",
     "playerCount_one": "{{count}} player here",

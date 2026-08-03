@@ -154,6 +154,19 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface ActivityEvent {
+  id: string
+  actorHandle: string | null
+  actorDisplayName: string | null
+  actorPictureUrl: string | null
+  type: 'FINISHED' | 'DROPPED' | 'PICKED_UP' | 'STARTED'
+  gameId: number
+  gameName: string
+  bannerImageUrl: string | null
+  playtimeSeconds: number
+  occurredAt: string
+}
+
 export interface GameCommunity {
   gameId: number
   gameName: string

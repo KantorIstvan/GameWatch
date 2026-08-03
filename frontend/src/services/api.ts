@@ -127,6 +127,10 @@ export const profilesApi = {
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
 }
 
+export const feedApi = {
+  getFeed: (limit?: number) => apiClient.get('/feed', { params: { limit } }),
+}
+
 export const followsApi = {
   getState: (handle: string) => apiClient.get(`/follows/${handle}`),
   follow: (handle: string) => apiClient.post(`/follows/${handle}`),
