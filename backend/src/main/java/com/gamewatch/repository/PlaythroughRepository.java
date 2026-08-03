@@ -28,4 +28,8 @@ public interface PlaythroughRepository extends JpaRepository<Playthrough, Long> 
 
     /** Playthroughs that absorbed this one's timer value via a one-time import. */
     List<Playthrough> findByImportedFromPlaythroughId(Long importedFromPlaythroughId);
+
+    /** Every playthrough of a game, across all users, for community aggregates. */
+    @Query("SELECT p FROM Playthrough p WHERE p.game.id = :gameId")
+    List<Playthrough> findAllByGameId(@Param("gameId") Long gameId);
 }
