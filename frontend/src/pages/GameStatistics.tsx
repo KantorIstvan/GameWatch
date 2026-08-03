@@ -11,6 +11,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import StatCard from '../components/StatCard'
 import GameRatingPanel from '../components/ratings/GameRatingPanel'
 import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
+import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -298,7 +299,10 @@ function GameStatisticsPage() {
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-        <GameRatingPanel gameId={statistics.gameId} />
+        <div className="flex flex-col gap-4 sm:gap-5">
+          <GameRatingPanel gameId={statistics.gameId} />
+          <GameCommunityPanel gameId={statistics.gameId} />
+        </div>
         <GameReviewsPanel gameId={statistics.gameId} />
       </div>
 

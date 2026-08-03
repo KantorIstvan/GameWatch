@@ -154,6 +154,25 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface GameCommunity {
+  gameId: number
+  gameName: string
+  bannerImageUrl: string | null
+  playerCount: number
+  finisherCount: number
+  /** Null until enough people have played for an aggregate to describe a group. */
+  medianCompletionSeconds: number | null
+  fastestCompletionSeconds: number | null
+  slowestCompletionSeconds: number | null
+  /** RAWG's own average, for comparison against what was measured here. */
+  typicalCompletionSeconds: number | null
+  dropRatePercentage: number | null
+  medianSecondsBeforeDropping: number | null
+  hasEnoughDataToAggregate: boolean
+  minimumPlayersRequired: number
+  rating: GameRatingSummary
+}
+
 export interface GameReview {
   id: number
   authorHandle: string | null
