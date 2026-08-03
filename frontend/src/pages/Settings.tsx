@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import ProfileSettingsSection from '../components/settings/ProfileSettingsSection'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
@@ -264,6 +265,8 @@ function Settings() {
         <h1 className="mb-8 text-h2 font-medium text-text-primary">{t('settings.title')}</h1>
 
         <div className="rounded-xl border border-border bg-surface/90 p-8 backdrop-blur-xl">
+          <ProfileSettingsSection />
+
           <div className="mb-8">
             <SectionHeader icon={<Languages className="size-5" />} title={t('settings.language')} />
             <p className="mb-4 text-body-sm text-text-secondary">{t('settings.languageDescription')}</p>

@@ -154,6 +154,18 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+/** Who may see part of a profile. Health data is never shareable and has no setting. */
+export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
+
+export interface ProfileSettings {
+  /** Null until the user claims one. */
+  handle: string | null
+  displayName: string | null
+  bio: string | null
+  profileVisibility: Visibility
+  libraryVisibility: Visibility
+}
+
 export interface CompletionComparison {
   gameId: number
   gameName: string

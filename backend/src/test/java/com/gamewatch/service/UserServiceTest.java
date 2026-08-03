@@ -1,6 +1,8 @@
 package com.gamewatch.service;
 
+import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
+import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -128,6 +131,80 @@ class UserServiceTest {
             .hasMessageContaining("User not found");
 
         verify(userRepository).findByAuth0UserId("auth0|999");
+    }
+
+    @Test
+    void updateProfileSettings_claimsAHandleInLowercase() {
+        User user = User.builder().id(1L).auth0UserId("auth0|123")
+            .profileVisibility(Visibility.PRIVATE).libraryVisibility(Visibility.PRIVATE).build();
+
+        when(userRepository.findByHandleIgnoreCase("kantor")).thenReturn(Optional.empty());
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        ProfileSettingsDto result = userService.updateProfileSettings(user,
+            ProfileSettingsDto.builder().handle("  KANTOR ").build());
+
+        assertThat(result.getHandle()).isEqualTo("kantor");
+    }
+
+    @Test
+    void updateProfileSettings_refusesAHandleAnotherAccountHolds() {
+        User user = User.builder().id(1L).auth0UserId("auth0|123")
+            .profileVisibility(Visibility.PRIVATE).libraryVisibility(Visibility.PRIVATE).build();
+        User someoneElse = User.builder().id(2L).auth0UserId("auth0|456").handle("kantor").build();
+
+        when(userRepository.findByHandleIgnoreCase("kantor")).thenReturn(Optional.of(someoneElse));
+
+        assertThatThrownBy(() -> userService.updateProfileSettings(user,
+                ProfileSettingsDto.builder().handle("kantor").build()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("already taken");
+
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void updateProfileSettings_translatesALostHandleRaceIntoTheSameMessage() {
+        // The uniqueness check races against concurrent claims, so the index is the real
+        // guarantee - and losing that race must read as a taken handle, not a 500.
+        User user = User.builder().id(1L).auth0UserId("auth0|123")
+            .profileVisibility(Visibility.PRIVATE).libraryVisibility(Visibility.PRIVATE).build();
+
+        when(userRepository.findByHandleIgnoreCase("kantor")).thenReturn(Optional.empty());
+        when(userRepository.saveAndFlush(any(User.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        assertThatThrownBy(() -> userService.updateProfileSettings(user,
+                ProfileSettingsDto.builder().handle("kantor").build()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("already taken");
+    }
+
+    @Test
+    void updateProfileSettings_neverLetsTheLibraryOutrankTheProfile() {
+        // A public library behind a private profile would be visible through any endpoint
+        // that reads the library setting on its own.
+        User user = User.builder().id(1L).auth0UserId("auth0|123")
+            .profileVisibility(Visibility.PRIVATE).libraryVisibility(Visibility.PRIVATE).build();
+
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        ProfileSettingsDto result = userService.updateProfileSettings(user,
+            ProfileSettingsDto.builder()
+                .profileVisibility(Visibility.FOLLOWERS)
+                .libraryVisibility(Visibility.PUBLIC)
+                .build());
+
+        assertThat(result.getProfileVisibility()).isEqualTo(Visibility.FOLLOWERS);
+        assertThat(result.getLibraryVisibility()).isEqualTo(Visibility.FOLLOWERS);
+    }
+
+    @Test
+    void newAccountsStartFullyPrivate() {
+        User fresh = User.builder().auth0UserId("auth0|new").build();
+
+        assertThat(fresh.getProfileVisibility()).isEqualTo(Visibility.PRIVATE);
+        assertThat(fresh.getLibraryVisibility()).isEqualTo(Visibility.PRIVATE);
     }
 
     @Test
