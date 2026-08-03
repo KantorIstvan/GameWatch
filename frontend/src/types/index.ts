@@ -154,6 +154,29 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface ProfileLibrary {
+  totalPlaytimeSeconds: number
+  gamesInLibrary: number
+  gamesCompleted: number
+  totalSessions: number
+  topGames: GameRanking[]
+}
+
+export interface PublicProfile {
+  handle: string
+  displayName: string | null
+  bio: string | null
+  profilePictureUrl: string | null
+  joinedDate: string
+  followerCount: number
+  followingCount: number
+  viewerIsFollowing: boolean
+  viewerRequestPending: boolean
+  isOwnProfile: boolean
+  /** Null when the viewer may see the profile but not the library behind it. */
+  library: ProfileLibrary | null
+}
+
 export interface FollowState {
   handle: string
   following: boolean
