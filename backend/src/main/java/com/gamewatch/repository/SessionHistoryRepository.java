@@ -48,4 +48,13 @@ public interface SessionHistoryRepository extends JpaRepository<SessionHistory, 
                                                           @Param("endDate") Instant endDate);
     
     List<SessionHistory> findByPlaythroughIdIn(List<Long> playthroughIds);
+
+    /**
+     * First time each game was actually played, as [gameId, earliest startedAt] pairs.
+     * Aggregated in the database so shelf time does not require loading every session the
+     * user has ever recorded.
+     */
+    @Query("SELECT sh.playthrough.game.id, MIN(sh.startedAt) FROM SessionHistory sh " +
+           "WHERE sh.playthrough.user.id = :userId GROUP BY sh.playthrough.game.id")
+    List<Object[]> findFirstSessionStartPerGame(@Param("userId") Long userId);
 }

@@ -18,6 +18,12 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
     
     @Query("SELECT ug.game FROM UserGame ug WHERE ug.user = :user")
     List<Game> findGamesByUser(@Param("user") User user);
+
+    /**
+     * The library links themselves, whose createdAt is when this user added the game -
+     * distinct from games.createdAt, which is when the catalog first saw it.
+     */
+    List<UserGame> findByUser(User user);
     
     boolean existsByUserAndGame(User user, Game game);
     

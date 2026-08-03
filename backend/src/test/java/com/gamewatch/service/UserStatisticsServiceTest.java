@@ -5,6 +5,7 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.SessionHistory;
 import com.gamewatch.entity.User;
+import com.gamewatch.entity.UserGame;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
 import com.gamewatch.repository.UserGameRepository;
@@ -360,6 +361,132 @@ class UserStatisticsServiceTest {
         assertThat(stats.getAverageSessionPlaytimeSeconds()).isEqualTo(14_400.0);
         assertThat(stats.getConsistencyStats().getMedianSessionSeconds()).isEqualTo(3_600L);
         assertThat(stats.getConsistencyStats().getPercentile90SessionSeconds()).isEqualTo(36_000L);
+    }
+
+    private UserGame libraryEntry(Game game, Instant addedAt) {
+        return UserGame.builder().id(game.getId()).user(testUser).game(game).createdAt(addedAt).build();
+    }
+
+    @Test
+    void backlog_reportsTheFunnelFromOwnedThroughStartedToFinished() {
+        Game unplayed = Game.builder().id(2L).name("Still Shrink-Wrapped").genres("RPG").build();
+        Game barelyTouched = Game.builder().id(3L).name("Twenty Minutes In").genres("RPG").build();
+
+        Playthrough finished = Playthrough.builder()
+            .id(1L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(36_000L).importedDurationSeconds(0L)
+            .isCompleted(true).isDropped(false).isActive(false).isPaused(false)
+            .endDate(LocalDate.now().minusDays(10)).lastPlayedAt(Instant.now())
+            .build();
+        Playthrough underAnHour = Playthrough.builder()
+            .id(2L).user(testUser).game(barelyTouched).playthroughType("story")
+            .durationSeconds(1_200L).importedDurationSeconds(0L)
+            .isCompleted(false).isDropped(false).isActive(false).isPaused(false)
+            .lastPlayedAt(Instant.now())
+            .build();
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L))
+            .thenReturn(List.of(finished, underAnHour));
+        when(userGameRepository.findGamesByUser(testUser))
+            .thenReturn(List.of(testGame, unplayed, barelyTouched));
+        when(userGameRepository.findByUser(testUser)).thenReturn(List.of(
+            libraryEntry(testGame, Instant.now().minus(60, ChronoUnit.DAYS)),
+            libraryEntry(unplayed, Instant.now().minus(30, ChronoUnit.DAYS)),
+            libraryEntry(barelyTouched, Instant.now().minus(10, ChronoUnit.DAYS))));
+        when(sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(any()))
+            .thenReturn(List.of());
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(any())).thenReturn(Set.of());
+        when(sessionHistoryRepository.findFirstSessionStartPerGame(1L)).thenReturn(List.of());
+
+        UserStatisticsDto.BacklogStats backlog =
+            userStatisticsService.getUserStatistics(testUser, "all", null).getBacklogStats();
+
+        assertThat(backlog.getGamesInLibrary()).isEqualTo(3);
+        assertThat(backlog.getGamesStarted()).isEqualTo(2);
+        // 20 minutes does not clear the first hour.
+        assertThat(backlog.getGamesPastFirstHour()).isEqualTo(1);
+        assertThat(backlog.getGamesFinished()).isEqualTo(1);
+        assertThat(backlog.getGamesNeverStarted()).isEqualTo(1);
+    }
+
+    @Test
+    void backlog_isStillReportedForALibraryWithNothingPlayedYet() {
+        // The early return for "no playthroughs in this period" used to swallow everything,
+        // so a new user with forty unplayed games was told only that they had no data -
+        // exactly the case the backlog view exists for.
+        Game unplayed = Game.builder().id(2L).name("Still Shrink-Wrapped").build();
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of());
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(unplayed));
+        when(userGameRepository.findByUser(testUser))
+            .thenReturn(List.of(libraryEntry(unplayed, Instant.now().minus(5, ChronoUnit.DAYS))));
+        when(sessionHistoryRepository.findFirstSessionStartPerGame(1L)).thenReturn(List.of());
+
+        UserStatisticsDto stats = userStatisticsService.getUserStatistics(testUser, "week", null);
+
+        assertThat(stats.getBacklogStats()).isNotNull();
+        assertThat(stats.getBacklogStats().getGamesInLibrary()).isEqualTo(1);
+        assertThat(stats.getBacklogStats().getGamesNeverStarted()).isEqualTo(1);
+        assertThat(stats.getTotalGamesCount()).isEqualTo(1);
+    }
+
+    @Test
+    void backlog_medianShelfTimeMeasuresFromWhenTheUserAddedTheGame() {
+        Game second = Game.builder().id(2L).name("Second").build();
+        Instant addedFirst = Instant.parse("2026-01-01T00:00:00Z");
+        Instant addedSecond = Instant.parse("2026-01-01T00:00:00Z");
+
+        Playthrough playthrough = playthroughWithLifetimePlaytime(3_600L, Instant.now());
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame, second));
+        when(userGameRepository.findByUser(testUser)).thenReturn(List.of(
+            libraryEntry(testGame, addedFirst),
+            libraryEntry(second, addedSecond)));
+        when(sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(any()))
+            .thenReturn(List.of());
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(any())).thenReturn(Set.of());
+        when(sessionHistoryRepository.findFirstSessionStartPerGame(1L)).thenReturn(List.of(
+            new Object[]{1L, Instant.parse("2026-01-04T00:00:00Z")},   // 3 days on the shelf
+            new Object[]{2L, Instant.parse("2026-01-11T00:00:00Z")})); // 10 days on the shelf
+
+        UserStatisticsDto.BacklogStats backlog =
+            userStatisticsService.getUserStatistics(testUser, "all", null).getBacklogStats();
+
+        // Nearest-rank median of [3, 10] is 3.
+        assertThat(backlog.getMedianShelfTimeDays()).isEqualTo(3L);
+    }
+
+    @Test
+    void backlog_listsPlaythroughsAbandonedWithoutEverBeingDropped() {
+        Playthrough stale = Playthrough.builder()
+            .id(1L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(7_200L).importedDurationSeconds(0L)
+            .isCompleted(false).isDropped(false).isActive(false).isPaused(false)
+            .lastPlayedAt(Instant.now().minus(200, ChronoUnit.DAYS))
+            .build();
+        Playthrough recentlyPlayed = Playthrough.builder()
+            .id(2L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(7_200L).importedDurationSeconds(0L)
+            .isCompleted(false).isDropped(false).isActive(false).isPaused(false)
+            .lastPlayedAt(Instant.now().minus(5, ChronoUnit.DAYS))
+            .build();
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L))
+            .thenReturn(List.of(stale, recentlyPlayed));
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(userGameRepository.findByUser(testUser))
+            .thenReturn(List.of(libraryEntry(testGame, Instant.now().minus(300, ChronoUnit.DAYS))));
+        when(sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(any()))
+            .thenReturn(List.of());
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(any())).thenReturn(Set.of());
+        when(sessionHistoryRepository.findFirstSessionStartPerGame(1L)).thenReturn(List.of());
+
+        UserStatisticsDto.BacklogStats backlog =
+            userStatisticsService.getUserStatistics(testUser, "all", null).getBacklogStats();
+
+        assertThat(backlog.getStalePlaythroughs()).hasSize(1);
+        assertThat(backlog.getStalePlaythroughs().get(0).getDaysSinceLastPlayed()).isEqualTo(200L);
     }
 
     @Test

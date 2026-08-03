@@ -7,6 +7,7 @@ import { useStatistics } from '../hooks/useStatistics'
 import { useStatisticsCharts } from '../hooks/useStatisticsCharts'
 import StatCard from '../components/StatCard'
 import ConsistencySection from '../components/statistics/ConsistencySection'
+import BacklogSection from '../components/statistics/BacklogSection'
 import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
@@ -232,6 +233,10 @@ function Statistics() {
       </div>
 
       {hasData && <ConsistencySection stats={statistics.consistencyStats} />}
+
+      {/* Not gated on hasData: the backlog is a fact about the library, and a library
+          with nothing played yet is exactly when it is worth seeing. */}
+      <BacklogSection stats={statistics.backlogStats} />
 
       {hasData && (
         <>

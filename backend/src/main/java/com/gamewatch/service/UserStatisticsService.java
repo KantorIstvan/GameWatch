@@ -7,6 +7,7 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.SessionHistory;
 import com.gamewatch.entity.User;
+import com.gamewatch.entity.UserGame;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
 import com.gamewatch.repository.UserGameRepository;
@@ -54,7 +55,13 @@ public class UserStatisticsService {
             filterPlaythroughsByInterval(allPlaythroughs, sessions, playthroughIdsWithAnySession, range);
 
         if (playthroughs.isEmpty()) {
-            return createEmptyStatistics();
+            // A library with nothing played in this period still has a backlog, and that is
+            // precisely the case where it is worth showing - a new user with forty unplayed
+            // games would otherwise be told only that they have no data.
+            UserStatisticsDto empty = createEmptyStatistics();
+            empty.setTotalGamesCount(totalGamesInLibrary);
+            empty.setBacklogStats(calculateBacklogStats(user, allPlaythroughs, zone));
+            return empty;
         }
 
         DaySpan span = resolveDaySpan(sessions, range, zone);
@@ -82,6 +89,7 @@ public class UserStatisticsService {
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
             .favoritePublisher(findFavoritePublisher(playthroughs))
             .consistencyStats(calculateConsistencyStats(sessions, dailyPlaytimeData, span, zone))
+            .backlogStats(calculateBacklogStats(user, allPlaythroughs, zone))
             .build();
     }
 
@@ -417,6 +425,139 @@ public class UserStatisticsService {
      * and so still looked plausible, but the hour figures in the legend were inflated and
      * heavily-tagged games crowded out single-genre ones purely on tag count.
      */
+    /** How far back "recently" reaches when comparing games added against games finished. */
+    private static final int BACKLOG_WINDOW_MONTHS = 6;
+
+    /** How long an unfinished playthrough must sit untouched before it counts as stale. */
+    private static final int STALE_AFTER_DAYS = 90;
+
+    private static final int MAX_STALE_PLAYTHROUGHS = 5;
+
+    private static final long FIRST_HOUR_SECONDS = 3600L;
+
+    /**
+     * The shape of the library rather than of the selected period: how much of it has been
+     * started, how much reached an hour, how much was finished, and what has been sitting
+     * untouched.
+     *
+     * Deliberately not period-scoped. A backlog is a fact about right now, and "41 unplayed
+     * games" does not become a different number because the chart above is showing March.
+     */
+    private UserStatisticsDto.BacklogStats calculateBacklogStats(
+            User user, List<Playthrough> allPlaythroughs, ZoneId zone) {
+
+        List<UserGame> library = userGameRepository.findByUser(user);
+        Map<Long, List<Playthrough>> playthroughsByGame = allPlaythroughs.stream()
+            .collect(Collectors.groupingBy(p -> p.getGame().getId()));
+
+        int started = 0;
+        int pastFirstHour = 0;
+        int finished = 0;
+
+        for (UserGame entry : library) {
+            List<Playthrough> forGame = playthroughsByGame.getOrDefault(entry.getGame().getId(), List.of());
+            long total = forGame.stream().mapToLong(Playthrough::effectivePlaytimeSeconds).sum();
+
+            if (total > 0) {
+                started++;
+            }
+            if (total >= FIRST_HOUR_SECONDS) {
+                pastFirstHour++;
+            }
+            if (forGame.stream().anyMatch(p -> Boolean.TRUE.equals(p.getIsCompleted()))) {
+                finished++;
+            }
+        }
+
+        LocalDate today = LocalDate.now(zone);
+        LocalDate windowStart = today.minusMonths(BACKLOG_WINDOW_MONTHS);
+
+        int addedRecently = (int) library.stream()
+            .filter(entry -> !entry.getCreatedAt().atZone(zone).toLocalDate().isBefore(windowStart))
+            .count();
+
+        int finishedRecently = (int) allPlaythroughs.stream()
+            .filter(p -> Boolean.TRUE.equals(p.getIsCompleted()))
+            .filter(p -> p.getEndDate() != null && !p.getEndDate().isBefore(windowStart))
+            .map(p -> p.getGame().getId())
+            .distinct()
+            .count();
+
+        return UserStatisticsDto.BacklogStats.builder()
+            .gamesInLibrary(library.size())
+            .gamesStarted(started)
+            .gamesPastFirstHour(pastFirstHour)
+            .gamesFinished(finished)
+            .gamesNeverStarted(library.size() - started)
+            .medianShelfTimeDays(calculateMedianShelfTimeDays(user, library, zone))
+            .gamesAddedRecently(addedRecently)
+            .gamesFinishedRecently(finishedRecently)
+            .backlogWindowMonths(BACKLOG_WINDOW_MONTHS)
+            .stalePlaythroughs(findStalePlaythroughs(allPlaythroughs, zone))
+            .build();
+    }
+
+    /**
+     * Median days a game waits between being added and first actually being played.
+     *
+     * Uses the library link's own createdAt, which is when this user added the game -
+     * games.createdAt only records when the catalog first saw it, which for a shared
+     * catalogue may predate the user entirely.
+     */
+    private Long calculateMedianShelfTimeDays(User user, List<UserGame> library, ZoneId zone) {
+        Map<Long, Instant> firstPlayedByGame = sessionHistoryRepository
+            .findFirstSessionStartPerGame(user.getId())
+            .stream()
+            .collect(Collectors.toMap(row -> (Long) row[0], row -> (Instant) row[1]));
+
+        List<Long> shelfDays = library.stream()
+            .map(entry -> {
+                Instant firstPlayed = firstPlayedByGame.get(entry.getGame().getId());
+                if (firstPlayed == null) {
+                    return null; // never played, so it is still on the shelf
+                }
+                long days = ChronoUnit.DAYS.between(
+                    entry.getCreatedAt().atZone(zone).toLocalDate(),
+                    firstPlayed.atZone(zone).toLocalDate());
+                // Backfilled libraries can show a game played before it was added.
+                return Math.max(0L, days);
+            })
+            .filter(Objects::nonNull)
+            .sorted()
+            .collect(Collectors.toList());
+
+        return shelfDays.isEmpty() ? null : percentile(shelfDays, 0.50);
+    }
+
+    /**
+     * Unfinished playthroughs with real time on them that have not been touched in a long
+     * while - the ones a user has drifted away from without ever deciding to drop.
+     */
+    private List<UserStatisticsDto.GameRankingDto> findStalePlaythroughs(
+            List<Playthrough> allPlaythroughs, ZoneId zone) {
+
+        LocalDate today = LocalDate.now(zone);
+
+        return allPlaythroughs.stream()
+            .filter(p -> !Boolean.TRUE.equals(p.getIsCompleted()))
+            .filter(p -> !Boolean.TRUE.equals(p.getIsDropped()))
+            .filter(p -> p.effectivePlaytimeSeconds() > 0)
+            .filter(p -> p.getLastPlayedAt() != null)
+            .map(p -> Map.entry(p, ChronoUnit.DAYS.between(
+                p.getLastPlayedAt().atZone(zone).toLocalDate(), today)))
+            .filter(entry -> entry.getValue() >= STALE_AFTER_DAYS)
+            .sorted(Map.Entry.<Playthrough, Long>comparingByValue().reversed())
+            .limit(MAX_STALE_PLAYTHROUGHS)
+            .map(entry -> UserStatisticsDto.GameRankingDto.builder()
+                .gameId(entry.getKey().getGame().getId())
+                .gameName(entry.getKey().getGame().getName())
+                .bannerImageUrl(entry.getKey().getGame().getBannerImageUrl())
+                .playtimeSeconds(entry.getKey().effectivePlaytimeSeconds())
+                .daysSinceLastPlayed(entry.getValue())
+                .build())
+            .collect(Collectors.toList());
+    }
+
     /**
      * Streaks, regularity and typical session length for the period.
      *
