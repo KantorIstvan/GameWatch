@@ -6,6 +6,7 @@ import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/fo
 import { useStatistics } from '../hooks/useStatistics'
 import { useStatisticsCharts } from '../hooks/useStatisticsCharts'
 import StatCard from '../components/StatCard'
+import ConsistencySection from '../components/statistics/ConsistencySection'
 import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
@@ -229,6 +230,8 @@ function Statistics() {
           </>
         )}
       </div>
+
+      {hasData && <ConsistencySection stats={statistics.consistencyStats} />}
 
       {hasData && (
         <>

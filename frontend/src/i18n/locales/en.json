@@ -193,6 +193,20 @@
     "failedToLoad": "Failed to load statistics",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
+    "consistency": {
+      "title": "Consistency",
+      "currentStreak": "Current Streak",
+      "longestStreak": "Longest Streak",
+      "daysPlayed": "Days Played",
+      "consistency": "Days Played Share",
+      "longestGap": "Longest Break",
+      "medianSession": "Median Session",
+      "longSession": "Long Session (90th pct)",
+      "sessionsPerActiveDay": "Sessions per Active Day",
+      "dayCount_one": "{{count}} day",
+      "dayCount_other": "{{count}} days",
+      "daysOutOf": "{{played}} of {{total}}"
+    },
     "userStats": {
       "totalPlaytime": "Total Playtime",
       "totalGames": "Owned Games",
