@@ -1,16 +1,23 @@
 import { Gamepad2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { GameRecommendation } from '../../types'
 
 interface GameRecommendationsProps {
   recommendations: GameRecommendation[]
   title: string
   noDataMessage: string
+  className?: string
 }
 
-function GameRecommendations({ recommendations, title, noDataMessage }: GameRecommendationsProps) {
+function GameRecommendations({ recommendations, title, noDataMessage, className }: GameRecommendationsProps) {
   return (
-    <div className="flex h-full flex-col justify-center rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
+    <div
+      className={cn(
+        'flex h-full flex-col justify-center rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6',
+        className
+      )}
+    >
       <div className="mb-2 flex items-center">
         <Gamepad2 className="mr-2 size-5 text-accent" />
         <p className="text-h4 font-bold">{title}</p>

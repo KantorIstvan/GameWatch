@@ -335,16 +335,6 @@ export interface ProfileSettings {
   libraryVisibility: Visibility
 }
 
-export interface CompletionComparison {
-  gameId: number
-  gameName: string
-  bannerImageUrl?: string
-  yourSeconds: number
-  typicalSeconds: number
-  /** Above 1 means slower than typical, below 1 faster. */
-  ratio: number
-}
-
 export interface TrendStats {
   /** Null for the all-time view, which has no preceding period. */
   previousPeriodPlaytimeSeconds: number | null
@@ -359,7 +349,6 @@ export interface TrendStats {
   playthroughsCompleted: number
   dropRatePercentage: number | null
   medianSecondsBeforeDropping: number | null
-  completionComparisons: CompletionComparison[]
 }
 
 export interface BacklogStats {

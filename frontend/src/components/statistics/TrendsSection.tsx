@@ -1,9 +1,20 @@
+import { ReactNode } from 'react'
 import { TrendingUp, TrendingDown, Minus, Shuffle, CalendarRange, CircleSlash } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StatCard from '../StatCard'
 import { formatTime } from '../../utils/formatters'
+import { bentoLastTile } from '../../lib/bento'
 import { statColors, statForegrounds } from '../../lib/statColors'
 import type { TrendStats } from '../../types'
+
+interface Tile {
+  key: string
+  title: string
+  value: string | number
+  icon: ReactNode
+  color?: string
+  foreground?: string
+}
 
 interface TrendsSectionProps {
   stats?: TrendStats
@@ -35,65 +46,79 @@ function TrendsSection({ stats }: TrendsSectionProps) {
       ? statForegrounds.orange
       : undefined
 
+  // Collected rather than written inline, because how many of these survive depends on the
+  // data and the last one has to stretch to keep the bento row flush.
+  const tiles: Tile[] = [
+    hasComparison && {
+      key: 'change',
+      title: t('statistics.trends.vsPreviousPeriod'),
+      value: `${change > 0 ? '+' : ''}${Math.round(change)}%`,
+      icon: rising ? (
+        <TrendingUp className="size-5" />
+      ) : falling ? (
+        <TrendingDown className="size-5" />
+      ) : (
+        <Minus className="size-5" />
+      ),
+      color: changeColor,
+      foreground: changeForeground,
+    },
+
+    stats.weekendIntensityRatio !== null &&
+      stats.weekendIntensityRatio !== undefined && {
+        key: 'weekendIntensity',
+        title: t('statistics.trends.weekendIntensity'),
+        value: `${stats.weekendIntensityRatio.toFixed(1)}×`,
+        icon: <CalendarRange className="size-5" />,
+      },
+
+    {
+      key: 'varietyScore',
+      title: t('statistics.trends.varietyScore'),
+      value: Math.round(stats.varietyScore),
+      icon: <Shuffle className="size-5" />,
+    },
+
+    {
+      key: 'topThreeShare',
+      title: t('statistics.trends.topThreeShare'),
+      value: `${Math.round(stats.topThreeSharePercentage)}%`,
+      icon: <TrendingUp className="size-5" />,
+    },
+
+    stats.dropRatePercentage !== null &&
+      stats.dropRatePercentage !== undefined && {
+        key: 'dropRate',
+        title: t('statistics.trends.dropRate'),
+        value: `${Math.round(stats.dropRatePercentage)}%`,
+        icon: <CircleSlash className="size-5" />,
+      },
+
+    stats.medianSecondsBeforeDropping !== null &&
+      stats.medianSecondsBeforeDropping !== undefined && {
+        key: 'medianBeforeDropping',
+        title: t('statistics.trends.medianBeforeDropping'),
+        value: formatTime(stats.medianSecondsBeforeDropping),
+        icon: <CircleSlash className="size-5" />,
+      },
+  ].filter(Boolean) as Tile[]
+
   return (
     <section className="mb-6 md:mb-8">
       <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('statistics.trends.title')}</p>
 
       <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
-        {hasComparison && (
+        {tiles.map((tile, index) => (
           <StatCard
-            title={t('statistics.trends.vsPreviousPeriod')}
-            value={`${change > 0 ? '+' : ''}${Math.round(change)}%`}
-            icon={
-              rising ? (
-                <TrendingUp className="size-5" />
-              ) : falling ? (
-                <TrendingDown className="size-5" />
-              ) : (
-                <Minus className="size-5" />
-              )
-            }
-            color={changeColor}
-            foreground={changeForeground}
+            key={tile.key}
+            title={tile.title}
+            value={tile.value}
+            icon={tile.icon}
+            color={tile.color}
+            foreground={tile.foreground}
+            className={index === tiles.length - 1 ? bentoLastTile(tiles.length) : undefined}
           />
-        )}
-
-        {stats.weekendIntensityRatio !== null && stats.weekendIntensityRatio !== undefined && (
-          <StatCard
-            title={t('statistics.trends.weekendIntensity')}
-            value={`${stats.weekendIntensityRatio.toFixed(1)}×`}
-            icon={<CalendarRange className="size-5" />}
-          />
-        )}
-
-        <StatCard
-          title={t('statistics.trends.varietyScore')}
-          value={Math.round(stats.varietyScore)}
-          icon={<Shuffle className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.trends.topThreeShare')}
-          value={`${Math.round(stats.topThreeSharePercentage)}%`}
-          icon={<TrendingUp className="size-5" />}
-        />
-
-        {stats.dropRatePercentage !== null && stats.dropRatePercentage !== undefined && (
-          <StatCard
-            title={t('statistics.trends.dropRate')}
-            value={`${Math.round(stats.dropRatePercentage)}%`}
-            icon={<CircleSlash className="size-5" />}
-          />
-        )}
-
-        {stats.medianSecondsBeforeDropping !== null &&
-          stats.medianSecondsBeforeDropping !== undefined && (
-            <StatCard
-              title={t('statistics.trends.medianBeforeDropping')}
-              value={formatTime(stats.medianSecondsBeforeDropping)}
-              icon={<CircleSlash className="size-5" />}
-            />
-          )}
+        ))}
       </div>
 
       {stats.weekendIntensityRatio !== null && stats.weekendIntensityRatio !== undefined && (
@@ -106,61 +131,6 @@ function TrendsSection({ stats }: TrendsSectionProps) {
                 ratio: (1 / stats.weekendIntensityRatio).toFixed(1),
               })}
         </p>
-      )}
-
-      {stats.completionComparisons.length > 0 && (
-        <div className="mt-4 rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:mt-5 sm:p-6">
-          <p className="mb-1 text-body-sm font-medium text-text-secondary">
-            {t('statistics.trends.comparisonTitle')}
-          </p>
-          <p className="mb-4 text-caption text-text-secondary">
-            {t('statistics.trends.comparisonSubtitle')}
-          </p>
-
-          <ul className="flex flex-col gap-3">
-            {stats.completionComparisons.map((comparison) => {
-              const slower = comparison.ratio >= 1
-              return (
-                <li key={comparison.gameId} className="flex items-center gap-3">
-                  {comparison.bannerImageUrl && (
-                    <img
-                      src={comparison.bannerImageUrl}
-                      alt=""
-                      className="h-10 w-16 shrink-0 rounded-md object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body-sm font-medium text-text-primary">
-                      {comparison.gameName}
-                    </span>
-                    <span className="block text-caption text-text-secondary">
-                      {t('statistics.trends.yoursVsTypical', {
-                        yours: formatTime(comparison.yourSeconds),
-                        typical: formatTime(comparison.typicalSeconds),
-                      })}
-                    </span>
-                  </span>
-                  <span
-                    className="shrink-0 rounded-md px-2 py-1 text-caption font-semibold"
-                    style={{
-                      color: slower ? statColors.orange : statColors.green,
-                      backgroundColor: `color-mix(in srgb, ${
-                        slower ? statColors.orange : statColors.green
-                      } 12%, transparent)`,
-                    }}
-                  >
-                    {slower
-                      ? t('statistics.trends.slower', { factor: comparison.ratio.toFixed(1) })
-                      : t('statistics.trends.faster', {
-                          factor: (1 / comparison.ratio).toFixed(1),
-                        })}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
       )}
     </section>
   )

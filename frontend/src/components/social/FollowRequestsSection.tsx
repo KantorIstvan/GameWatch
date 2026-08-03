@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, X } from 'lucide-react'
+import { Check, X, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import SettingsSection from '../settings/SettingsSection'
 import { followsApi } from '../../services/api'
 import type { FollowPerson } from '../../types'
 
@@ -53,10 +54,11 @@ function FollowRequestsSection() {
   }
 
   return (
-    <div className="mb-8">
-      <p className="mb-1 text-h4 font-semibold">{t('social.requests.title')}</p>
-      <p className="mb-4 text-body-sm text-text-secondary">{t('social.requests.description')}</p>
-
+    <SettingsSection
+      icon={<UserPlus className="size-5" />}
+      title={t('social.requests.title')}
+      description={t('social.requests.description')}
+    >
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
           <li key={request.followId} className="flex items-center gap-3">
@@ -94,7 +96,7 @@ function FollowRequestsSection() {
           </li>
         ))}
       </ul>
-    </div>
+    </SettingsSection>
   )
 }
 

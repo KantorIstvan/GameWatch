@@ -1,12 +1,23 @@
+import { ReactNode } from 'react'
 import { Flame, CalendarCheck, CalendarX, Gauge, Repeat, TrendingUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StatCard from '../StatCard'
 import { formatTime } from '../../utils/formatters'
+import { bentoLastTile } from '../../lib/bento'
 import { statColors, statForegrounds } from '../../lib/statColors'
 import type { ConsistencyStats } from '../../types'
 
 interface ConsistencySectionProps {
   stats?: ConsistencyStats
+}
+
+interface Tile {
+  key: string
+  title: string
+  value: string | number
+  icon: ReactNode
+  color?: string
+  foreground?: string
 }
 
 /**
@@ -26,6 +37,73 @@ function ConsistencySection({ stats }: ConsistencySectionProps) {
 
   const consistency = Math.round(stats.consistencyPercentage)
 
+  // Collected rather than written inline, because the current streak drops out entirely
+  // for a past period and the last tile has to stretch to keep the bento row flush.
+  const tiles: Tile[] = [
+    // Only meaningful while the period still contains today.
+    stats.currentStreakDays !== null &&
+      stats.currentStreakDays !== undefined && {
+        key: 'currentStreak',
+        title: t('statistics.consistency.currentStreak'),
+        value: t('statistics.consistency.dayCount', { count: stats.currentStreakDays }),
+        icon: <Flame className="size-5" />,
+        color: statColors.orange,
+        foreground: statForegrounds.orange,
+      },
+
+    {
+      key: 'longestStreak',
+      title: t('statistics.consistency.longestStreak'),
+      value: t('statistics.consistency.dayCount', { count: stats.longestStreakDays }),
+      icon: <TrendingUp className="size-5" />,
+    },
+
+    {
+      key: 'daysPlayed',
+      title: t('statistics.consistency.daysPlayed'),
+      value: t('statistics.consistency.daysOutOf', {
+        played: stats.daysPlayed,
+        total: stats.daysInPeriod,
+      }),
+      icon: <CalendarCheck className="size-5" />,
+    },
+
+    {
+      key: 'consistency',
+      title: t('statistics.consistency.consistency'),
+      value: `${consistency}%`,
+      icon: <Gauge className="size-5" />,
+    },
+
+    {
+      key: 'longestGap',
+      title: t('statistics.consistency.longestGap'),
+      value: t('statistics.consistency.dayCount', { count: stats.longestGapDays }),
+      icon: <CalendarX className="size-5" />,
+    },
+
+    {
+      key: 'medianSession',
+      title: t('statistics.consistency.medianSession'),
+      value: formatTime(stats.medianSessionSeconds),
+      icon: <Gauge className="size-5" />,
+    },
+
+    {
+      key: 'longSession',
+      title: t('statistics.consistency.longSession'),
+      value: formatTime(stats.percentile90SessionSeconds),
+      icon: <Flame className="size-5" />,
+    },
+
+    {
+      key: 'sessionsPerActiveDay',
+      title: t('statistics.consistency.sessionsPerActiveDay'),
+      value: stats.sessionsPerActiveDay.toFixed(1),
+      icon: <Repeat className="size-5" />,
+    },
+  ].filter(Boolean) as Tile[]
+
   return (
     <section className="mb-6 md:mb-8">
       <p className="mb-3 text-body-lg font-bold sm:mb-4">
@@ -33,61 +111,17 @@ function ConsistencySection({ stats }: ConsistencySectionProps) {
       </p>
 
       <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
-        {/* Only meaningful while the period still contains today. */}
-        {stats.currentStreakDays !== null && stats.currentStreakDays !== undefined && (
+        {tiles.map((tile, index) => (
           <StatCard
-            title={t('statistics.consistency.currentStreak')}
-            value={t('statistics.consistency.dayCount', { count: stats.currentStreakDays })}
-            icon={<Flame className="size-5" />}
-            color={statColors.orange}
-            foreground={statForegrounds.orange}
+            key={tile.key}
+            title={tile.title}
+            value={tile.value}
+            icon={tile.icon}
+            color={tile.color}
+            foreground={tile.foreground}
+            className={index === tiles.length - 1 ? bentoLastTile(tiles.length) : undefined}
           />
-        )}
-
-        <StatCard
-          title={t('statistics.consistency.longestStreak')}
-          value={t('statistics.consistency.dayCount', { count: stats.longestStreakDays })}
-          icon={<TrendingUp className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.daysPlayed')}
-          value={t('statistics.consistency.daysOutOf', {
-            played: stats.daysPlayed,
-            total: stats.daysInPeriod,
-          })}
-          icon={<CalendarCheck className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.consistency')}
-          value={`${consistency}%`}
-          icon={<Gauge className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.longestGap')}
-          value={t('statistics.consistency.dayCount', { count: stats.longestGapDays })}
-          icon={<CalendarX className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.medianSession')}
-          value={formatTime(stats.medianSessionSeconds)}
-          icon={<Gauge className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.longSession')}
-          value={formatTime(stats.percentile90SessionSeconds)}
-          icon={<Flame className="size-5" />}
-        />
-
-        <StatCard
-          title={t('statistics.consistency.sessionsPerActiveDay')}
-          value={stats.sessionsPerActiveDay.toFixed(1)}
-          icon={<Repeat className="size-5" />}
-        />
+        ))}
       </div>
     </section>
   )

@@ -356,12 +356,7 @@
       "dropRate": "Drop Rate",
       "medianBeforeDropping": "Median Before Dropping",
       "weekendHeavy": "You play {{ratio}}× as much per weekend day as per weekday.",
-      "weekdayHeavy": "You play {{ratio}}× as much per weekday as per weekend day.",
-      "comparisonTitle": "How long you took",
-      "comparisonSubtitle": "Your finish times against how long these games usually take.",
-      "yoursVsTypical": "{{yours}} · usually {{typical}}",
-      "slower": "{{factor}}× slower",
-      "faster": "{{factor}}× faster"
+      "weekdayHeavy": "You play {{ratio}}× as much per weekday as per weekend day."
     },
     "backlog": {
       "title": "Backlog",
@@ -472,6 +467,9 @@
       "failedToDeleteSession": "Failed to delete session",
       "deleteSessionTitle": "Delete Session",
       "deleteSessionConfirm": "Are you sure you want to delete session #{{sessionNumber}}? This action cannot be undone.",
+      "overview": "Overview",
+      "community": "Community",
+      "rangeOfTotal": "{{from}}-{{to}} of {{total}}",
       "totalPlayTime": "Total Play Time",
       "totalSessions": "Total Sessions",
       "averageSession": "Average Time/Session",

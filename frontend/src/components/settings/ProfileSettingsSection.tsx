@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, X, Lock } from 'lucide-react'
+import { Check, X, Lock, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import SettingsSection from './SettingsSection'
 import { userApi } from '../../services/api'
 import type { ProfileSettings, Visibility } from '../../types'
 
@@ -90,10 +91,11 @@ function ProfileSettingsSection() {
   }
 
   return (
-    <div className="mb-8">
-      <p className="mb-1 text-h4 font-semibold">{t('settings.profile.title')}</p>
-      <p className="mb-4 text-body-sm text-text-secondary">{t('settings.profile.description')}</p>
-
+    <SettingsSection
+      icon={<UserRound className="size-5" />}
+      title={t('settings.profile.title')}
+      description={t('settings.profile.description')}
+    >
       <div className="flex flex-col gap-4">
         <div>
           <Label htmlFor="profile-handle" className="mb-1 block text-body-sm font-semibold">
@@ -210,7 +212,7 @@ function ProfileSettingsSection() {
           {saving ? t('settings.profile.saving') : t('settings.profile.save')}
         </Button>
       </div>
-    </div>
+    </SettingsSection>
   )
 }
 

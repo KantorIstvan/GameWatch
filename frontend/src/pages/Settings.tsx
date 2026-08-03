@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import ProfileSettingsSection from '../components/settings/ProfileSettingsSection'
+import SettingsSection from '../components/settings/SettingsSection'
 import FollowRequestsSection from '../components/social/FollowRequestsSection'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
-import { Languages, Clock, Trash2, Heart, ChevronDown, ChevronUp, Globe, HardDriveUpload, Upload, CalendarDays, ChevronsUpDown } from 'lucide-react'
+import { Languages, Clock, Trash2, Heart, Globe, HardDriveUpload, Upload, CalendarDays, ChevronsUpDown } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { userApi } from '../services/api'
 import healthApi, { HealthSettings as HealthSettingsType } from '../services/healthApi'
@@ -47,15 +48,6 @@ const LANGUAGES: { code: string; flag: string; key: string }[] = [
   { code: 'uk', flag: '🇺🇦', key: 'ukrainian' }, { code: 'ur', flag: '🇵🇰', key: 'urdu' },
   { code: 'vi', flag: '🇻🇳', key: 'vietnamese' },
 ]
-
-function SectionHeader({ icon, title, color }: { icon: React.ReactNode; title: string; color?: string }) {
-  return (
-    <div className="mb-2 flex items-center">
-      <span className="mr-3" style={{ color: color ?? 'var(--color-accent)' }}>{icon}</span>
-      <p className="text-h4 font-medium" style={{ color: color }}>{title}</p>
-    </div>
-  )
-}
 
 function Settings() {
   const { t, i18n } = useTranslation()
@@ -262,17 +254,21 @@ function Settings() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="my-8">
-        <h1 className="mb-8 text-h2 font-medium text-text-primary">{t('settings.title')}</h1>
+      {/* No top margin of its own: the page shell already supplies the offset below the
+          header, and doubling it made this page start lower than every other one. */}
+      <div>
+        <h1 className="mb-6 text-h2 font-bold text-text-primary md:mb-8">{t('settings.title')}</h1>
 
-        <div className="rounded-xl border border-border bg-surface/90 p-8 backdrop-blur-xl">
+        <div className="flex flex-col gap-8 rounded-xl border border-border bg-surface/90 p-4 backdrop-blur-xl sm:p-6">
           <ProfileSettingsSection />
 
           <FollowRequestsSection />
 
-          <div className="mb-8">
-            <SectionHeader icon={<Languages className="size-5" />} title={t('settings.language')} />
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.languageDescription')}</p>
+          <SettingsSection
+            icon={<Languages className="size-5" />}
+            title={t('settings.language')}
+            description={t('settings.languageDescription')}
+          >
             <Popover open={languagePickerOpen} onOpenChange={setLanguagePickerOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" className="h-14 w-full justify-between font-normal">
@@ -307,13 +303,13 @@ function Settings() {
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div className="mb-8">
-            <SectionHeader icon={<Clock className="size-5" />} title={t('settings.timeFormat')} />
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.timeFormatDescription')}</p>
+          <SettingsSection
+            icon={<Clock className="size-5" />}
+            title={t('settings.timeFormat')}
+            description={t('settings.timeFormatDescription')}
+          >
             <Select value={timeFormat} onValueChange={(v) => setTimeFormatContext(v as '12h' | '24h')}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('settings.timeFormat')} />
@@ -323,13 +319,13 @@ function Settings() {
                 <SelectItem value="12h">{t('settings.format12h')}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div className="mb-8">
-            <SectionHeader icon={<CalendarDays className="size-5" />} title={t('settings.firstDayOfWeek')} />
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.firstDayOfWeekDescription')}</p>
+          <SettingsSection
+            icon={<CalendarDays className="size-5" />}
+            title={t('settings.firstDayOfWeek')}
+            description={t('settings.firstDayOfWeekDescription')}
+          >
             <Select value={weekStart} onValueChange={handleWeekStartChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('settings.firstDayOfWeek')} />
@@ -339,13 +335,13 @@ function Settings() {
                 <SelectItem value="SUNDAY">{t('settings.sunday')}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div className="mb-8">
-            <SectionHeader icon={<Globe className="size-5" />} title={t('settings.timezone')} />
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.timezoneDescription')}</p>
+          <SettingsSection
+            icon={<Globe className="size-5" />}
+            title={t('settings.timezone')}
+            description={t('settings.timezoneDescription')}
+          >
             <div className="flex items-start gap-2">
               <Popover open={timezonePickerOpen} onOpenChange={setTimezonePickerOpen}>
                 <PopoverTrigger asChild>
@@ -383,27 +379,21 @@ function Settings() {
                 {t('settings.save')}
               </Button>
             </div>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div className="mb-8">
-            <button
-              type="button"
-              onClick={() => setHealthExpanded(!healthExpanded)}
-              className="mb-2 flex w-full items-center text-left hover:opacity-80"
-            >
-              <Heart className="mr-3 size-5 text-accent" />
-              <p className="flex-1 text-h4 font-medium">{t('settings.healthWellness')}</p>
-              {healthExpanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
-            </button>
-
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.healthDescription')}</p>
-
+          <SettingsSection
+            icon={<Heart className="size-5" />}
+            title={t('settings.healthWellness')}
+            description={t('settings.healthDescription')}
+            expanded={healthExpanded}
+            onToggle={() => setHealthExpanded(!healthExpanded)}
+          >
             <Collapsible open={healthExpanded}>
               <CollapsibleContent>
-                <div className="mt-4">
-                  <div className="mb-6">
+                {/* Same rhythm one level down: the gap alone spaces the blocks, so each rule
+                    sits centred between them instead of hugging the block below it. */}
+                <div className="mt-4 flex flex-col gap-6">
+                  <div>
                     <p className="mb-1 text-body-sm font-semibold">{t('settings.yourAge')}</p>
                     <p className="mb-3 text-body-sm text-text-secondary">{t('settings.ageDescription')}</p>
                     <div className="flex gap-2">
@@ -422,11 +412,11 @@ function Settings() {
                     </div>
                   </div>
 
-                  <Separator className="my-6" />
-
                   {healthSettings && (
                     <>
-                      <div className="mb-6">
+                      <Separator />
+
+                      <div>
                         <p className="mb-3 text-body-sm font-semibold">{t('settings.notificationsReminders')}</p>
 
                         <label className="mb-2 flex items-center gap-3">
@@ -476,9 +466,9 @@ function Settings() {
                         </label>
                       </div>
 
-                      <Separator className="my-6" />
+                      <Separator />
 
-                      <div className="mb-6">
+                      <div>
                         <p className="mb-3 text-body-sm font-semibold">{t('settings.gamingGoals')}</p>
 
                         <label className="mb-3 flex items-center gap-3">
@@ -564,9 +554,9 @@ function Settings() {
                         )}
                       </div>
 
-                      <Separator className="my-6" />
+                      <Separator />
 
-                      <div className="mb-6">
+                      <div>
                         <p className="mb-3 text-body-sm font-semibold">{t('settings.moodTracking')}</p>
 
                         <label className="mb-2 flex items-center gap-3">
@@ -588,7 +578,7 @@ function Settings() {
                         )}
                       </div>
 
-                      <Button onClick={handleSaveHealthSettings} disabled={savingHealth} className="px-8">
+                      <Button onClick={handleSaveHealthSettings} disabled={savingHealth} className="self-start px-8">
                         {savingHealth ? t('settings.savingHealthSettings') : t('settings.saveHealthSettings')}
                       </Button>
                     </>
@@ -600,14 +590,13 @@ function Settings() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div className="mb-8">
-            <SectionHeader icon={<HardDriveUpload className="size-5" />} title={t('settings.dataBackup')} />
-            <p className="mb-6 text-body-sm text-text-secondary">{t('settings.backupDescription')}</p>
-
+          <SettingsSection
+            icon={<HardDriveUpload className="size-5" />}
+            title={t('settings.dataBackup')}
+            description={t('settings.backupDescription')}
+          >
             <div className="flex flex-wrap gap-3">
               <Button
                 onClick={handleExportBackup}
@@ -647,13 +636,14 @@ function Settings() {
                 {t('settings.backupIncludesTimers')}
               </p>
             </div>
-          </div>
+          </SettingsSection>
 
-          <Separator className="my-8" />
-
-          <div>
-            <SectionHeader icon={<Trash2 className="size-5" />} title={t('settings.dangerZone')} color="var(--color-danger)" />
-            <p className="mb-4 text-body-sm text-text-secondary">{t('settings.dangerZoneDescription')}</p>
+          <SettingsSection
+            icon={<Trash2 className="size-5" />}
+            title={t('settings.dangerZone')}
+            description={t('settings.dangerZoneDescription')}
+            tone="danger"
+          >
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
@@ -662,7 +652,7 @@ function Settings() {
               <Trash2 className="size-4" />
               {t('settings.deleteAccount')}
             </Button>
-          </div>
+          </SettingsSection>
         </div>
 
         <TypedConfirmDialog

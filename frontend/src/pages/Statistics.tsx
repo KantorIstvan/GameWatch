@@ -88,6 +88,14 @@ function Statistics() {
 
   const cardClass = 'h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6'
 
+  // No bento row may end with a gap. Above md the hero covers two columns across two rows
+  // and the six stat tiles fill the remainder of those rows, which leaves the last row two
+  // columns short whenever the number of full-width tiles below it is even. Whichever tile
+  // lands last takes up the slack rather than sitting alone beside empty space.
+  const favoriteCount = (statistics.favoriteDeveloper ? 1 : 0) + (statistics.favoritePublisher ? 1 : 0)
+  const favoriteSpan = favoriteCount === 1 ? 'col-span-2 md:col-span-4' : 'col-span-2'
+  const lastStatSpan = hasData ? undefined : 'md:col-span-3'
+
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -137,13 +145,13 @@ function Statistics() {
           color={statColors.blue}
           foreground={statForegrounds.blue}
         />
-        {!!statistics.longestSessionSeconds && (
-          <StatCard
-            title={t('statistics.userStats.longestSession')}
-            value={formatTimeDetailed(statistics.longestSessionSeconds)}
-            icon={<Hourglass className="size-5" />}
-          />
-        )}
+        {/* Rendered even at zero, unlike the conditional tiles below: it belongs to the
+            fixed six that tile the rows beside the hero, and dropping it opens a hole. */}
+        <StatCard
+          title={t('statistics.userStats.longestSession')}
+          value={formatTimeDetailed(statistics.longestSessionSeconds ?? 0)}
+          icon={<Hourglass className="size-5" />}
+        />
         <StatCard
           title={t('statistics.userStats.totalGames')}
           value={statistics.totalGamesCount}
@@ -168,6 +176,7 @@ function Statistics() {
           title={t('statistics.userStats.avgSession')}
           value={formatTime(Math.round(statistics.averageSessionPlaytimeSeconds))}
           icon={<Clock className="size-5" />}
+          className={lastStatSpan}
         />
 
         {hasData && (
@@ -212,7 +221,7 @@ function Statistics() {
 
             {statistics.favoriteDeveloper && (
               <InfoCard
-                className="col-span-2 p-5"
+                className={`${favoriteSpan} p-5`}
                 icon={<Code className="size-5" />}
                 title={t('statistics.userStats.favoriteDeveloper')}
                 value={statistics.favoriteDeveloper}
@@ -222,7 +231,7 @@ function Statistics() {
 
             {statistics.favoritePublisher && (
               <InfoCard
-                className="col-span-2 p-5"
+                className={`${favoriteSpan} p-5`}
                 icon={<Building2 className="size-5" />}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}
@@ -259,8 +268,8 @@ function Statistics() {
 
             <div className={cardClass}>
               <ReusablePieChart
-                data={timeOfDayData}
-                title={t('statistics.userStats.timeOfDayDistribution')}
+                data={platformData}
+                title={t('statistics.userStats.platformDistribution')}
                 noDataMessage={t('statistics.userStats.noData')}
                 valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
@@ -277,8 +286,8 @@ function Statistics() {
 
             <div className={`${cardClass} lg:col-span-2`}>
               <ReusablePieChart
-                data={platformData}
-                title={t('statistics.userStats.platformDistribution')}
+                data={timeOfDayData}
+                title={t('statistics.userStats.timeOfDayDistribution')}
                 wide
                 noDataMessage={t('statistics.userStats.noData')}
                 valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
@@ -316,11 +325,14 @@ function Statistics() {
             </div>
           </div>
 
+          {/* Half-width tiles only while they have a partner: a single card floating in one
+              column with the other half blank reads as a failed load, not as a layout. */}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2">
             <GameRecommendations
               recommendations={recommendations}
               title={t('statistics.userStats.recommendedGames')}
               noDataMessage={t('statistics.userStats.noRecommendations')}
+              className={statistics.favoriteGame ? undefined : 'md:col-span-2'}
             />
 
             {statistics.favoriteGame && (
@@ -341,6 +353,7 @@ function Statistics() {
                 <GameBannerCard
                   game={statistics.longestToCompleteGame}
                   size="medium"
+                  className={statistics.fastestToCompleteGame ? undefined : 'md:col-span-2'}
                   label={t('statistics.userStats.longestToComplete')}
                   labelIcon={<CalendarDays className="size-4" />}
                   metric={statistics.longestToCompleteGame.daysToComplete !== undefined
@@ -353,6 +366,7 @@ function Statistics() {
                 <GameBannerCard
                   game={statistics.fastestToCompleteGame}
                   size="medium"
+                  className={statistics.longestToCompleteGame ? undefined : 'md:col-span-2'}
                   label={t('statistics.userStats.fastestCompletion')}
                   labelIcon={<Timer className="size-4" />}
                   metric={statistics.fastestToCompleteGame.daysToComplete !== undefined
