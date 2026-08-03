@@ -489,6 +489,14 @@
     "minutes": "Minutes",
     "seconds": "Seconds",
     "logManualSession": "Log Session Manually",
+    "manualSession": {
+      "bothTimesRequired": "Both start and end times are required",
+      "invalidFormat": "Invalid date or time format",
+      "startBeforeEnd": "Start time must be before end time",
+      "startInFuture": "Start time cannot be in the future",
+      "endInFuture": "End time cannot be in the future",
+      "beforePlaythroughStart": "Cannot log a session before the playthrough start date ({{date}})"
+    },
     "startDateTime": "Start Date & Time",
     "endDateTime": "End Date & Time",
     "editTitle": "Edit Title",
