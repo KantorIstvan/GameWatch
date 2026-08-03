@@ -148,8 +148,23 @@ export interface UserStatistics {
   dayOfWeekTotalPlaytime: Record<string, number>
   libraryCompletionPercentage: number
   consistencyStats?: ConsistencyStats
+  backlogStats?: BacklogStats
   favoriteDeveloper?: string
   favoritePublisher?: string
+}
+
+export interface BacklogStats {
+  gamesInLibrary: number
+  gamesStarted: number
+  gamesPastFirstHour: number
+  gamesFinished: number
+  gamesNeverStarted: number
+  /** Null when no game in the library has ever been played. */
+  medianShelfTimeDays: number | null
+  gamesAddedRecently: number
+  gamesFinishedRecently: number
+  backlogWindowMonths: number
+  stalePlaythroughs: GameRanking[]
 }
 
 export interface ConsistencyStats {
@@ -186,6 +201,8 @@ export interface GameRanking {
   bannerImageUrl?: string
   playtimeSeconds: number
   daysToComplete?: number
+  /** Only populated for stale playthroughs, where it is the point of the entry. */
+  daysSinceLastPlayed?: number
   startDate?: string
   endDate?: string
   badges?: string[]
