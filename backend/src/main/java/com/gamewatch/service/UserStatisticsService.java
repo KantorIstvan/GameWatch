@@ -66,6 +66,7 @@ public class UserStatisticsService {
 
         DaySpan span = resolveDaySpan(sessions, range, zone);
         List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, span, zone);
+        Map<String, Long> dayOfWeekTotals = calculateDayOfWeekTotalPlaytime(sessions, zone);
 
         return UserStatisticsDto.builder()
             .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, playthroughIdsWithAnySession, range))
@@ -84,12 +85,14 @@ public class UserStatisticsService {
             .fastestToCompleteGame(findFastestToCompleteGame(playthroughs))
             .topMostPlayedGames(findTopMostPlayedGames(playthroughs, 5))
             .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, span, zone))
-            .dayOfWeekTotalPlaytime(calculateDayOfWeekTotalPlaytime(sessions, zone))
+            .dayOfWeekTotalPlaytime(dayOfWeekTotals)
             .libraryCompletionPercentage(calculateLibraryCompletion(allPlaythroughs, totalGamesInLibrary))
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
             .favoritePublisher(findFavoritePublisher(playthroughs))
             .consistencyStats(calculateConsistencyStats(sessions, dailyPlaytimeData, span, zone))
             .backlogStats(calculateBacklogStats(user, allPlaythroughs, zone))
+            .trendStats(calculateTrendStats(
+                user, playthroughs, allPlaythroughs, sessions, dayOfWeekTotals, range, interval, zone))
             .build();
     }
 
@@ -413,7 +416,27 @@ public class UserStatisticsService {
             current = current.plusDays(1);
         }
 
+        applyRollingAverage(result, ROLLING_AVERAGE_DAYS);
         return result;
+    }
+
+    /** Days behind each point that the trend line averages over. */
+    private static final int ROLLING_AVERAGE_DAYS = 7;
+
+    /**
+     * Attaches a trailing mean to each day. Early days average over however many days
+     * actually precede them rather than being left blank, so the line starts with the
+     * chart instead of a week into it.
+     */
+    private void applyRollingAverage(List<UserStatisticsDto.DailyPlaytime> days, int window) {
+        for (int i = 0; i < days.size(); i++) {
+            int from = Math.max(0, i - window + 1);
+            long sum = 0;
+            for (int j = from; j <= i; j++) {
+                sum += days.get(j).getPlaytimeSeconds();
+            }
+            days.get(i).setRollingAverageSeconds((double) sum / (i - from + 1));
+        }
     }
 
     /**
@@ -425,6 +448,164 @@ public class UserStatisticsService {
      * and so still looked plausible, but the hour figures in the legend were inflated and
      * heavily-tagged games crowded out single-genre ones purely on tag count.
      */
+    private static final int MAX_COMPLETION_COMPARISONS = 5;
+
+    /**
+     * Direction and shape of play rather than volume.
+     */
+    private UserStatisticsDto.TrendStats calculateTrendStats(
+            User user, List<Playthrough> periodPlaythroughs, List<Playthrough> allPlaythroughs,
+            List<SessionHistory> sessions, Map<String, Long> dayOfWeekTotals,
+            DateRange range, String interval, ZoneId zone) {
+
+        long weekend = dayOfWeekTotals.getOrDefault(DayOfWeek.SATURDAY.toString(), 0L)
+            + dayOfWeekTotals.getOrDefault(DayOfWeek.SUNDAY.toString(), 0L);
+        long weekday = dayOfWeekTotals.values().stream().mapToLong(Long::longValue).sum() - weekend;
+
+        // Per-day, because five weekdays against two weekend days would otherwise make
+        // every user look like a weekday player.
+        Double weekendIntensity = weekday == 0
+            ? null
+            : (weekend / 2.0) / (weekday / 5.0);
+
+        Map<Long, GamePlaytimeAggregation> byGame = aggregatePlaytimeByGame(periodPlaythroughs);
+        List<Long> playtimes = byGame.values().stream()
+            .map(GamePlaytimeAggregation::getTotalPlaytime)
+            .filter(seconds -> seconds > 0)
+            .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
+
+        long totalAcrossGames = playtimes.stream().mapToLong(Long::longValue).sum();
+        long topThree = playtimes.stream().limit(3).mapToLong(Long::longValue).sum();
+
+        List<Playthrough> dropped = allPlaythroughs.stream()
+            .filter(p -> Boolean.TRUE.equals(p.getIsDropped()))
+            .collect(Collectors.toList());
+        int completed = (int) allPlaythroughs.stream()
+            .filter(p -> Boolean.TRUE.equals(p.getIsCompleted()))
+            .count();
+        int endedEitherWay = dropped.size() + completed;
+
+        List<Long> secondsBeforeDropping = dropped.stream()
+            .map(Playthrough::effectivePlaytimeSeconds)
+            .sorted()
+            .collect(Collectors.toList());
+
+        Long previousTotal = calculatePreviousPeriodPlaytime(user, range, interval, zone);
+
+        return UserStatisticsDto.TrendStats.builder()
+            .previousPeriodPlaytimeSeconds(previousTotal)
+            .playtimeChangePercentage(calculatePlaytimeChange(sessions, previousTotal))
+            .weekdayPlaytimeSeconds(weekday)
+            .weekendPlaytimeSeconds(weekend)
+            .weekendIntensityRatio(weekendIntensity)
+            .topThreeSharePercentage(totalAcrossGames == 0
+                ? 0.0
+                : (double) topThree / totalAcrossGames * 100.0)
+            .varietyScore(calculateVarietyScore(playtimes, totalAcrossGames))
+            .playthroughsDropped(dropped.size())
+            .playthroughsCompleted(completed)
+            .dropRatePercentage(endedEitherWay == 0
+                ? null
+                : (double) dropped.size() / endedEitherWay * 100.0)
+            .medianSecondsBeforeDropping(secondsBeforeDropping.isEmpty()
+                ? null
+                : percentile(secondsBeforeDropping, 0.50))
+            .completionComparisons(findCompletionComparisons(allPlaythroughs))
+            .build();
+    }
+
+    /**
+     * Normalised Shannon entropy over per-game shares, as a 0-100 score.
+     *
+     * 0 is every hour in a single game; 100 is time spread perfectly evenly. Entropy rather
+     * than a simple top-N share because it accounts for the whole distribution - two users
+     * can both have 60% of their time in three games while one plays four other games and
+     * the other plays forty.
+     */
+    private Double calculateVarietyScore(List<Long> playtimes, long total) {
+        if (playtimes.size() < 2 || total == 0) {
+            return 0.0;
+        }
+
+        double entropy = 0.0;
+        for (long seconds : playtimes) {
+            double share = (double) seconds / total;
+            if (share > 0) {
+                entropy -= share * Math.log(share);
+            }
+        }
+
+        return Math.min(100.0, entropy / Math.log(playtimes.size()) * 100.0);
+    }
+
+    /**
+     * Total for the equivalent window immediately before this one. Null for the all-time
+     * view, which has nothing preceding it.
+     */
+    private Long calculatePreviousPeriodPlaytime(User user, DateRange range, String interval, ZoneId zone) {
+        if (range.start().equals(Instant.EPOCH)) {
+            return null;
+        }
+
+        LocalDate anchor = LocalDateTime.ofInstant(range.start(), zone).toLocalDate();
+        LocalDate previousAnchor = switch (interval.toLowerCase()) {
+            case "week" -> anchor.minusWeeks(1);
+            case "month" -> anchor.minusMonths(1);
+            case "year" -> anchor.minusYears(1);
+            default -> null;
+        };
+        if (previousAnchor == null) {
+            return null;
+        }
+
+        DateRange previous = getDateRange(user, zone, interval, previousAnchor.toString());
+        return sessionHistoryRepository
+            .findSessionsStartedByUserBetween(user.getId(), previous.start(), previous.end())
+            .stream()
+            .mapToLong(SessionHistory::getDurationSeconds)
+            .sum();
+    }
+
+    private Double calculatePlaytimeChange(List<SessionHistory> sessions, Long previousTotal) {
+        if (previousTotal == null || previousTotal == 0) {
+            return null;
+        }
+        long current = sessions.stream().mapToLong(SessionHistory::getDurationSeconds).sum();
+        return ((double) current - previousTotal) / previousTotal * 100.0;
+    }
+
+    /**
+     * Finished playthroughs set against the average playtime RAWG records for the game.
+     *
+     * Ordered by how far the user diverged from typical in either direction, since a game
+     * finished in half or double the usual time is the interesting one.
+     */
+    private List<UserStatisticsDto.CompletionComparison> findCompletionComparisons(
+            List<Playthrough> allPlaythroughs) {
+
+        return allPlaythroughs.stream()
+            .filter(p -> Boolean.TRUE.equals(p.getIsCompleted()))
+            .filter(p -> p.effectivePlaytimeSeconds() > 0)
+            .filter(p -> p.getGame().getPlaytime() != null && p.getGame().getPlaytime() > 0)
+            .map(p -> {
+                long yours = p.effectivePlaytimeSeconds();
+                long typical = p.getGame().getPlaytime() * 3600L;
+                return UserStatisticsDto.CompletionComparison.builder()
+                    .gameId(p.getGame().getId())
+                    .gameName(p.getGame().getName())
+                    .bannerImageUrl(p.getGame().getBannerImageUrl())
+                    .yourSeconds(yours)
+                    .typicalSeconds(typical)
+                    .ratio((double) yours / typical)
+                    .build();
+            })
+            .sorted(Comparator.comparingDouble(
+                (UserStatisticsDto.CompletionComparison c) -> Math.abs(Math.log(c.getRatio()))).reversed())
+            .limit(MAX_COMPLETION_COMPARISONS)
+            .collect(Collectors.toList());
+    }
+
     /** How far back "recently" reaches when comparing games added against games finished. */
     private static final int BACKLOG_WINDOW_MONTHS = 6;
 

@@ -41,6 +41,57 @@ public class UserStatisticsDto {
 
     private ConsistencyStats consistencyStats;
     private BacklogStats backlogStats;
+    private TrendStats trendStats;
+
+    /**
+     * Direction and shape of play rather than its volume: whether this period is up or down
+     * on the last one, when in the week it happens, how concentrated it is on a few games,
+     * and what tends to happen to the games that get abandoned.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrendStats {
+        /** Null for the all-time view, which has no preceding period to compare against. */
+        private Long previousPeriodPlaytimeSeconds;
+        /** Null when the previous period was empty, where a percentage change is undefined. */
+        private Double playtimeChangePercentage;
+
+        private Long weekdayPlaytimeSeconds;
+        private Long weekendPlaytimeSeconds;
+        /** Average seconds played per weekend day against per weekday, or null with no data. */
+        private Double weekendIntensityRatio;
+
+        private Double topThreeSharePercentage;
+        /** 0 = all time in one game, 100 = time spread perfectly evenly across the library. */
+        private Double varietyScore;
+
+        private Integer playthroughsDropped;
+        private Integer playthroughsCompleted;
+        private Double dropRatePercentage;
+        private Long medianSecondsBeforeDropping;
+
+        private List<CompletionComparison> completionComparisons;
+    }
+
+    /**
+     * How long this user took to finish a game against how long it takes people generally,
+     * using the average playtime RAWG already stores against the game.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CompletionComparison {
+        private Long gameId;
+        private String gameName;
+        private String bannerImageUrl;
+        private Long yourSeconds;
+        private Long typicalSeconds;
+        /** Above 1 means slower than typical, below 1 faster. */
+        private Double ratio;
+    }
 
     /**
      * The state of the library as a whole, rather than of the selected period.
@@ -114,6 +165,11 @@ public class UserStatisticsDto {
     public static class DailyPlaytime {
         private LocalDate date;
         private Long playtimeSeconds;
+        /**
+         * Trailing seven-day mean, so the daily bars can carry a trend line. Daily play is
+         * spiky enough that the bars alone show very little about direction.
+         */
+        private Double rollingAverageSeconds;
     }
     
     @Data
