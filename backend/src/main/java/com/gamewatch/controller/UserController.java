@@ -1,5 +1,6 @@
 package com.gamewatch.controller;
 
+import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,33 @@ public class UserController {
         User user = userService.getOrCreateUser(authentication);
         User updated = userService.updateFirstDayOfWeek(user, request.get("firstDayOfWeek"));
         return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/me/profile")
+    public ResponseEntity<ProfileSettingsDto> getProfileSettings(Authentication authentication) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(userService.getProfileSettings(user));
+    }
+
+    @PutMapping("/me/profile")
+    public ResponseEntity<ProfileSettingsDto> updateProfileSettings(
+            Authentication authentication,
+            @RequestBody ProfileSettingsDto request) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(userService.updateProfileSettings(user, request));
+    }
+
+    /**
+     * Lets the settings form say whether a handle is free before the user commits to it.
+     * Advisory only - the claim itself is still what decides, since another account can
+     * take the handle between this call and the save.
+     */
+    @GetMapping("/me/handle-available")
+    public ResponseEntity<Map<String, Boolean>> isHandleAvailable(
+            Authentication authentication,
+            @RequestParam String handle) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(Map.of("available", userService.isHandleAvailable(user, handle)));
     }
 
     @DeleteMapping("/me")

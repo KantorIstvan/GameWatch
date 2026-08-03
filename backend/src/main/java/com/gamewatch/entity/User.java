@@ -30,8 +30,32 @@ public class User {
     @Column
     private String email;
 
+    /**
+     * Copied from the Auth0 nickname claim: not chosen, not unique, not editable.
+     * {@link #handle} is the addressable identity; this stays for existing display paths.
+     */
     @Column(length = 100)
     private String username;
+
+    /** Unique, case-insensitively, and chosen by the user. Null until they claim one. */
+    @Column(length = 30)
+    private String handle;
+
+    @Column(name = "display_name", length = 50)
+    private String displayName;
+
+    @Column(length = 300)
+    private String bio;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "profile_visibility", nullable = false, length = 20)
+    @Builder.Default
+    private Visibility profileVisibility = Visibility.PRIVATE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "library_visibility", nullable = false, length = 20)
+    @Builder.Default
+    private Visibility libraryVisibility = Visibility.PRIVATE;
 
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
