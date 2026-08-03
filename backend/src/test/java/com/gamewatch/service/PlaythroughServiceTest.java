@@ -14,6 +14,7 @@ import com.gamewatch.repository.UserGameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -277,6 +278,108 @@ class PlaythroughServiceTest {
 
         verify(playthroughRepository).findByIdAndUserId(1L, 1L);
         verify(playthroughRepository).save(any(Playthrough.class));
+    }
+
+    @Test
+    void stopPlaythrough_PausedSession_RecordsSessionHistory() {
+        // A paused session's time is already banked into durationSeconds, but finishing
+        // never wrote a session_history row for it. The time then existed only as a total:
+        // absent from the per-game session list, the calendar and every health metric, and
+        // treated by the period statistics as a playthrough with no sessions at all.
+        testPlaythrough.setIsActive(false);
+        testPlaythrough.setIsPaused(true);
+        testPlaythrough.setDurationSeconds(5400L);
+        testPlaythrough.setSessionStartDurationSeconds(1800L);
+        testPlaythrough.setSessionStartTime(Instant.now().minus(1, ChronoUnit.HOURS));
+        testPlaythrough.setSessionCount(2);
+        testPlaythrough.setPauseCount(3);
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+        when(sessionHistoryRepository.save(any(SessionHistory.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.stopPlaythrough(testUser, 1L);
+
+        ArgumentCaptor<SessionHistory> captor = ArgumentCaptor.forClass(SessionHistory.class);
+        verify(sessionHistoryRepository).save(captor.capture());
+        SessionHistory recorded = captor.getValue();
+
+        assertThat(recorded.getSessionNumber()).isEqualTo(3);
+        assertThat(recorded.getDurationSeconds()).isEqualTo(3600L); // 5400 total - 1800 at session start
+        assertThat(recorded.getPauseCount()).isEqualTo(3);
+
+        assertThat(testPlaythrough.getSessionCount()).isEqualTo(3);
+        assertThat(testPlaythrough.getSessionStartTime()).isNull();
+        assertThat(testPlaythrough.getPauseCount()).isZero();
+        assertThat(testPlaythrough.getIsCompleted()).isTrue();
+    }
+
+    @Test
+    void stopPlaythrough_ActiveSession_BanksStillRunningTime() {
+        // stopPlaythrough cleared isActive before testing it, so the branch that folds the
+        // still-running elapsed time into the total could never fire and that time was lost.
+        testPlaythrough.setIsActive(true);
+        testPlaythrough.setStartedAt(Instant.now().minus(1, ChronoUnit.HOURS));
+        testPlaythrough.setDurationSeconds(1800L);
+        testPlaythrough.setSessionStartDurationSeconds(1800L);
+        testPlaythrough.setSessionStartTime(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+        when(sessionHistoryRepository.save(any(SessionHistory.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.stopPlaythrough(testUser, 1L);
+
+        // 30 min previously banked + the hour that was still running when Finish was hit
+        assertThat(testPlaythrough.getDurationSeconds()).isBetween(5395L, 5405L);
+
+        ArgumentCaptor<SessionHistory> captor = ArgumentCaptor.forClass(SessionHistory.class);
+        verify(sessionHistoryRepository).save(captor.capture());
+        assertThat(captor.getValue().getDurationSeconds()).isBetween(3595L, 3605L);
+    }
+
+    @Test
+    void dropPlaythrough_PausedSession_RecordsSessionHistory() {
+        // Abandoning a playthrough does not un-play the session that was in progress.
+        testPlaythrough.setIsActive(false);
+        testPlaythrough.setIsPaused(true);
+        testPlaythrough.setDurationSeconds(2700L);
+        testPlaythrough.setSessionStartDurationSeconds(0L);
+        testPlaythrough.setSessionStartTime(Instant.now().minus(45, ChronoUnit.MINUTES));
+        testPlaythrough.setSessionCount(0);
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+        when(sessionHistoryRepository.save(any(SessionHistory.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.dropPlaythrough(testUser, 1L);
+
+        ArgumentCaptor<SessionHistory> captor = ArgumentCaptor.forClass(SessionHistory.class);
+        verify(sessionHistoryRepository).save(captor.capture());
+
+        assertThat(captor.getValue().getSessionNumber()).isEqualTo(1);
+        assertThat(captor.getValue().getDurationSeconds()).isEqualTo(2700L);
+        assertThat(testPlaythrough.getSessionCount()).isEqualTo(1);
+        assertThat(testPlaythrough.getIsDropped()).isTrue();
+    }
+
+    @Test
+    void endSession_WithoutOpenSession_DoesNotIncrementSessionCount() {
+        // sessionCount was incremented before the null check guarding the row write, so a
+        // playthrough with no open session drifted permanently out of step with the number
+        // of session_history rows actually behind it.
+        testPlaythrough.setIsPaused(true);
+        testPlaythrough.setSessionStartTime(null);
+        testPlaythrough.setSessionCount(4);
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+
+        PlaythroughDto result = playthroughService.endSessionPlaythrough(testUser, 1L);
+
+        assertThat(testPlaythrough.getSessionCount()).isEqualTo(4);
+        assertThat(result.getLastSessionHistoryId()).isNull();
+        verify(sessionHistoryRepository, never()).save(any(SessionHistory.class));
     }
 
     @Test
