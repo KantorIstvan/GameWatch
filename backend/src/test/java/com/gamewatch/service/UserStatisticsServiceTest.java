@@ -490,6 +490,114 @@ class UserStatisticsServiceTest {
     }
 
     @Test
+    void varietyScore_separatesAMonogamerFromASampler() {
+        // Both users can have the same total hours and even the same top-three share; what
+        // differs is how the rest of the library is used, which is what entropy captures.
+        Game second = Game.builder().id(2L).name("Second").build();
+        Game third = Game.builder().id(3L).name("Third").build();
+
+        Playthrough onlyGame = Playthrough.builder()
+            .id(1L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(30_000L).importedDurationSeconds(0L)
+            .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+            .lastPlayedAt(Instant.now())
+            .build();
+
+        UserStatisticsDto concentrated = trendStatsFor(List.of(onlyGame));
+        assertThat(concentrated.getTrendStats().getVarietyScore()).isZero();
+        assertThat(concentrated.getTrendStats().getTopThreeSharePercentage()).isEqualTo(100.0);
+
+        org.mockito.Mockito.reset(playthroughRepository, userGameRepository, sessionHistoryRepository);
+
+        List<Playthrough> spread = List.of(
+            onlyGame,
+            Playthrough.builder().id(2L).user(testUser).game(second).playthroughType("story")
+                .durationSeconds(30_000L).importedDurationSeconds(0L)
+                .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+                .lastPlayedAt(Instant.now()).build(),
+            Playthrough.builder().id(3L).user(testUser).game(third).playthroughType("story")
+                .durationSeconds(30_000L).importedDurationSeconds(0L)
+                .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+                .lastPlayedAt(Instant.now()).build());
+
+        UserStatisticsDto varied = trendStatsFor(spread);
+        // Three games played equally is a perfectly even spread across what was played.
+        // Compared with a tolerance because normalised entropy lands a float's breadth
+        // under 1.0 for an exactly even split.
+        assertThat(varied.getTrendStats().getVarietyScore())
+            .isCloseTo(100.0, org.assertj.core.api.Assertions.within(0.001));
+    }
+
+    @Test
+    void dropRate_measuresAgainstPlaythroughsThatActuallyEnded() {
+        // In-progress playthroughs have not decided yet, so counting them in the
+        // denominator would make every active user look like they never abandon anything.
+        Playthrough dropped = Playthrough.builder()
+            .id(1L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(7_200L).importedDurationSeconds(0L)
+            .isActive(false).isCompleted(false).isDropped(true).isPaused(false)
+            .lastPlayedAt(Instant.now()).build();
+        Playthrough finished = Playthrough.builder()
+            .id(2L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(36_000L).importedDurationSeconds(0L)
+            .isActive(false).isCompleted(true).isDropped(false).isPaused(false)
+            .lastPlayedAt(Instant.now()).build();
+        Playthrough stillGoing = Playthrough.builder()
+            .id(3L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(1_800L).importedDurationSeconds(0L)
+            .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+            .lastPlayedAt(Instant.now()).build();
+
+        UserStatisticsDto stats = trendStatsFor(List.of(dropped, finished, stillGoing));
+
+        assertThat(stats.getTrendStats().getPlaythroughsDropped()).isEqualTo(1);
+        assertThat(stats.getTrendStats().getPlaythroughsCompleted()).isEqualTo(1);
+        assertThat(stats.getTrendStats().getDropRatePercentage()).isEqualTo(50.0);
+        assertThat(stats.getTrendStats().getMedianSecondsBeforeDropping()).isEqualTo(7_200L);
+    }
+
+    @Test
+    void completionComparison_setsFinishTimesAgainstTheGamesTypicalLength() {
+        Game quickGame = Game.builder().id(2L).name("Short One").playtime(10).build();
+        Playthrough finished = Playthrough.builder()
+            .id(1L).user(testUser).game(quickGame).playthroughType("story")
+            .durationSeconds(72_000L).importedDurationSeconds(0L) // 20 h against a typical 10
+            .isActive(false).isCompleted(true).isDropped(false).isPaused(false)
+            .lastPlayedAt(Instant.now()).build();
+
+        UserStatisticsDto stats = trendStatsFor(List.of(finished));
+
+        assertThat(stats.getTrendStats().getCompletionComparisons()).hasSize(1);
+        assertThat(stats.getTrendStats().getCompletionComparisons().get(0).getRatio()).isEqualTo(2.0);
+        assertThat(stats.getTrendStats().getCompletionComparisons().get(0).getTypicalSeconds())
+            .isEqualTo(36_000L);
+    }
+
+    @Test
+    void rollingAverage_startsWithTheChartRatherThanAWeekIntoIt() {
+        UserStatisticsDto stats = statsForDaysAgo(0, 1, 2);
+        List<UserStatisticsDto.DailyPlaytime> days = stats.getDailyPlaytime();
+
+        // Every point carries a value, including the first, which averages over the one
+        // day that precedes it rather than being left blank.
+        assertThat(days).isNotEmpty();
+        assertThat(days).allSatisfy(day ->
+            assertThat(day.getRollingAverageSeconds()).isNotNull());
+    }
+
+    private UserStatisticsDto trendStatsFor(List<Playthrough> playthroughs) {
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(playthroughs);
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(userGameRepository.findByUser(testUser)).thenReturn(List.of());
+        when(sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(any()))
+            .thenReturn(List.of());
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(any())).thenReturn(Set.of());
+        when(sessionHistoryRepository.findFirstSessionStartPerGame(1L)).thenReturn(List.of());
+
+        return userStatisticsService.getUserStatistics(testUser, "all", null);
+    }
+
+    @Test
     void allTimeTotal_IsUnaffectedByTheWindowingRules() {
         Playthrough playthrough = playthroughWithLifetimePlaytime(360_000L, Instant.now());
 
