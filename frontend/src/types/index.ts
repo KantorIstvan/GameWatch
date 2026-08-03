@@ -154,6 +154,23 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface FollowState {
+  handle: string
+  following: boolean
+  /** True while a request to a followers-only profile is waiting to be answered. */
+  requestPending: boolean
+  followerCount: number
+  followingCount: number
+}
+
+export interface FollowPerson {
+  followId: number
+  handle: string
+  displayName: string | null
+  profilePictureUrl: string | null
+  createdAt: string
+}
+
 /** Who may see part of a profile. Health data is never shareable and has no setting. */
 export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
 

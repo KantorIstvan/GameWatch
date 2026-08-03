@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import ProfileSettingsSection from '../components/settings/ProfileSettingsSection'
+import FollowRequestsSection from '../components/social/FollowRequestsSection'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
@@ -266,6 +267,8 @@ function Settings() {
 
         <div className="rounded-xl border border-border bg-surface/90 p-8 backdrop-blur-xl">
           <ProfileSettingsSection />
+
+          <FollowRequestsSection />
 
           <div className="mb-8">
             <SectionHeader icon={<Languages className="size-5" />} title={t('settings.language')} />
