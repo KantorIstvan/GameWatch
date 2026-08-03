@@ -6,6 +6,7 @@ import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
 import GameSearchAutocomplete from '../components/GameSearchAutocomplete'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
+import DeleteGameWarning from '../components/DeleteGameWarning'
 import GameCard from '../components/GameCard'
 import SearchFilterBar from '../components/SearchFilterBar'
 import StyledDialog from '../components/StyledDialog'
@@ -452,7 +453,7 @@ function Games() {
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDeleteGame}
         title={t('games.deleteGame')}
-        message={t('games.confirmDelete', { gameName: gameToDelete?.name })}
+        message={<DeleteGameWarning game={gameToDelete} />}
         confirmText={t('games.yesDelete')}
         requiredText={t('common.delete')}
         destructive
