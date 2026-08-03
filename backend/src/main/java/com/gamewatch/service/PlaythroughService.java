@@ -135,6 +135,9 @@ public class PlaythroughService {
         playthrough.setIsPaused(false);
         playthrough.setIsCompleted(true);
         playthrough.setIsDropped(false);
+        // Finishing a previously-dropped playthrough clears the drop rather than leaving a
+        // record that claims to be both completed and dropped at once.
+        playthrough.setDroppedAt(null);
         playthrough.setEndDate(stoppedAt.atZone(TimezoneUtils.resolveZone(user)).toLocalDate());
         playthrough.setLastPlayedAt(stoppedAt);
 
@@ -196,6 +199,9 @@ public class PlaythroughService {
         playthrough.setPickedUpAt(pickedUpAt);
         playthrough.setEndDate(null);
         playthrough.setStoppedAt(null);
+        // Left set, droppedAt outlived the drop it recorded, leaving a playthrough that
+        // reports itself as not dropped while still carrying the moment it was dropped.
+        playthrough.setDroppedAt(null);
 
         playthrough = playthroughRepository.save(playthrough);
         log.info("Picked up dropped playthrough {}", playthroughId);
@@ -513,18 +519,16 @@ public class PlaythroughService {
             throw new RuntimeException("Start time must be before end time");
         }
 
-        if (playthrough.getIsActive()) {
-            throw new RuntimeException("Cannot log manual session while a session is active. Please end the current session first.");
+        // An open session on the timer has no session_history row yet, so it cannot be
+        // overlap-checked against. Requiring it to be closed first keeps the check honest.
+        if (playthrough.getIsActive() || playthrough.getIsPaused()) {
+            throw new RuntimeException("Cannot log manual session while a session is open. Please end the current session first.");
         }
 
-        if (playthrough.getIsCompleted()) {
-            throw new RuntimeException("Cannot log manual session for a completed playthrough");
-        }
-
-        if (playthrough.getIsDropped()) {
-            throw new RuntimeException("Cannot log manual session for a dropped playthrough");
-        }
-
+        // Completed and dropped playthroughs deliberately still accept manual sessions.
+        // Remembering forgotten time is exactly what this feature is for, and it is usually
+        // remembered *after* finishing - refusing it left those hours with nowhere to go at
+        // all, since duration edits can only ever revise time downwards.
         ZoneId zone = TimezoneUtils.resolveZone(user);
 
         if (playthrough.getStartDate() != null) {
@@ -535,10 +539,23 @@ public class PlaythroughService {
         }
 
         long durationSeconds = Duration.between(request.getStartedAt(), request.getEndedAt()).getSeconds();
-        
+
         List<SessionHistory> existingSessions = sessionHistoryRepository
             .findByPlaythroughIdOrderBySessionNumberAsc(playthroughId);
-        
+
+        // Nothing stopped the same evening being logged five times over. Each copy counted
+        // in full towards the playthrough total, the day's health hours and the period
+        // statistics, and there was no way to tell the duplicates apart afterwards.
+        for (SessionHistory existing : existingSessions) {
+            boolean overlaps = request.getStartedAt().isBefore(existing.getEndedAt())
+                && existing.getStartedAt().isBefore(request.getEndedAt());
+            if (overlaps) {
+                throw new RuntimeException(
+                    "This session overlaps one already recorded for this playthrough ("
+                        + existing.getStartedAt() + " to " + existing.getEndedAt() + ")");
+            }
+        }
+
         int newSessionNumber = 1;
         for (SessionHistory existingSession : existingSessions) {
             if (request.getStartedAt().isBefore(existingSession.getStartedAt())) {
@@ -574,6 +591,13 @@ public class PlaythroughService {
 
         if (playthrough.getLastPlayedAt() == null || request.getEndedAt().isAfter(playthrough.getLastPlayedAt())) {
             playthrough.setLastPlayedAt(request.getEndedAt());
+        }
+
+        // Backfilling onto an already-finished playthrough can land after the recorded end,
+        // which would leave a session sitting outside its own playthrough on the timeline.
+        LocalDate sessionEndDate = request.getEndedAt().atZone(zone).toLocalDate();
+        if (playthrough.getEndDate() != null && sessionEndDate.isAfter(playthrough.getEndDate())) {
+            playthrough.setEndDate(sessionEndDate);
         }
 
         playthrough = playthroughRepository.save(playthrough);

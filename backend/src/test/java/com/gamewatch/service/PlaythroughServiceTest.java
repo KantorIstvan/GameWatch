@@ -530,16 +530,18 @@ class PlaythroughServiceTest {
 
         assertThatThrownBy(() -> playthroughService.logManualSession(testUser, 1L, request))
             .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Cannot log manual session while a session is active");
+            .hasMessageContaining("Cannot log manual session while a session is open");
 
         verify(playthroughRepository).findByIdAndUserId(1L, 1L);
         verify(sessionHistoryRepository, never()).saveAndFlush(any());
     }
 
     @Test
-    void logManualSession_CompletedPlaythrough_ThrowsException() {
-        testPlaythrough.setIsCompleted(true);
-        
+    void logManualSession_WhilePaused_ThrowsException() {
+        // A paused session has no session_history row yet, so it cannot be overlap-checked
+        // against - the open session has to be closed before backfilling around it.
+        testPlaythrough.setIsPaused(true);
+
         LogManualSessionRequest request = new LogManualSessionRequest();
         request.setStartedAt(Instant.now().minus(2, ChronoUnit.HOURS));
         request.setEndedAt(Instant.now().minus(1, ChronoUnit.HOURS));
@@ -548,7 +550,101 @@ class PlaythroughServiceTest {
 
         assertThatThrownBy(() -> playthroughService.logManualSession(testUser, 1L, request))
             .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Cannot log manual session for a completed playthrough");
+            .hasMessageContaining("Cannot log manual session while a session is open");
+
+        verify(sessionHistoryRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void logManualSession_OnCompletedPlaythrough_IsAllowed() {
+        // Forgotten time is usually remembered after finishing, and updateDuration can only
+        // revise downwards, so refusing here left those hours unrecordable by any route.
+        testPlaythrough.setIsCompleted(true);
+        testPlaythrough.setEndDate(LocalDate.now().minusDays(3));
+        testUser.setTimezone("UTC");
+
+        LogManualSessionRequest request = new LogManualSessionRequest();
+        request.setStartedAt(Instant.now().minus(2, ChronoUnit.HOURS));
+        request.setEndedAt(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of());
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.logManualSession(testUser, 1L, request);
+
+        verify(sessionHistoryRepository).saveAndFlush(any(SessionHistory.class));
+        assertThat(testPlaythrough.getDurationSeconds()).isEqualTo(3600L);
+        assertThat(testPlaythrough.getIsCompleted()).isTrue();
+        // The backfilled session lands after the recorded end, so the end moves out to
+        // cover it rather than leaving the session outside its own playthrough.
+        assertThat(testPlaythrough.getEndDate()).isEqualTo(LocalDate.now(java.time.ZoneOffset.UTC));
+    }
+
+    @Test
+    void logManualSession_OverlappingAnExistingSession_ThrowsException() {
+        // The same evening could be logged any number of times, each copy counting in full
+        // towards the playthrough total, the day's health hours and the statistics.
+        Instant existingStart = Instant.now().minus(3, ChronoUnit.HOURS);
+        SessionHistory existing = SessionHistory.builder()
+            .id(1L).playthrough(testPlaythrough).sessionNumber(1)
+            .durationSeconds(7200L).pauseCount(0)
+            .startedAt(existingStart).endedAt(existingStart.plusSeconds(7200))
+            .build();
+
+        LogManualSessionRequest request = new LogManualSessionRequest();
+        request.setStartedAt(existingStart.plusSeconds(3600));  // starts inside the existing one
+        request.setEndedAt(existingStart.plusSeconds(10800));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L))
+            .thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> playthroughService.logManualSession(testUser, 1L, request))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("overlaps one already recorded");
+
+        verify(sessionHistoryRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void logManualSession_AbuttingAnExistingSession_IsAllowed() {
+        // Ending exactly when another begins is contiguous play, not an overlap.
+        Instant existingStart = Instant.now().minus(3, ChronoUnit.HOURS);
+        SessionHistory existing = SessionHistory.builder()
+            .id(1L).playthrough(testPlaythrough).sessionNumber(1)
+            .durationSeconds(3600L).pauseCount(0)
+            .startedAt(existingStart).endedAt(existingStart.plusSeconds(3600))
+            .build();
+
+        LogManualSessionRequest request = new LogManualSessionRequest();
+        request.setStartedAt(existingStart.plusSeconds(3600));
+        request.setEndedAt(existingStart.plusSeconds(7200));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L))
+            .thenReturn(List.of(existing));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.logManualSession(testUser, 1L, request);
+
+        verify(sessionHistoryRepository).saveAndFlush(any(SessionHistory.class));
+    }
+
+    @Test
+    void pickupPlaythrough_ClearsTheDropTimestamp() {
+        testPlaythrough.setIsDropped(true);
+        testPlaythrough.setDroppedAt(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.pickupPlaythrough(testUser, 1L);
+
+        assertThat(testPlaythrough.getIsDropped()).isFalse();
+        // droppedAt used to outlive the drop it recorded, leaving a playthrough that
+        // reports itself as not dropped while still carrying the moment it was dropped.
+        assertThat(testPlaythrough.getDroppedAt()).isNull();
     }
 
     @Test
