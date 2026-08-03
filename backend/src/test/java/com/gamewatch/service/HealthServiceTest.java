@@ -1,6 +1,8 @@
 package com.gamewatch.service;
 
 import com.gamewatch.entity.DailyHealthMetrics;
+import com.gamewatch.entity.Playthrough;
+import com.gamewatch.entity.SessionHistory;
 import com.gamewatch.entity.User;
 import com.gamewatch.repository.DailyHealthMetricsRepository;
 import com.gamewatch.repository.HealthSettingsRepository;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -139,14 +142,84 @@ class HealthServiceTest {
         when(moodEntryRepository.calculateAverageMood(anyLong(), any(), any())).thenReturn(4.0);
         when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(anyLong(), any()))
             .thenReturn(Optional.empty());
-        when(dailyHealthMetricsRepository.findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(
-                anyLong(), any(), any())).thenReturn(List.of());
 
         healthService.recalculateMetricsForDate(user, LocalDate.of(2026, 3, 10));
 
         org.mockito.Mockito.verify(dailyHealthMetricsRepository).save(any(DailyHealthMetrics.class));
         org.mockito.Mockito.verify(dailyHealthMetricsRepository, org.mockito.Mockito.never())
             .delete(any(DailyHealthMetrics.class));
+    }
+
+    /** A short, well-broken, mid-afternoon session - nothing about it should cost points. */
+    private SessionHistory unremarkableAfternoonSession() {
+        Instant start = LocalDate.of(2026, 3, 10).atTime(14, 0).toInstant(ZoneOffset.UTC);
+        return SessionHistory.builder()
+            .id(1L)
+            .playthrough(Playthrough.builder().id(1L).build())
+            .sessionNumber(1)
+            .durationSeconds(3600L)
+            .pauseCount(1)
+            .startedAt(start)
+            .endedAt(start.plusSeconds(3600L))
+            .build();
+    }
+
+    private Integer scoreFor(User user, SessionHistory session, Double averageMood) {
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(List.of(session));
+        when(moodEntryRepository.calculateAverageMood(anyLong(), any(), any())).thenReturn(averageMood);
+        when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(anyLong(), any()))
+            .thenReturn(Optional.empty());
+
+        ArgumentCaptor<DailyHealthMetrics> saved = ArgumentCaptor.forClass(DailyHealthMetrics.class);
+        healthService.recalculateMetricsForDate(user, LocalDate.of(2026, 3, 10));
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository).save(saved.capture());
+        return saved.getValue().getHealthScore();
+    }
+
+    @Test
+    void healthScore_isNotReducedForSkippingTheMoodPrompt() {
+        // Scoring an absent mood as a neutral 3/5 charged a 0.25-weight penalty of 0.5 just
+        // for saying nothing, capping an otherwise flawless day at 87. Dismissing a dialog
+        // is not a health outcome.
+        User adult = User.builder().id(1L).auth0UserId("auth0|123").timezone("UTC").age(30).build();
+
+        assertThat(scoreFor(adult, unremarkableAfternoonSession(), null)).isEqualTo(100);
+    }
+
+    @Test
+    void healthScore_stillReflectsMoodWhenOneWasLogged() {
+        User adult = User.builder().id(1L).auth0UserId("auth0|123").timezone("UTC").age(30).build();
+
+        assertThat(scoreFor(adult, unremarkableAfternoonSession(), 5.0)).isEqualTo(100);
+        org.mockito.Mockito.reset(sessionHistoryRepository, moodEntryRepository, dailyHealthMetricsRepository);
+        assertThat(scoreFor(adult, unremarkableAfternoonSession(), 1.0)).isEqualTo(75);
+    }
+
+    @Test
+    void lateNightWindow_followsTheAgeBandRatherThanAHardcodedHour() {
+        // A 22:30 session is late night for a 10-year-old (band starts 22:00) but not yet
+        // for a 15-year-old (band starts 23:00). The per-band value existed but was never
+        // read, so both used to be measured against a hardcoded 22:00.
+        Instant start = LocalDate.of(2026, 3, 10).atTime(22, 30).toInstant(ZoneOffset.UTC);
+        SessionHistory lateSession = SessionHistory.builder()
+            .id(1L).playthrough(Playthrough.builder().id(1L).build()).sessionNumber(1)
+            .durationSeconds(1800L).pauseCount(1)
+            .startedAt(start).endedAt(start.plusSeconds(1800L))
+            .build();
+
+        User teenager = User.builder().id(1L).auth0UserId("auth0|t").timezone("UTC").age(15).build();
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(List.of(lateSession));
+        when(moodEntryRepository.calculateAverageMood(anyLong(), any(), any())).thenReturn(null);
+        when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(anyLong(), any()))
+            .thenReturn(Optional.empty());
+
+        ArgumentCaptor<DailyHealthMetrics> saved = ArgumentCaptor.forClass(DailyHealthMetrics.class);
+        healthService.recalculateMetricsForDate(teenager, LocalDate.of(2026, 3, 10));
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository).save(saved.capture());
+
+        assertThat(saved.getValue().getLateNightMinutes()).isZero();
     }
 
     @Test
