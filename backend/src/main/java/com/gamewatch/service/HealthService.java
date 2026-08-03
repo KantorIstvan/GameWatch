@@ -35,6 +35,9 @@ public class HealthService {
     private static final double WEIGHT_MOOD = 0.25;       // same
     private static final double WEIGHT_LATE_NIGHT = 0.25; // increased from 0.15
 
+    /** Morning end of the late-night window; the start comes from the user's age band. */
+    private static final LocalTime LATE_NIGHT_END = LocalTime.of(6, 0);
+
     @Transactional
     public HealthSettingsDto getHealthSettings(User user) {
         HealthSettings settings = healthSettingsRepository.findByUserId(user.getId())
@@ -163,6 +166,7 @@ public class HealthService {
         int sessionCount = sessions.size();
 
         // Calculate late-night minutes and time-of-day breakdown
+        LocalTime lateNightStart = getAgeLimits(user.getAge()).lateNightStart;
         long lateNightMinutes = 0;
         int morningSessions = 0;
         int afternoonSessions = 0;
@@ -173,8 +177,8 @@ public class HealthService {
         for (SessionHistory session : sessions) {
             LocalTime startTime = LocalDateTime.ofInstant(session.getStartedAt(), zone).toLocalTime();
 
-            // Count late-night minutes (22:00 - 06:00)
-            lateNightMinutes += calculateLateNightMinutes(session.getStartedAt(), session.getEndedAt(), zone);
+            lateNightMinutes += calculateLateNightMinutes(
+                session.getStartedAt(), session.getEndedAt(), zone, lateNightStart);
 
             // Categorize by start time
             int hour = startTime.getHour();
@@ -242,19 +246,27 @@ public class HealthService {
             user.getId(), date, healthScore, totalHours, sessionCount);
     }
 
-    private long calculateLateNightMinutes(Instant startInstant, Instant endInstant, ZoneId zone) {
+    /**
+     * Minutes of this session that fall inside the late-night window, which runs from the
+     * age band's lateNightStart through {@link #LATE_NIGHT_END} the following morning.
+     *
+     * The start used to be hardcoded to 22:00 while AgeLimits carried a per-band value that
+     * nothing read, so the stricter windows configured for younger players never applied.
+     */
+    private long calculateLateNightMinutes(Instant startInstant, Instant endInstant, ZoneId zone,
+                                           LocalTime lateNightStart) {
         LocalDateTime start = LocalDateTime.ofInstant(startInstant, zone);
         LocalDateTime end = LocalDateTime.ofInstant(endInstant, zone);
-        
+
         long lateNightMinutes = 0;
         LocalDateTime current = start;
-        
+
         while (current.isBefore(end)) {
             LocalTime time = current.toLocalTime();
-            int hour = time.getHour();
-            
-            // Late night is 22:00-06:00
-            if (hour >= 22 || hour < 6) {
+
+            // The window wraps past midnight, so a time qualifies if it is at or after the
+            // evening boundary or before the morning one.
+            if (!time.isBefore(lateNightStart) || time.isBefore(LATE_NIGHT_END)) {
                 LocalDateTime nextHour = current.plusMinutes(1);
                 if (nextHour.isAfter(end)) {
                     lateNightMinutes += ChronoUnit.MINUTES.between(current, end);
@@ -313,20 +325,12 @@ public class HealthService {
         }
     }
 
-    private Integer calculateHealthScore(User user, double totalHours, int sessionCount, 
-                                        Double averageMood, long lateNightMinutes, 
+    private Integer calculateHealthScore(User user, double totalHours, int sessionCount,
+                                        Double averageMood, long lateNightMinutes,
                                         double breakComplianceRatio, LocalDate date) {
-        
+
         // Get age-based limits
         AgeLimits limits = getAgeLimits(user.getAge());
-        
-        // Calculate weekly hours for better context
-        LocalDate weekStart = date.minusDays(6);
-        List<DailyHealthMetrics> weekMetrics = dailyHealthMetricsRepository
-            .findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(user.getId(), weekStart, date);
-        double weeklyHours = weekMetrics.stream()
-            .mapToDouble(m -> m.getTotalHours() != null ? m.getTotalHours() : 0.0)
-            .sum() + totalHours;
 
         // Only penalize hours when approaching/exceeding limit (80%+)
         double normHours = Math.max(0.0, (totalHours - 0.8 * limits.maxHoursPerDay) / (0.2 * limits.maxHoursPerDay));
@@ -334,32 +338,37 @@ public class HealthService {
 
         // Only penalize sessions if too many (3+ for adults is fragmented)
         double normSessions = sessionCount <= 2 ? 0.0 : Math.min(1.0, (sessionCount - 2.0) / 3.0);
-        
+
         // Break penalty (0 = perfect breaks, 1 = no breaks)
         double breakPenalty = 1.0 - breakComplianceRatio;
-        
-        // Mood penalty (0 = perfect mood 5, 1 = worst mood 1)
-        double moodPenalty = averageMood != null ? (5.0 - averageMood) / 4.0 : 0.5;
-        
+
         // Late night penalty (proportion of total time spent in late night)
         double totalMinutes = totalHours * 60;
         double latePenalty = totalMinutes > 0 ? Math.min(1.0, lateNightMinutes / totalMinutes) : 0.0;
-        
-        // Calculate weighted penalty
+
         double weightedPenalty = WEIGHT_HOURS * normHours
                                + WEIGHT_SESSIONS * normSessions
                                + WEIGHT_BREAKS * breakPenalty
-                               + WEIGHT_MOOD * moodPenalty
                                + WEIGHT_LATE_NIGHT * latePenalty;
-        
-        // Calculate score (0-100)
-        int healthScore = (int) Math.round(100 * (1.0 - weightedPenalty));
-        
+        double appliedWeight = WEIGHT_HOURS + WEIGHT_SESSIONS + WEIGHT_BREAKS + WEIGHT_LATE_NIGHT;
+
+        // A day with no mood logged carries no mood information; it is not a mediocre day.
+        // Scoring the absence as a neutral 3/5 charged a quarter-weight penalty of 0.5 for
+        // saying nothing, which capped an otherwise flawless day at 87 and made the score
+        // visibly drop for dismissing a dialog. The weight is dropped from the denominator
+        // instead, so the day is scored on the signals that actually exist.
+        if (averageMood != null) {
+            weightedPenalty += WEIGHT_MOOD * ((5.0 - averageMood) / 4.0);
+            appliedWeight += WEIGHT_MOOD;
+        }
+
+        int healthScore = (int) Math.round(100 * (1.0 - weightedPenalty / appliedWeight));
+
         log.debug("Health score calculation for user {}: normHours={}, normSessions={}, " +
-                 "breakPenalty={}, moodPenalty={}, latePenalty={}, weightedPenalty={}, score={}", 
-                 user.getId(), normHours, normSessions, breakPenalty, moodPenalty, 
-                 latePenalty, weightedPenalty, healthScore);
-        
+                 "breakPenalty={}, mood={}, latePenalty={}, weightedPenalty={}/{}, score={}",
+                 user.getId(), normHours, normSessions, breakPenalty, averageMood,
+                 latePenalty, weightedPenalty, appliedWeight, healthScore);
+
         return Math.max(0, Math.min(100, healthScore));
     }
 
@@ -367,7 +376,7 @@ public class HealthService {
         if (age == null) {
             age = 18; // Default to adult
         }
-        
+
         if (age <= 2) {
             return new AgeLimits(0.0, 0, 0, 15, LocalTime.of(21, 0));
         } else if (age <= 5) {
@@ -377,8 +386,12 @@ public class HealthService {
         } else if (age <= 17) {
             return new AgeLimits(2.0, 14.0, 3, 60, LocalTime.of(23, 0));
         } else {
-            // Adults - use LocalTime.MAX (23:59:59) to effectively disable late night tracking
-            return new AgeLimits(3.0, 21.0, 3, 60, LocalTime.MAX); // Adults
+            // 22:00 is the boundary adults have always actually been measured against. The
+            // value here used to be LocalTime.MAX, annotated as disabling late-night
+            // tracking for adults - but nothing ever read the field, so the claim was never
+            // true, and LocalTime.MAX would not have disabled it anyway since the window
+            // wraps past midnight and the 00:00-06:00 half would still have counted.
+            return new AgeLimits(3.0, 21.0, 3, 60, LocalTime.of(22, 0));
         }
     }
 
