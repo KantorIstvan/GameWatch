@@ -18,6 +18,7 @@ import { usePlaythrough } from '../hooks/usePlaythrough'
 import { useMoodPrompt } from '../hooks/useHealth'
 import { formatTime } from '../utils/formatters'
 import { formatPlaythroughType, formatDescription, getPlaythroughTypeColor } from '../utils/playthroughUtils'
+import { parseLocalDate } from '../utils/dateUtils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -632,8 +633,8 @@ function PlaythroughDetail() {
                 {availablePlaythroughs.map((pt) => (
                   <SelectItem key={pt.id} value={String(pt.id)}>
                     {pt.title || pt.gameName} - {formatPlaythroughType(pt.playthroughType)}
-                    {pt.startDate && ` (${new Date(pt.startDate).toLocaleDateString()})`}
-                    {pt.endDate && ` - ${new Date(pt.endDate).toLocaleDateString()}`}
+                    {pt.startDate && ` (${parseLocalDate(pt.startDate).toLocaleDateString()})`}
+                    {pt.endDate && ` - ${parseLocalDate(pt.endDate).toLocaleDateString()}`}
                     {` - ${formatTime(pt.durationSeconds || 0)}`}
                   </SelectItem>
                 ))}

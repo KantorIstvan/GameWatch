@@ -122,7 +122,7 @@ export const TimelineGanttView = ({ events, onEventClick }: TimelineGanttViewPro
     [events]
   )
 
-  const { rangeStart, rangeEnd } = useMemo(() => {
+  const { rangeStart: rawRangeStart, rangeEnd } = useMemo(() => {
     const today = getStartOfDay(new Date())
     if (rows.length === 0) {
       return { rangeStart: addDays(today, -14), rangeEnd: addDays(today, 14) }
@@ -139,6 +139,17 @@ export const TimelineGanttView = ({ events, onEventClick }: TimelineGanttViewPro
 
     return { rangeStart: addDays(minStart, -3), rangeEnd: addDays(maxEnd, 7) }
   }, [rows])
+
+  // Header ticks are generated on week/month boundaries (buildTicks below), while bars
+  // are positioned by day-offset from rangeStart. Aligning rangeStart itself to that same
+  // boundary keeps both in the same coordinate system — otherwise the first tick starts
+  // before rangeStart but renders at the same x=0, shifting every header label relative
+  // to the bars underneath it.
+  const rangeStart = useMemo(() => {
+    if (zoom === 'week') return getStartOfWeek(rawRangeStart, weekStart)
+    if (zoom === 'month') return getStartOfMonth(rawRangeStart)
+    return rawRangeStart
+  }, [rawRangeStart, zoom, weekStart])
 
   const pxPerDay = PX_PER_DAY[zoom]
   const totalDays = Math.max(diffInDays(rangeStart, rangeEnd), 1)
@@ -222,14 +233,15 @@ export const TimelineGanttView = ({ events, onEventClick }: TimelineGanttViewPro
                 ))}
               </div>
               <div className="flex h-8 items-center border-b border-border">
-                {ticks.map((tick) => {
+                {ticks.map((tick, index) => {
                   const isWeekend = zoom === 'day' && (tick.date.getDay() === 0 || tick.date.getDay() === 6)
                   return (
                     <div
                       key={tick.key}
                       style={{ width: tick.spanDays * pxPerDay }}
                       className={cn(
-                        'flex shrink-0 flex-col items-center justify-center text-caption text-text-secondary',
+                        'flex shrink-0 flex-col items-center justify-center border-border text-caption text-text-secondary',
+                        zoom !== 'day' && index > 0 && 'items-start border-l pl-1.5',
                         isWeekend && 'bg-surface/60'
                       )}
                     >
@@ -307,6 +319,15 @@ export const TimelineGanttView = ({ events, onEventClick }: TimelineGanttViewPro
               </div>
             )
           })}
+
+          {zoom !== 'day' &&
+            ticks.slice(1).map((tick) => (
+              <div
+                key={`grid-${tick.key}`}
+                className="pointer-events-none absolute top-0 bottom-0 w-px bg-border"
+                style={{ left: LABEL_WIDTH + tick.offsetDays * pxPerDay }}
+              />
+            ))}
 
           {showTodayLine && (
             <div

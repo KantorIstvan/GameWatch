@@ -9,6 +9,7 @@ import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Playthrough, Game } from '../types'
 import DatePicker from '../components/DatePicker'
+import { toLocalDateString } from '../utils/dateUtils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -23,7 +24,7 @@ function Dashboard() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedGameId, setSelectedGameId] = useState('')
   const [playthroughType, setPlaythroughType] = useState('story')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [startDate, setStartDate] = useState(toLocalDateString(new Date()))
 
   useEffect(() => {
     if (isAuthReady) {
@@ -59,7 +60,7 @@ function Dashboard() {
       setDialogOpen(false)
       setSelectedGameId('')
       setPlaythroughType('story')
-      setStartDate(new Date().toISOString().split('T')[0])
+      setStartDate(toLocalDateString(new Date()))
     } catch (err: any) {
       setError(t('errors.failedCreatePlaythrough'))
     }

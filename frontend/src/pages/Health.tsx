@@ -123,6 +123,12 @@ export default function Health() {
         locale: { weekStart: getFirstDayNumber() }
       },
       range: 12,
+      // cal-heatmap animates its SVG width/height attributes in from 0 by default
+      // (200ms). Since the container has no `viewBox` until paint() resolves, the
+      // browser recomputes CSS `h-auto` height on every frame of that transition,
+      // producing a visible "small, framed" heatmap that pops to full size. Disabling
+      // it removes the pop; the viewBox swap below still gives a smooth CSS transition.
+      animationDuration: 0,
       scale: {
         color: {
           type: 'threshold',

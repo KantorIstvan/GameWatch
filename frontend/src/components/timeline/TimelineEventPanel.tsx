@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { Playthrough } from '../../types'
 import { TimelineEvent } from '../../types/timeline'
 import { formatPlaythroughType, getPlaythroughTypeColor } from '../../utils/playthroughUtils'
+import { parseLocalDate } from '../../utils/dateUtils'
 
 interface TimelineEventPanelProps {
   event: TimelineEvent | null
@@ -18,7 +19,7 @@ interface TimelineEventPanelProps {
 }
 
 function formatEventDate(dateString: string, locale: string) {
-  return new Date(dateString).toLocaleDateString(locale, {
+  return parseLocalDate(dateString).toLocaleDateString(locale, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',

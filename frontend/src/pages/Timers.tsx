@@ -7,6 +7,7 @@ import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Playthrough, Game } from '../types'
+import { toLocalDateString } from '../utils/dateUtils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,7 +28,7 @@ function Timers() {
   const [playthroughType, setPlaythroughType] = useState('story')
   const [playthroughTitle, setPlaythroughTitle] = useState('')
   const [platform, setPlatform] = useState('')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [startDate, setStartDate] = useState(toLocalDateString(new Date()))
   const [sortBy, setSortBy] = useState('date-desc')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -83,7 +84,7 @@ function Timers() {
     setPlaythroughType('story')
     setPlaythroughTitle('')
     setPlatform('')
-    setStartDate(new Date().toISOString().split('T')[0])
+    setStartDate(toLocalDateString(new Date()))
   }
 
   const filteredAndSortedPlaythroughs = useMemo(() => {

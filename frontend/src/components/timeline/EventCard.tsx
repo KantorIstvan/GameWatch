@@ -2,6 +2,7 @@ import { CircleCheck, CircleX, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { TimelineEvent } from '../../types/timeline'
+import { parseLocalDate } from '../../utils/dateUtils'
 
 interface EventCardProps {
   event: TimelineEvent
@@ -12,7 +13,7 @@ export const EventCard = ({ event, onEventClick }: EventCardProps) => {
   const { t } = useTranslation()
 
   const formatEventDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = parseLocalDate(dateString)
     return date.toLocaleDateString(t('app.locale', 'en'), {
       month: 'short',
       day: 'numeric',

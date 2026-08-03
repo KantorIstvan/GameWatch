@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { TimelineEvent } from '../types/timeline'
+import { parseLocalDate } from '../utils/dateUtils'
 
 export const useTimelineFilters = (events: TimelineEvent[]) => {
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -38,7 +39,7 @@ export const useTimelineFilters = (events: TimelineEvent[]) => {
     const grouped: { [key: string]: TimelineEvent[] } = {}
 
     filteredEvents.forEach(event => {
-      const date = new Date(event.start)
+      const date = parseLocalDate(event.start)
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
       if (!grouped[monthKey]) {
@@ -49,7 +50,7 @@ export const useTimelineFilters = (events: TimelineEvent[]) => {
 
     // Sort events within each month
     Object.keys(grouped).forEach(key => {
-      grouped[key].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+      grouped[key].sort((a, b) => parseLocalDate(a.start).getTime() - parseLocalDate(b.start).getTime())
     })
 
     return grouped
