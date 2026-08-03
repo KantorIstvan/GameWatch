@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
@@ -6,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import {
   Sidebar,
   SidebarContent,
@@ -24,13 +26,22 @@ import {
 } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import Footer from './Footer'
+import MobileBottomNav from './MobileBottomNav'
+
+// Deep, single-purpose screens: full-focus mode on mobile — bottom nav and
+// account entry point hide the same way opening an editor hides chrome in a
+// notes app, since these pages already carry their own back navigation.
+const isFocusRoute = (pathname: string) =>
+  /^\/playthrough\/\d+/.test(pathname) || /^\/games\/\d+\/statistics/.test(pathname)
 
 function Layout() {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0()
   const { mode, toggleTheme } = useTheme()
   const { t } = useTranslation()
   const location = useLocation()
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false)
   const currentTab = location.pathname === '/statistics' ? '/statistics' : location.pathname.startsWith('/games') ? '/games' : location.pathname === '/timeline' ? '/timeline' : location.pathname === '/health' ? '/health' : '/'
+  const focusMode = isFocusRoute(location.pathname)
 
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } })
@@ -51,6 +62,7 @@ function Layout() {
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
+          aria-label={t('theme.toggle')}
           className="absolute right-4 top-4 text-text-primary"
         >
           {mode === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
@@ -155,21 +167,46 @@ function Layout() {
 
       <SidebarInset>
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/60 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:px-6">
-          <SidebarTrigger />
+          <SidebarTrigger className="hidden md:inline-flex" />
+
+          <Link to="/" className="flex items-center gap-2 md:hidden">
+            <p className="truncate bg-linear-to-br from-brand-start to-brand-end bg-clip-text text-h4 font-semibold tracking-tight text-transparent">
+              {t('app.name')}
+            </p>
+          </Link>
+
           <div className="flex-1" />
+
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="text-text-secondary transition-transform hover:rotate-20 hover:text-accent"
+            aria-label={t('theme.toggle')}
+            className="size-11 text-text-secondary transition-transform hover:rotate-20 hover:text-accent md:size-9"
           >
             {mode === 'dark' ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
           </Button>
+
+          {!focusMode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAccountSheetOpen(true)}
+              className="size-11 md:hidden"
+              aria-label={t('nav.account')}
+            >
+              <Avatar className="size-7 shrink-0 border border-border">
+                <AvatarImage src={user?.picture} alt={user?.name} />
+                <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </Button>
+          )}
         </header>
 
         <div
           className={cn(
-            'mx-auto w-full flex-1 px-4 py-4 sm:px-6 sm:py-6 md:py-8',
+            'mx-auto w-full flex-1 px-4 pt-4 sm:px-6 sm:pt-6 md:pt-8',
+            focusMode ? 'pb-4 md:pb-8' : 'pb-24 md:pb-8',
             currentTab === '/games' ? 'md:px-12' : 'max-w-7xl'
           )}
         >
@@ -177,7 +214,62 @@ function Layout() {
         </div>
 
         <Footer />
+        {!focusMode && <div className="h-20 md:hidden" aria-hidden="true" />}
       </SidebarInset>
+
+      <MobileBottomNav items={navigationItems} currentTab={currentTab} hidden={focusMode} />
+
+      <Sheet open={accountSheetOpen} onOpenChange={setAccountSheetOpen}>
+        <SheetContent side="bottom" className="md:hidden">
+          <SheetHeader className="flex-row items-center gap-3 text-left">
+            <Avatar className="size-11 shrink-0 border border-border">
+              <AvatarImage src={user?.picture} alt={user?.name} />
+              <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <SheetTitle className="truncate text-body font-semibold">{user?.name}</SheetTitle>
+              <SheetDescription className="truncate">{user?.email}</SheetDescription>
+            </div>
+          </SheetHeader>
+
+          <div className="flex flex-col gap-1 px-4 pb-2">
+            <Button
+              variant="ghost"
+              asChild
+              className="h-12 justify-start gap-3 text-body"
+              onClick={() => setAccountSheetOpen(false)}
+            >
+              <Link to="/settings">
+                <SettingsIcon className="size-4.5" />
+                {t('nav.settings')}
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              asChild
+              className="h-12 justify-start gap-3 text-body"
+              onClick={() => setAccountSheetOpen(false)}
+            >
+              <Link to="/help">
+                <CircleHelp className="size-4.5" />
+                {t('footer.help')}
+              </Link>
+            </Button>
+            <SidebarSeparator className="mx-0 my-1" />
+            <Button
+              variant="ghost"
+              className="h-12 justify-start gap-3 text-body text-destructive hover:text-destructive"
+              onClick={() => {
+                setAccountSheetOpen(false)
+                handleLogout()
+              }}
+            >
+              <LogOut className="size-4.5" />
+              {t('auth.logout')}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </SidebarProvider>
   )
 }

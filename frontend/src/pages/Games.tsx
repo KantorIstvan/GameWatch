@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Gamepad2, X } from 'lucide-react'
+import { Plus, Gamepad2, SearchX, X } from 'lucide-react'
 import { gamesApi } from '../services/api'
 import Loading from '../components/Loading'
 import { useAuthContext } from '../contexts/AuthContext'
@@ -313,13 +313,13 @@ function Games() {
 
   const dialogActions = useMemo(() => (
     <>
-      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="flex-1">
+      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="h-12 flex-1">
         {t('common.cancel')}
       </Button>
       <Button
         onClick={handleCreateGame}
         size="lg"
-        className="flex-1 bg-success text-white hover:bg-success/90"
+        className="h-12 flex-1 bg-success text-white hover:bg-success/90"
         disabled={!selectedGame}
       >
         {t('games.addGame')}
@@ -381,16 +381,30 @@ function Games() {
       )}
 
       {filteredAndSortedGames.length === 0 ? (
-        <div className="mt-12 px-4 py-8 text-center sm:mt-16 sm:px-6">
-          <p className="text-body sm:text-h4 text-text-secondary">
-            {games.length === 0 ? t('games.noGames') : t('games.noMatchingGames')}
-          </p>
-          {games.length > 0 && (
-            <Button variant="ghost" onClick={clearFilters} className="mt-4">
+        games.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-border px-6 py-16 text-center sm:mt-12">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-accent-subtle text-accent">
+              <Gamepad2 className="size-8" />
+            </div>
+            <p className="text-h4 font-semibold text-text-primary">{t('games.noGames')}</p>
+            <p className="mt-1 max-w-sm text-body-sm text-text-secondary">{t('games.noGamesDescription')}</p>
+            <Button onClick={() => setDialogOpen(true)} size="lg" className="mt-6">
+              <Plus className="size-4" />
+              {t('games.addGame')}
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-border px-6 py-16 text-center sm:mt-12">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-surface text-text-secondary">
+              <SearchX className="size-8" />
+            </div>
+            <p className="text-h4 font-semibold text-text-primary">{t('games.noMatchingGames')}</p>
+            <p className="mt-1 max-w-sm text-body-sm text-text-secondary">{t('games.noMatchingGamesDescription')}</p>
+            <Button variant="outline" onClick={clearFilters} className="mt-6">
               {t('games.clearFilters')}
             </Button>
-          )}
-        </div>
+          </div>
+        )
       ) : (
         <div className={`grid gap-3 sm:gap-4 ${gridClassBySize[cardSize]}`}>
           {filteredAndSortedGames.map((game) => (

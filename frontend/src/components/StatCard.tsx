@@ -44,7 +44,7 @@ const StatCard = React.memo(({ title, value, icon, color, foreground, hero = fal
         </div>
         <p className="text-body-sm font-medium text-text-secondary">{title}</p>
       </div>
-      <p className={cn('font-bold text-text-primary', hero ? 'text-display' : 'text-h1')}>
+      <p className={cn('font-bold leading-tight text-text-primary', hero ? 'text-display' : 'text-h3 sm:text-h1')}>
         {value}
       </p>
     </div>

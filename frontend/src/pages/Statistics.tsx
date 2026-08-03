@@ -170,7 +170,7 @@ function Statistics() {
         {hasData && (
           <>
             <div
-              className="h-full rounded-xl border border-current/20 p-5 backdrop-blur-xl md:col-span-2"
+              className="col-span-2 h-full rounded-xl border border-current/20 p-5 backdrop-blur-xl"
               style={{
                 color: statColors.green,
                 background: `linear-gradient(135deg, color-mix(in srgb, ${statColors.green} 10%, transparent) 0%, color-mix(in srgb, ${statColors.green} 5%, transparent) 100%)`,
@@ -209,7 +209,7 @@ function Statistics() {
 
             {statistics.favoriteDeveloper && (
               <InfoCard
-                className="p-5 md:col-span-2"
+                className="col-span-2 p-5"
                 icon={<Code className="size-5" />}
                 title={t('statistics.userStats.favoriteDeveloper')}
                 value={statistics.favoriteDeveloper}
@@ -219,7 +219,7 @@ function Statistics() {
 
             {statistics.favoritePublisher && (
               <InfoCard
-                className="p-5 md:col-span-2"
+                className="col-span-2 p-5"
                 icon={<Building2 className="size-5" />}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}

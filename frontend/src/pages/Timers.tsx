@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, SearchX, SlidersHorizontal, Timer, X } from 'lucide-react'
 import { playthroughsApi, gamesApi } from '../services/api'
 import StopwatchCard from '../components/StopwatchCard'
 import CreatePlaythroughDialog from '../components/CreatePlaythroughDialog'
@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 const ALL = '__all__'
 
@@ -33,6 +34,7 @@ function Timers() {
   const [filterGame, setFilterGame] = useState('')
   const [filterPlatform, setFilterPlatform] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   useEffect(() => {
     if (isAuthReady) {
@@ -203,21 +205,11 @@ function Timers() {
         </Alert>
       )}
 
-      {playthroughs.length > 0 && (
-        <div className="mb-6">
-          <div className="relative mb-4">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={t('timers.searchTimers')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 pl-9"
-            />
-          </div>
-
-          <div className="flex flex-col flex-wrap gap-4 sm:flex-row">
+      {playthroughs.length > 0 && (() => {
+        const filterFields = (
+          <>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-45">
+              <SelectTrigger className="h-12 w-full sm:h-9 sm:w-45">
                 <SelectValue placeholder={t('timers.sortBy')} />
               </SelectTrigger>
               <SelectContent>
@@ -233,7 +225,7 @@ function Timers() {
             </Select>
 
             <Select value={filterStatus || ALL} onValueChange={(v) => setFilterStatus(v === ALL ? '' : v)}>
-              <SelectTrigger className="w-full sm:w-37.5">
+              <SelectTrigger className="h-12 w-full sm:h-9 sm:w-37.5">
                 <SelectValue placeholder={t('timers.filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
@@ -245,7 +237,7 @@ function Timers() {
             </Select>
 
             <Select value={filterType || ALL} onValueChange={(v) => setFilterType(v === ALL ? '' : v)}>
-              <SelectTrigger className="w-full sm:w-37.5">
+              <SelectTrigger className="h-12 w-full sm:h-9 sm:w-37.5">
                 <SelectValue placeholder={t('timers.filterByType')} />
               </SelectTrigger>
               <SelectContent>
@@ -258,7 +250,7 @@ function Timers() {
             </Select>
 
             <Select value={filterGame || ALL} onValueChange={(v) => setFilterGame(v === ALL ? '' : v)}>
-              <SelectTrigger className="w-full sm:w-45">
+              <SelectTrigger className="h-12 w-full sm:h-9 sm:w-45">
                 <SelectValue placeholder={t('timers.filterByGame')} />
               </SelectTrigger>
               <SelectContent>
@@ -275,7 +267,7 @@ function Timers() {
             </Select>
 
             <Select value={filterPlatform || ALL} onValueChange={(v) => setFilterPlatform(v === ALL ? '' : v)}>
-              <SelectTrigger className="w-full sm:w-37.5">
+              <SelectTrigger className="h-12 w-full sm:h-9 sm:w-37.5">
                 <SelectValue placeholder={t('timers.filterByPlatform')} />
               </SelectTrigger>
               <SelectContent>
@@ -289,21 +281,102 @@ function Timers() {
                   ))}
               </SelectContent>
             </Select>
+          </>
+        )
 
-            {hasActiveFilters && (
-              <Button size="sm" variant="ghost" onClick={clearFilters} className="w-full sm:ml-auto sm:w-auto">
-                {t('timers.clearFilters')}
+        return (
+          <div className="mb-6">
+            <div className="mb-4 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={t('timers.searchTimers')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 pl-9"
+                />
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative h-12 w-12 shrink-0 sm:hidden"
+                onClick={() => setFilterSheetOpen(true)}
+                aria-label={t('timers.filters')}
+              >
+                <SlidersHorizontal className="size-4.5" />
+                {hasActiveFilters && (
+                  <span className="absolute right-2 top-2 size-2 rounded-full bg-accent" aria-hidden="true" />
+                )}
               </Button>
-            )}
+            </div>
+
+            <div className="hidden flex-wrap items-center gap-4 sm:flex">
+              {filterFields}
+              {hasActiveFilters && (
+                <Button size="sm" variant="ghost" onClick={clearFilters} className="sm:ml-auto">
+                  {t('timers.clearFilters')}
+                </Button>
+              )}
+            </div>
+
+            <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+              <SheetContent side="bottom" className="sm:hidden">
+                <SheetHeader>
+                  <SheetTitle>{t('timers.filters')}</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-3 overflow-y-auto px-4 pb-2">
+                  {filterFields}
+                </div>
+                <SheetFooter className="flex-row gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-12 flex-1"
+                    onClick={clearFilters}
+                    disabled={!hasActiveFilters}
+                  >
+                    {t('timers.clearFilters')}
+                  </Button>
+                  <Button className="h-12 flex-1" onClick={() => setFilterSheetOpen(false)}>
+                    {t('games.showResults')}
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {filteredAndSortedPlaythroughs.length === 0 ? (
-        <div className="mt-12 rounded-xl border-2 border-dashed border-border/20 bg-surface/60 px-4 py-12 text-center sm:mt-16 sm:px-6 sm:py-16">
-          <p className="text-body sm:text-h4 text-text-secondary">{t('timers.noPlaythroughsMessage')}</p>
-          <p className="mt-1 text-body-sm text-text-secondary opacity-70">{t('labels.clickNewPlaythrough')}</p>
-        </div>
+        playthroughs.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-border px-6 py-16 text-center sm:mt-12">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-accent-subtle text-accent">
+              <Timer className="size-8" />
+            </div>
+            <p className="text-h4 font-semibold text-text-primary">{t('timers.noPlaythroughsMessage')}</p>
+            <p className="mt-1 max-w-sm text-body-sm text-text-secondary">{t('labels.clickNewPlaythrough')}</p>
+            <Button
+              onClick={() => setDialogOpen(true)}
+              disabled={games.length === 0}
+              size="lg"
+              className="mt-6"
+            >
+              <Plus className="size-4" />
+              {t('timers.newPlaythrough')}
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-border px-6 py-16 text-center sm:mt-12">
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-surface text-text-secondary">
+              <SearchX className="size-8" />
+            </div>
+            <p className="text-h4 font-semibold text-text-primary">{t('timers.noMatchingTimers')}</p>
+            <p className="mt-1 max-w-sm text-body-sm text-text-secondary">{t('timers.noMatchingTimersDescription')}</p>
+            <Button variant="outline" onClick={clearFilters} className="mt-6">
+              {t('timers.clearFilters')}
+            </Button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
           {filteredAndSortedPlaythroughs.map((playthrough) => (

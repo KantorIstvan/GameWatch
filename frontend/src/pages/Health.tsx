@@ -291,10 +291,12 @@ export default function Health() {
             </SelectContent>
           </Select>
         </div>
-        <div
-          ref={calHeatmapRef}
-          className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
-        />
+        <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
+          <div
+            ref={calHeatmapRef}
+            className="w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full"
+          />
+        </div>
         <div id="legend" className="mt-2 flex flex-wrap gap-2" />
       </div>
 

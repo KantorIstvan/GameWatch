@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CalendarSearch, CalendarX } from 'lucide-react'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useTimelineEvents } from '../hooks/useTimelineEvents'
@@ -11,13 +12,14 @@ import { TimelineListView } from '../components/timeline/TimelineListView'
 import { TimelineGanttView } from '../components/timeline/TimelineGanttView'
 import { TimelineEventPanel } from '../components/timeline/TimelineEventPanel'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 function Timeline() {
   const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
 
   const { playthroughs, events, loading, error, refetch } = useTimelineEvents()
-  const { viewMode, setViewMode, isMobile } = useTimelineView()
+  const { viewMode } = useTimelineView()
   const {
     statusFilter,
     setStatusFilter,
@@ -54,11 +56,7 @@ function Timeline() {
 
   return (
     <div>
-      <TimelineToolbar
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        isMobile={isMobile}
-      />
+      <TimelineToolbar />
 
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -75,7 +73,30 @@ function Timeline() {
         onClearFilters={clearFilters}
       />
 
-      {viewMode === 'list' ? (
+      {events.length === 0 && !loading ? (
+        <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-accent/20 bg-accent/5 px-6 py-16 text-center sm:mt-12">
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-accent-subtle text-accent">
+            <CalendarX className="size-8" />
+          </div>
+          <p className="text-h4 font-semibold text-text-primary">{t('calendar.noEvents')}</p>
+          <p className="mx-auto mt-1 max-w-sm text-body-sm text-text-secondary">
+            {t('calendar.noEventsDescription')}
+          </p>
+        </div>
+      ) : filteredEvents.length === 0 && !loading ? (
+        <div className="mt-8 flex flex-col items-center rounded-xl border-2 border-dashed border-border px-6 py-16 text-center sm:mt-12">
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-surface text-text-secondary">
+            <CalendarSearch className="size-8" />
+          </div>
+          <p className="text-h4 font-semibold text-text-primary">{t('calendar.noMatchingEvents')}</p>
+          <p className="mx-auto mt-1 max-w-sm text-body-sm text-text-secondary">
+            {t('calendar.noMatchingEventsDescription')}
+          </p>
+          <Button variant="outline" onClick={clearFilters} className="mt-6">
+            {t('games.clearFilters')}
+          </Button>
+        </div>
+      ) : viewMode === 'list' ? (
         <TimelineListView
           groupedEventsByMonth={groupedEventsByMonth}
           onEventClick={openEventPanel}
@@ -85,17 +106,6 @@ function Timeline() {
           events={filteredEvents}
           onEventClick={openEventPanel}
         />
-      )}
-
-      {events.length === 0 && !loading && (
-        <div className="mt-12 rounded-xl border-2 border-dashed border-accent/20 bg-accent/5 p-12 text-center">
-          <p className="mb-2 text-h3 font-semibold text-text-primary">
-            {t('calendar.noEvents')}
-          </p>
-          <p className="mx-auto max-w-125 text-text-secondary">
-            {t('calendar.noEventsDescription')}
-          </p>
-        </div>
       )}
 
       <TimelineEventPanel

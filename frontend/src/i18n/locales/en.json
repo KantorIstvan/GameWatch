@@ -13,7 +13,8 @@
     "myGames": "My Games",
     "calendar": "Timeline",
     "health": "Health",
-    "settings": "Settings"
+    "settings": "Settings",
+    "account": "Account"
   },
   "settings": {
     "title": "Settings",
@@ -143,7 +144,8 @@
   },
   "theme": {
     "light": "Light Mode",
-    "dark": "Dark Mode"
+    "dark": "Dark Mode",
+    "toggle": "Toggle theme"
   },
   "timers": {
     "title": "Active Timers",
@@ -180,7 +182,10 @@
     "filterByPlatform": "Filter by Platform",
     "platformAll": "All Platforms",
     "searchTimers": "Search timers...",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "filters": "Filters",
+    "noMatchingTimers": "No timers match your search",
+    "noMatchingTimersDescription": "Try adjusting your search or filters."
   },
   "statistics": {
     "title": "Statistics",
@@ -291,6 +296,7 @@
       "allPlaythroughs": "All Playthroughs",
       "searchSessions": "Search sessions...",
       "clearFilters": "Clear Filters",
+      "filters": "Filters",
       "oneWeek": "Week",
       "oneMonth": "Month",
       "oneYear": "Year",
@@ -298,7 +304,10 @@
       "timeRange": "Time Range",
       "startTime": "Start Time",
       "endTime": "End Time",
-      "actions": "Actions"
+      "actions": "Actions",
+      "rowsPerPage": "Rows per page:",
+      "breakSingular": "break",
+      "breaksShort": "breaks"
     },
     "export": {
       "metric": "Metric",
@@ -355,8 +364,12 @@
     "confirmDelete": "Are you sure you want to delete \"{{gameName}}\"? This action cannot be undone.",
     "yesDelete": "Yes, Delete",
     "noGames": "No games yet. Add your first game!",
+    "noGamesDescription": "Your library is empty. Add a game to start tracking playtime.",
     "noMatchingGames": "No games match your filters.",
+    "noMatchingGamesDescription": "Try adjusting your search or filters.",
     "clearFilters": "Clear Filters",
+    "filters": "Filters",
+    "showResults": "Show Results",
     "search": "Search games...",
     "searchPlaceholder": "Search games by name, genre, developer...",
     "searchForGame": "Search for a game",
@@ -520,6 +533,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
+    "done": "Done",
     "confirm": "Confirm",
     "create": "Create",
     "back": "Back",
@@ -579,6 +593,8 @@
     "zoomMonth": "Month",
     "noEvents": "No playthroughs with dates yet",
     "noEventsDescription": "Start adding dates to your playthroughs to see them on the timeline",
+    "noMatchingEvents": "No events match your filters",
+    "noMatchingEventsDescription": "Try adjusting your search or status filter.",
     "errorLoading": "Error loading timeline data",
     "searchPlaceholder": "Search games...",
     "calendarView": "Timeline",

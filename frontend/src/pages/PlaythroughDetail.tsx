@@ -553,11 +553,11 @@ function PlaythroughDetail() {
                 />
               </div>
             </div>
-            <div className="flex gap-3 pt-2">
-              <Button onClick={() => setEditDialogOpen(false)} variant="outline" size="lg" className="flex-1">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+              <Button onClick={() => setEditDialogOpen(false)} variant="outline" size="lg" className="h-12 flex-1">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSaveTime} disabled={isSubmitting} size="lg" className="flex-1">
+              <Button onClick={handleSaveTime} disabled={isSubmitting} size="lg" className="h-12 flex-1">
                 {t('common.save')}
               </Button>
             </div>
@@ -582,7 +582,7 @@ function PlaythroughDetail() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleUpdatePlatform} disabled={!selectedPlatform || isSubmitting} className="w-full">
+            <Button onClick={handleUpdatePlatform} disabled={!selectedPlatform || isSubmitting} className="h-12 w-full">
               {t('common.save')}
             </Button>
           </DialogContent>
@@ -600,11 +600,11 @@ function PlaythroughDetail() {
                 placeholder={game ? `${game.name} playthrough` : ''}
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button onClick={() => setTitleDialogOpen(false)} variant="outline">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+              <Button onClick={() => setTitleDialogOpen(false)} variant="outline" className="h-12 flex-1">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleUpdateTitle} disabled={isSubmitting}>
+              <Button onClick={handleUpdateTitle} disabled={isSubmitting} className="h-12 flex-1">
                 {t('common.save')}
               </Button>
             </div>
@@ -639,11 +639,11 @@ function PlaythroughDetail() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button onClick={() => setImportDialogOpen(false)} variant="outline">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+              <Button onClick={() => setImportDialogOpen(false)} variant="outline" className="h-12 flex-1">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough || isSubmitting}>
+              <Button onClick={handleImportSessions} disabled={!selectedImportPlaythrough || isSubmitting} className="h-12 flex-1">
                 {t('playthrough.import')}
               </Button>
             </div>

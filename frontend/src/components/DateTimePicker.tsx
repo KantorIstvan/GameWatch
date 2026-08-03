@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { TimePickerClock } from '@/components/ui/time-picker-clock'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -38,6 +40,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const { timeFormat } = useTimeFormat()
   const { getFirstDayNumber } = useWeekStart()
   const [open, setOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   const parsedValue = value ? dayjs(value) : null
   const isValid = !!parsedValue?.isValid()
@@ -66,6 +69,44 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
     ? parsedValue!.format(is12h ? 'YYYY-MM-DD hh:mm A' : 'YYYY-MM-DD HH:mm')
     : t('timePicker.selectDateTime')
 
+  const isDateDisabled = (date: Date) =>
+    (!!maxDateTime && date > maxDateTime.endOf('day').toDate()) ||
+    (!!minDateTime && date < minDateTime.startOf('day').toDate())
+
+  const trigger = (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={disabled}
+      aria-invalid={error}
+      onClick={isMobile ? () => setOpen(true) : undefined}
+      className={cn(
+        'h-12 w-full justify-start text-left font-normal',
+        !isValid && 'text-muted-foreground',
+        error && 'border-destructive'
+      )}
+    >
+      <CalendarIcon className="mr-2 size-4 shrink-0" />
+      <span className="truncate">{display}</span>
+    </Button>
+  )
+
+  const pickerBody = (
+    <>
+      <Calendar
+        mode="single"
+        selected={selectedDate}
+        onSelect={handleSelectDate}
+        weekStartsOn={getFirstDayNumber() as 0 | 1}
+        disabled={isDateDisabled}
+        autoFocus={!isMobile}
+      />
+      <div className="flex items-center justify-center border-t border-border p-4 sm:border-t-0 sm:border-l">
+        <TimePickerClock hour24={hour24} minute={minute} is12h={is12h} onChange={handleTimeChange} />
+      </div>
+    </>
+  )
+
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
@@ -74,42 +115,33 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           {required && ' *'}
         </Label>
       )}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            aria-invalid={error}
-            className={cn(
-              'w-full justify-start text-left font-normal',
-              !isValid && 'text-muted-foreground',
-              error && 'border-destructive'
-            )}
-          >
-            <CalendarIcon className="mr-2 size-4" />
-            {display}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <div className="flex flex-col sm:flex-row">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleSelectDate}
-              weekStartsOn={getFirstDayNumber() as 0 | 1}
-              disabled={(date) =>
-                (!!maxDateTime && date > maxDateTime.endOf('day').toDate()) ||
-                (!!minDateTime && date < minDateTime.startOf('day').toDate())
-              }
-              autoFocus
-            />
-            <div className="flex items-center justify-center border-t border-border p-4 sm:border-t-0 sm:border-l">
-              <TimePickerClock hour24={hour24} minute={minute} is12h={is12h} onChange={handleTimeChange} />
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+
+      {isMobile ? (
+        <>
+          {trigger}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetContent side="bottom" className="max-h-[90vh]">
+              <SheetHeader>
+                <SheetTitle>{label || t('timePicker.selectDateTime')}</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col items-center overflow-y-auto">{pickerBody}</div>
+              <SheetFooter>
+                <Button className="h-12 w-full" onClick={() => setOpen(false)}>
+                  {t('common.done')}
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </>
+      ) : (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <div className="flex flex-col sm:flex-row">{pickerBody}</div>
+          </PopoverContent>
+        </Popover>
+      )}
+
       {helperText && (
         <p className={cn('text-caption', error ? 'text-destructive' : 'text-muted-foreground')}>
           {helperText}

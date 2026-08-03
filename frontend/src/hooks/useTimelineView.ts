@@ -1,24 +1,14 @@
-import { useState, useEffect } from 'react'
 import { useMediaQuery } from './useMediaQuery'
 
 export const useTimelineView = () => {
-  const [viewMode, setViewMode] = useState<'timeline' | 'list'>('list')
-  const isMobile = useMediaQuery('(max-width:768px)')
-  const isPortrait = useMediaQuery('(orientation: portrait)')
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
-  // Auto-switch view mode based on screen size
-  useEffect(() => {
-    if (isMobile && isPortrait) {
-      setViewMode('list')
-    } else if (!isMobile) {
-      setViewMode('timeline')
-    }
-  }, [isMobile, isPortrait])
+  // Mobile never gets the desktop Gantt/timeline view — it's a 2D grid that
+  // doesn't fit a phone screen, so there's no toggle to escape into it.
+  const viewMode: 'timeline' | 'list' = isMobile ? 'list' : 'timeline'
 
   return {
     viewMode,
-    setViewMode,
     isMobile,
-    isPortrait,
   }
 }

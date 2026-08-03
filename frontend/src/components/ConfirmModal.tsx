@@ -82,13 +82,13 @@ function ConfirmModal({
         </div>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-          <Button onClick={onClose} variant="outline" size="lg" className="flex-1">
+          <Button onClick={onClose} variant="outline" size="lg" className="h-12 flex-1">
             {cancelText ?? t('common.cancel')}
           </Button>
           <Button
             onClick={onConfirm}
             size="lg"
-            className="flex-1 text-white"
+            className="h-12 flex-1 text-white"
             style={{ backgroundColor: color }}
           >
             {confirmText ?? t('common.confirm')}

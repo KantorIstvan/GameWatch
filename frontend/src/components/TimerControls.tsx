@@ -28,8 +28,8 @@ function TimerControls({
   onOpenManualSession,
   t
 }: TimerControlsProps) {
-  const buttonClass = 'text-body-sm px-4 border-none text-white'
-  const secondaryButtonClass = 'border border-white/30 bg-white/15 text-white hover:bg-white/25'
+  const buttonClass = 'h-11 text-body-sm px-4 border-none text-white'
+  const secondaryButtonClass = 'h-11 border border-white/30 bg-white/15 text-white hover:bg-white/25'
 
   return (
     <>
@@ -96,7 +96,7 @@ function TimerControls({
             variant="outline"
             onClick={onOpenManualSession}
             disabled={playthrough.isCompleted}
-            className="min-w-auto border-white/50 px-4 text-body-sm text-white hover:border-white hover:bg-white/10 disabled:border-white/20 disabled:text-white/30 sm:min-w-45"
+            className="h-11 min-w-auto border-white/50 px-4 text-body-sm text-white hover:border-white hover:bg-white/10 disabled:border-white/20 disabled:text-white/30 sm:min-w-45"
           >
             <Clock className="size-4" />
             {t('playthrough.logManualSession')}

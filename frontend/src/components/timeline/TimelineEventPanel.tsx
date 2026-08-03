@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { CircleCheck, CircleX, Play, Gamepad2, Clock, CalendarDays } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 import { Playthrough } from '../../types'
 import { TimelineEvent } from '../../types/timeline'
 import { formatPlaythroughType, getPlaythroughTypeColor } from '../../utils/playthroughUtils'
@@ -33,6 +35,7 @@ function formatDuration(seconds: number) {
 export function TimelineEventPanel({ event, playthrough, open, onOpenChange }: TimelineEventPanelProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   if (!event) return null
 
@@ -48,7 +51,10 @@ export function TimelineEventPanel({ event, playthrough, open, onOpenChange }: T
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 overflow-y-auto p-0 sm:max-w-sm">
+      <SheetContent
+        side={isMobile ? 'bottom' : 'right'}
+        className={cn('w-full gap-0 overflow-y-auto p-0', !isMobile && 'sm:max-w-sm')}
+      >
         <div
           className="relative flex h-40 shrink-0 items-end overflow-hidden"
           style={{ background: gradient }}
