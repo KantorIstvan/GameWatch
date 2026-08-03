@@ -417,7 +417,6 @@ public class BackupService {
             UserGame userGame = UserGame.builder()
                 .user(user)
                 .game(game)
-                .totalPlaytimeSeconds(0L)
                 .build();
             userGameRepository.save(userGame);
         }
