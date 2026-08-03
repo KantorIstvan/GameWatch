@@ -200,6 +200,7 @@
       "inProgress": "In Progress",
       "totalSessions": "Total Sessions",
       "avgSession": "Avg Session",
+      "avgPerDay": "Avg per Day",
       "longestSession": "Longest Session",
       "averageSession": "Average Session",
       "dailyPlaytime": "Daily Playtime",
