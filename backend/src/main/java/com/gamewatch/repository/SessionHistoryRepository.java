@@ -8,11 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SessionHistoryRepository extends JpaRepository<SessionHistory, Long> {
-    
+
     List<SessionHistory> findByPlaythroughIdOrderBySessionNumberAsc(Long playthroughId);
+
+    Optional<SessionHistory> findByIdAndPlaythroughUserId(Long id, Long userId);
     
     @Query("SELECT sh FROM SessionHistory sh WHERE sh.playthrough.id IN :playthroughIds ORDER BY sh.playthrough.id, sh.sessionNumber")
     List<SessionHistory> findByPlaythroughIdsOrderByPlaythroughAndSession(@Param("playthroughIds") List<Long> playthroughIds);
