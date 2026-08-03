@@ -167,6 +167,29 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "groups": {
+    "title": "Groups",
+    "noHoursExplainer": "Challenges are never scored on hours played. Every metric counts finishing, variety or turning up regularly, so competing means playing more deliberately rather than simply more.",
+    "newGroup": "Start a group",
+    "namePlaceholder": "Backlog Club",
+    "create": "Create",
+    "created": "Group created",
+    "createFailed": "Could not create the group",
+    "empty": "You are not in any groups yet. Start one above.",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "youOwnThis": "you own this",
+    "noChallenges": "No challenges yet.",
+    "active": "Active",
+    "target_one": "target {{count}}",
+    "target_other": "target {{count}}",
+    "metric": {
+      "GAMES_FINISHED": "Games finished",
+      "DISTINCT_GAMES_PLAYED": "Different games played",
+      "DAYS_PLAYED": "Days played",
+      "BACKLOG_CLEARED": "Backlog games finished"
+    }
+  },
   "compare": {
     "title": "Compare",
     "unavailable": "That profile does not exist, or its library is not shared with you.",
