@@ -290,11 +290,17 @@ public class PlaythroughService {
             : 0L;
         long sessionDuration = Math.max(0L, playthrough.getDurationSeconds() - sessionStartDuration);
 
+        // When the duration was hand-edited mid-session the wall clock no longer agrees with
+        // the recorded time, so the end is derived from the start instead. It must be
+        // derived from *this session's* duration: deriving it from the playthrough's
+        // lifetime total put the end of a session on a 50-hour playthrough two days into
+        // the future, which in turn misfiled it on the calendar, the timeline and whichever
+        // day's health metrics it landed on.
         Instant endedAt;
         if (Boolean.TRUE.equals(playthrough.getManualTimeSet())) {
-            endedAt = sessionStartTime.plusSeconds(playthrough.getDurationSeconds());
+            endedAt = sessionStartTime.plusSeconds(sessionDuration);
             log.info("Using calculated end time for playthrough {} (manual time set): {} + {} sec = {}",
-                playthrough.getId(), sessionStartTime, playthrough.getDurationSeconds(), endedAt);
+                playthrough.getId(), sessionStartTime, sessionDuration, endedAt);
         } else {
             endedAt = Instant.now();
         }
