@@ -154,6 +154,20 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface GameRatingSummary {
+  gameId: number
+  ratingCount: number
+  /** Null when nobody has rated it, so unrated stays distinct from rated badly. */
+  averageScore: number | null
+  bayesianScore: number | null
+  distribution: Record<number, number>
+  verifiedCount: number
+  verifiedAverageScore: number | null
+  finisherCount: number
+  finisherAverageScore: number | null
+  yourScore: number | null
+}
+
 export interface ProfileLibrary {
   totalPlaytimeSeconds: number
   gamesInLibrary: number
