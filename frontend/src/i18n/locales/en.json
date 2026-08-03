@@ -167,6 +167,23 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "social": {
+    "follow": {
+      "follow": "Follow",
+      "following": "Following",
+      "requested": "Requested",
+      "failed": "Could not update follow"
+    },
+    "requests": {
+      "title": "Follow Requests",
+      "description": "People asking to follow you. Accepting lets them see anything you have set to followers-only.",
+      "accept": "Accept request",
+      "reject": "Reject request",
+      "accepted": "Request accepted",
+      "rejected": "Request rejected",
+      "failed": "Could not answer the request"
+    }
+  },
   "theme": {
     "light": "Light Mode",
     "dark": "Dark Mode",

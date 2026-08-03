@@ -101,4 +101,15 @@ export const userApi = {
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 
+export const followsApi = {
+  getState: (handle: string) => apiClient.get(`/follows/${handle}`),
+  follow: (handle: string) => apiClient.post(`/follows/${handle}`),
+  unfollow: (handle: string) => apiClient.delete(`/follows/${handle}`),
+  getPendingRequests: () => apiClient.get('/follows/me/requests'),
+  getFollowers: () => apiClient.get('/follows/me/followers'),
+  getFollowing: () => apiClient.get('/follows/me/following'),
+  accept: (followId: number) => apiClient.post(`/follows/me/requests/${followId}/accept`),
+  reject: (followId: number) => apiClient.post(`/follows/me/requests/${followId}/reject`),
+}
+
 export default apiClient
