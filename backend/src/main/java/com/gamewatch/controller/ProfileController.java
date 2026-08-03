@@ -1,7 +1,9 @@
 package com.gamewatch.controller;
 
+import com.gamewatch.dto.ProfileComparisonDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.entity.User;
+import com.gamewatch.service.ProfileComparisonService;
 import com.gamewatch.service.ProfileService;
 import com.gamewatch.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final ProfileComparisonService profileComparisonService;
     private final UserService userService;
 
     @GetMapping("/search")
@@ -24,6 +27,13 @@ public class ProfileController {
                                                          @RequestParam String query) {
         User viewer = userService.getOrCreateUser(authentication);
         return ResponseEntity.ok(profileService.search(viewer, query));
+    }
+
+    @GetMapping("/{handle}/compare")
+    public ResponseEntity<ProfileComparisonDto> compare(Authentication authentication,
+                                                        @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileComparisonService.compare(viewer, handle));
     }
 
     @GetMapping("/{handle}")
