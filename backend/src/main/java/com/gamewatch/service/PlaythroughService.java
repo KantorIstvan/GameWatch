@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -411,9 +412,16 @@ public class PlaythroughService {
     public void deletePlaythrough(User user, Long playthroughId) {
         Playthrough playthrough = playthroughRepository.findByIdAndUserId(playthroughId, user.getId())
             .orElseThrow(() -> new RuntimeException("Playthrough not found or access denied"));
-        
+
+        // Capture the days this playthrough contributed to before the cascade takes its
+        // sessions with it, so their metrics can be rebuilt from what remains.
+        Set<LocalDate> affectedDates = sessionDatesOf(playthroughId, user);
+
         playthroughRepository.delete(playthrough);
+        playthroughRepository.flush();
         log.info("Deleted playthrough {}", playthroughId);
+
+        recalculateHealthForDates(user, affectedDates);
     }
 
     @Transactional
@@ -430,8 +438,12 @@ public class PlaythroughService {
 
         int deletedSessionNumber = session.getSessionNumber();
         long sessionDuration = session.getDurationSeconds();
-        
+        LocalDate deletedSessionDate = session.getStartedAt()
+            .atZone(TimezoneUtils.resolveZone(user))
+            .toLocalDate();
+
         sessionHistoryRepository.delete(session);
+        sessionHistoryRepository.flush();
         log.info("Deleted session {} from playthrough {}", sessionId, playthroughId);
 
         List<SessionHistory> laterSessions = sessionHistoryRepository
@@ -453,8 +465,34 @@ public class PlaythroughService {
         }
         
         playthroughRepository.save(playthrough);
-        log.info("Updated playthrough {} after session deletion: sessions={}, duration={}", 
+        log.info("Updated playthrough {} after session deletion: sessions={}, duration={}",
             playthroughId, playthrough.getSessionCount(), playthrough.getDurationSeconds());
+
+        // Without this the deleted hours stayed in that day's health metrics forever: the
+        // heatmap, the weekly totals and the score all kept counting a session that no
+        // longer existed.
+        recalculateHealthForDates(user, Set.of(deletedSessionDate));
+    }
+
+    /**
+     * The distinct days a playthrough's sessions are attributed to, in the user's zone.
+     */
+    private Set<LocalDate> sessionDatesOf(Long playthroughId, User user) {
+        ZoneId zone = TimezoneUtils.resolveZone(user);
+        return sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(playthroughId)
+            .stream()
+            .map(s -> s.getStartedAt().atZone(zone).toLocalDate())
+            .collect(Collectors.toSet());
+    }
+
+    private void recalculateHealthForDates(User user, Set<LocalDate> dates) {
+        for (LocalDate date : dates) {
+            try {
+                healthService.recalculateMetricsForDate(user, date);
+            } catch (Exception e) {
+                log.error("Failed to recalculate health metrics for user {} on {}", user.getId(), date, e);
+            }
+        }
     }
 
     @Transactional

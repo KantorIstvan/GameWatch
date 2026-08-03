@@ -137,8 +137,21 @@ public class HealthService {
         List<SessionHistory> sessions = sessionHistoryRepository
             .findSessionsStartedByUserBetween(user.getId(), startInstant, endInstant);
 
-        if (sessions.isEmpty()) {
-            log.debug("No sessions found for user {} on {}", user.getId(), date);
+        // Calculate average mood for the day
+        Double averageMood = moodEntryRepository.calculateAverageMood(user.getId(), startInstant, endInstant);
+
+        // A day with nothing left on it must lose its stored row, not keep the last one
+        // computed. Returning early here meant a recalculation could only ever raise or
+        // restate a day's metrics, never clear them: deleting every session from a day left
+        // its hours, its session count and its score sitting in the heatmap and the weekly
+        // totals for good.
+        if (sessions.isEmpty() && averageMood == null) {
+            dailyHealthMetricsRepository.findByUserIdAndMetricDate(user.getId(), date)
+                .ifPresent(stale -> {
+                    dailyHealthMetricsRepository.delete(stale);
+                    log.info("Cleared health metrics for user {} on {} - no activity remains",
+                        user.getId(), date);
+                });
             return;
         }
 
@@ -148,9 +161,6 @@ public class HealthService {
             .sum() / 3600.0;
 
         int sessionCount = sessions.size();
-
-        // Calculate average mood for the day
-        Double averageMood = moodEntryRepository.calculateAverageMood(user.getId(), startInstant, endInstant);
 
         // Calculate late-night minutes and time-of-day breakdown
         long lateNightMinutes = 0;

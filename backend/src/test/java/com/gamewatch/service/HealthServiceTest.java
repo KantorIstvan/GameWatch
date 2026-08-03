@@ -107,6 +107,49 @@ class HealthServiceTest {
     }
 
     @Test
+    void recalculateMetricsForDate_clearsTheStoredRowWhenNothingIsLeftOnTheDay() {
+        // Recalculation used to bail out as soon as a day had no sessions, so it could only
+        // ever raise or restate a day's metrics, never clear them. Deleting every session
+        // from a day left its hours and score in the heatmap permanently.
+        User user = User.builder().id(1L).auth0UserId("auth0|123").timezone("UTC").build();
+        DailyHealthMetrics stale = DailyHealthMetrics.builder()
+            .user(user).metricDate(LocalDate.of(2026, 3, 10)).healthScore(72).totalHours(4.0).build();
+
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(List.of());
+        when(moodEntryRepository.calculateAverageMood(anyLong(), any(), any())).thenReturn(null);
+        when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(1L, LocalDate.of(2026, 3, 10)))
+            .thenReturn(Optional.of(stale));
+
+        healthService.recalculateMetricsForDate(user, LocalDate.of(2026, 3, 10));
+
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository).delete(stale);
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository, org.mockito.Mockito.never())
+            .save(any(DailyHealthMetrics.class));
+    }
+
+    @Test
+    void recalculateMetricsForDate_keepsADayThatHasAMoodButNoSessions() {
+        // Mood can be logged without a session attached, and a day like that is still a day
+        // worth scoring - clearing it would throw away real data.
+        User user = User.builder().id(1L).auth0UserId("auth0|123").timezone("UTC").build();
+
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(List.of());
+        when(moodEntryRepository.calculateAverageMood(anyLong(), any(), any())).thenReturn(4.0);
+        when(dailyHealthMetricsRepository.findByUserIdAndMetricDate(anyLong(), any()))
+            .thenReturn(Optional.empty());
+        when(dailyHealthMetricsRepository.findByUserIdAndMetricDateBetweenOrderByMetricDateDesc(
+                anyLong(), any(), any())).thenReturn(List.of());
+
+        healthService.recalculateMetricsForDate(user, LocalDate.of(2026, 3, 10));
+
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository).save(any(DailyHealthMetrics.class));
+        org.mockito.Mockito.verify(dailyHealthMetricsRepository, org.mockito.Mockito.never())
+            .delete(any(DailyHealthMetrics.class));
+    }
+
+    @Test
     void getHealthDashboard_startsTheWeekOnTheUsersPreferredDay() {
         // The statistics page already honours this preference. A dashboard that always
         // started its week on Monday made the two pages' weekly totals irreconcilable for
