@@ -167,25 +167,34 @@ export function usePlaythrough(id: number, isAuthReady: boolean) {
     }
   }, [id, playthrough, sessionTimer, t])
 
+  // Finishing and dropping now close the open session on the backend, so they settle
+  // the timer the same way ending a session does - otherwise the page keeps rendering
+  // a "current session" for a playthrough that no longer has one.
   const handleFinish = useCallback(async () => {
     try {
       const response = await playthroughsApi.stop(id)
       setPlaythrough(response.data)
       setIsRunning(false)
+      setElapsedTime(response.data.durationSeconds || 0)
+      sessionTimer.clearSessionTime(id)
+      healthNotificationService.stopAllReminders()
     } catch (err) {
       setError(t('playthrough.failedToFinishPlaythrough'))
     }
-  }, [id, t])
+  }, [id, sessionTimer, t])
 
   const handleDrop = useCallback(async () => {
     try {
       const response = await playthroughsApi.drop(id)
       setPlaythrough(response.data)
       setIsRunning(false)
+      setElapsedTime(response.data.durationSeconds || 0)
+      sessionTimer.clearSessionTime(id)
+      healthNotificationService.stopAllReminders()
     } catch (err) {
       setError(t('playthrough.failedToDropPlaythrough'))
     }
-  }, [id, t])
+  }, [id, sessionTimer, t])
 
   const handlePickup = useCallback(async () => {
     try {
