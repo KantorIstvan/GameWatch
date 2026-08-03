@@ -25,4 +25,7 @@ public interface PlaythroughRepository extends JpaRepository<Playthrough, Long> 
     
     Optional<Playthrough> findByIdAndUserId(Long id, Long userId);
     List<Playthrough> findByUserIdAndIsActiveTrue(Long userId);
+
+    /** Playthroughs that absorbed this one's timer value via a one-time import. */
+    List<Playthrough> findByImportedFromPlaythroughId(Long importedFromPlaythroughId);
 }

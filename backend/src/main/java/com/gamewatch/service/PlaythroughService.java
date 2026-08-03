@@ -423,6 +423,8 @@ public class PlaythroughService {
         // sessions with it, so their metrics can be rebuilt from what remains.
         Set<LocalDate> affectedDates = sessionDatesOf(playthroughId, user);
 
+        releaseImportsFrom(playthrough);
+
         playthroughRepository.delete(playthrough);
         playthroughRepository.flush();
         log.info("Deleted playthrough {}", playthroughId);
@@ -478,6 +480,28 @@ public class PlaythroughService {
         // heatmap, the weekly totals and the score all kept counting a session that no
         // longer existed.
         recalculateHealthForDates(user, Set.of(deletedSessionDate));
+    }
+
+    /**
+     * Detaches any playthrough that absorbed this one's timer value, before it is deleted.
+     *
+     * The imported chunk is deducted from the target's total only to stop the source
+     * counting it twice. Once the source is gone the target's duration is the sole
+     * surviving record of that time, so the bookkeeping is cleared and the target keeps it.
+     *
+     * The database would set the foreign key to null on its own, but doing it here keeps
+     * Hibernate and its second-level cache in step, and clears the now-meaningless imported
+     * duration alongside it.
+     */
+    private void releaseImportsFrom(Playthrough source) {
+        List<Playthrough> targets = playthroughRepository.findByImportedFromPlaythroughId(source.getId());
+        for (Playthrough target : targets) {
+            target.setImportedFromPlaythrough(null);
+            target.setImportedDurationSeconds(0L);
+            playthroughRepository.save(target);
+            log.info("Released import link from playthrough {} after deleting source {}",
+                target.getId(), source.getId());
+        }
     }
 
     /**

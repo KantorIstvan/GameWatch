@@ -209,11 +209,7 @@ public class GameService {
     
     private GameDto mapToDtoWithStats(Game game, List<Playthrough> playthroughs) {
         long totalSeconds = playthroughs.stream()
-            .mapToLong(p -> {
-                long duration = p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L;
-                long imported = p.getImportedDurationSeconds() != null ? p.getImportedDurationSeconds() : 0L;
-                return Math.max(0, duration - imported);
-            })
+            .mapToLong(Playthrough::effectivePlaytimeSeconds)
             .sum();
         
         int sessionCount = playthroughs.stream()
@@ -288,11 +284,7 @@ public class GameService {
         }
         
         long totalPlaytime = playthroughs.stream()
-            .mapToLong(p -> {
-                long duration = p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L;
-                long imported = p.getImportedDurationSeconds() != null ? p.getImportedDurationSeconds() : 0L;
-                return Math.max(0, duration - imported);
-            })
+            .mapToLong(Playthrough::effectivePlaytimeSeconds)
             .sum();
         
         if (totalPlaytime == 0) {
@@ -361,11 +353,7 @@ public class GameService {
         }
         
         long totalPlayTimeSeconds = playthroughs.stream()
-            .mapToLong(p -> {
-                long duration = p.getDurationSeconds() != null ? p.getDurationSeconds() : 0L;
-                long imported = p.getImportedDurationSeconds() != null ? p.getImportedDurationSeconds() : 0L;
-                return Math.max(0, duration - imported);
-            })
+            .mapToLong(Playthrough::effectivePlaytimeSeconds)
             .sum();
         
         int totalSessions = playthroughs.stream()

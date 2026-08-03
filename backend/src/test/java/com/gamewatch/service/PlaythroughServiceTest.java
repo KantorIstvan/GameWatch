@@ -632,6 +632,35 @@ class PlaythroughServiceTest {
     }
 
     @Test
+    void deletingAnImportSource_LeavesTheImportedTimeCountingOnTheTarget() {
+        // The imported chunk is deducted from the target only to stop the source counting
+        // it twice. The deduction used to be unconditional, so deleting the source made
+        // those hours vanish from every total: the source no longer contributed them, and
+        // the target went on subtracting them from the only surviving record of them.
+        Playthrough target = Playthrough.builder()
+            .id(2L).user(testUser).game(testGame).playthroughType("100%")
+            .durationSeconds(10_000L)
+            .importedFromPlaythrough(testPlaythrough)
+            .importedDurationSeconds(4_000L)
+            .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+            .sessionCount(0).pauseCount(0).sessionStartDurationSeconds(0L)
+            .build();
+
+        assertThat(target.effectivePlaytimeSeconds()).isEqualTo(6_000L);
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of());
+        when(playthroughRepository.findByImportedFromPlaythroughId(1L)).thenReturn(List.of(target));
+
+        playthroughService.deletePlaythrough(testUser, 1L);
+
+        assertThat(target.getImportedFromPlaythrough()).isNull();
+        assertThat(target.getImportedDurationSeconds()).isZero();
+        // All 10 000 seconds now count, because nothing else reports them any more.
+        assertThat(target.effectivePlaytimeSeconds()).isEqualTo(10_000L);
+    }
+
+    @Test
     void pickupPlaythrough_ClearsTheDropTimestamp() {
         testPlaythrough.setIsDropped(true);
         testPlaythrough.setDroppedAt(Instant.now().minus(1, ChronoUnit.HOURS));
