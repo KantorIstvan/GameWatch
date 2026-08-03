@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
@@ -267,6 +269,97 @@ class UserStatisticsServiceTest {
             .durationSeconds(duration).pauseCount(0)
             .startedAt(startedAt).endedAt(startedAt.plusSeconds(duration))
             .build();
+    }
+
+    /** Drives the service with sessions on the given days-ago offsets from today. */
+    private UserStatisticsDto statsForDaysAgo(int... daysAgo) {
+        Playthrough playthrough = playthroughWithLifetimePlaytime(3_600L * daysAgo.length, Instant.now());
+
+        List<SessionHistory> sessions = new java.util.ArrayList<>();
+        int number = 1;
+        for (int offset : daysAgo) {
+            Instant start = LocalDate.now(ZoneOffset.UTC).minusDays(offset)
+                .atTime(14, 0).toInstant(ZoneOffset.UTC);
+            sessions.add(session(playthrough, number++, start, 3_600L));
+        }
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(sessions);
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of(1L));
+
+        return userStatisticsService.getUserStatistics(testUser, "year", null);
+    }
+
+    @Test
+    void currentStreak_countsBackFromToday() {
+        UserStatisticsDto stats = statsForDaysAgo(0, 1, 2);
+
+        assertThat(stats.getConsistencyStats().getCurrentStreakDays()).isEqualTo(3);
+        assertThat(stats.getConsistencyStats().getLongestStreakDays()).isEqualTo(3);
+    }
+
+    @Test
+    void currentStreak_survivesAnUnplayedTodayButNotAnUnplayedYesterday() {
+        // A streak breaks when a whole day passes unplayed, not the moment midnight
+        // arrives - otherwise every streak in the app would read zero each morning.
+        assertThat(statsForDaysAgo(1, 2, 3).getConsistencyStats().getCurrentStreakDays()).isEqualTo(3);
+
+        org.mockito.Mockito.reset(playthroughRepository, userGameRepository, sessionHistoryRepository);
+
+        assertThat(statsForDaysAgo(2, 3, 4).getConsistencyStats().getCurrentStreakDays()).isZero();
+    }
+
+    @Test
+    void currentStreak_isAbsentForAPeriodThatHasAlreadyEnded() {
+        Playthrough playthrough = playthroughWithLifetimePlaytime(3_600L, Instant.now());
+        Instant start = Instant.parse("2026-03-10T14:00:00Z");
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(List.of(session(playthrough, 1, start, 3_600L)));
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of(1L));
+
+        UserStatisticsDto stats = userStatisticsService.getUserStatistics(testUser, "month", "2026-03-10");
+
+        // "Currently on a 3 day streak" is meaningless when looking at last March.
+        assertThat(stats.getConsistencyStats().getCurrentStreakDays()).isNull();
+        assertThat(stats.getConsistencyStats().getLongestStreakDays()).isEqualTo(1);
+    }
+
+    @Test
+    void longestGap_ignoresTheRunUpToTheFirstDayEverPlayed() {
+        // Days before the user's first session are the period starting early, not a lapse.
+        UserStatisticsDto stats = statsForDaysAgo(0, 10, 11);
+
+        assertThat(stats.getConsistencyStats().getLongestGapDays()).isEqualTo(9);
+        assertThat(stats.getConsistencyStats().getDaysPlayed()).isEqualTo(3);
+    }
+
+    @Test
+    void medianSessionLength_isNotDraggedAroundByOneMarathon() {
+        // The mean this page already reports is 3h; the median describes a normal evening.
+        Playthrough playthrough = playthroughWithLifetimePlaytime(43_200L, Instant.now());
+        Instant base = LocalDate.now(ZoneOffset.UTC).minusDays(3).atTime(12, 0).toInstant(ZoneOffset.UTC);
+
+        List<SessionHistory> sessions = List.of(
+            session(playthrough, 1, base, 3_600L),
+            session(playthrough, 2, base.plusSeconds(86_400), 3_600L),
+            session(playthrough, 3, base.plusSeconds(172_800), 36_000L));
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
+        when(userGameRepository.findGamesByUser(testUser)).thenReturn(List.of(testGame));
+        when(sessionHistoryRepository.findSessionsStartedByUserBetween(anyLong(), any(), any()))
+            .thenReturn(sessions);
+        when(sessionHistoryRepository.findPlaythroughIdsWithAnySession(List.of(1L))).thenReturn(Set.of(1L));
+
+        UserStatisticsDto stats = userStatisticsService.getUserStatistics(testUser, "year", null);
+
+        assertThat(stats.getAverageSessionPlaytimeSeconds()).isEqualTo(14_400.0);
+        assertThat(stats.getConsistencyStats().getMedianSessionSeconds()).isEqualTo(3_600L);
+        assertThat(stats.getConsistencyStats().getPercentile90SessionSeconds()).isEqualTo(36_000L);
     }
 
     @Test

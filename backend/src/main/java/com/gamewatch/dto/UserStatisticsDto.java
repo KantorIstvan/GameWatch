@@ -38,7 +38,34 @@ public class UserStatisticsDto {
     private Double libraryCompletionPercentage;
     private String favoriteDeveloper;
     private String favoritePublisher;
-    
+
+    private ConsistencyStats consistencyStats;
+
+    /**
+     * How regularly the period was played, and how long a typical session runs.
+     *
+     * Medians sit alongside the existing mean deliberately: a single all-night session
+     * drags an average far enough to stop describing anyone's normal evening, and this page
+     * previously reported only means.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConsistencyStats {
+        /** Null when the period does not contain today, where "current" has no meaning. */
+        private Integer currentStreakDays;
+        private Integer longestStreakDays;
+        private Integer daysPlayed;
+        private Integer daysInPeriod;
+        private Double consistencyPercentage;
+        private Integer longestGapDays;
+        private Long medianSessionSeconds;
+        private Long percentile90SessionSeconds;
+        private Double sessionsPerActiveDay;
+    }
+
+
     @Data
     @Builder
     @NoArgsConstructor
