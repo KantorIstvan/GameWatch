@@ -61,8 +61,9 @@ public class GameDto {
     private String dominantColor1;
     private String dominantColor2;
     
-    private String status; 
+    private String status;
     private Long totalPlaytimeSeconds;
+    private Integer playthroughCount;
     private Integer sessionCount;
     private String lastPlayedDate; 
 }

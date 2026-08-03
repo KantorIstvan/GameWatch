@@ -273,6 +273,9 @@ public class GameService {
             .dominantColor2(game.getDominantColor2())
             .status(status)
             .totalPlaytimeSeconds(totalSeconds)
+            // Deleting a game cascades to its playthroughs and their sessions, so the
+            // confirmation dialog needs to be able to say how much that actually is.
+            .playthroughCount(playthroughs.size())
             .sessionCount(sessionCount)
             .lastPlayedDate(lastPlayedDate)
             .build();
