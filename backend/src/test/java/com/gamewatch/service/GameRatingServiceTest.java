@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +51,7 @@ class GameRatingServiceTest {
 
     private void stubAggregate(long count, long sum, Double globalMean) {
         when(gameRatingRepository.findCountAndSum(1L))
-            .thenReturn(new Object[]{count, sum});
+            .thenReturn(Collections.singletonList(new Object[]{count, sum}));
         lenient().when(gameRatingRepository.findGlobalMeanScore()).thenReturn(globalMean);
         lenient().when(gameRepository.save(any(Game.class))).thenAnswer(i -> i.getArgument(0));
     }
@@ -65,7 +66,8 @@ class GameRatingServiceTest {
         double loneTen = game.getBayesianScore();
 
         Game popular = Game.builder().id(2L).name("Popular").ratingCount(0).ratingSum(0L).build();
-        when(gameRatingRepository.findCountAndSum(2L)).thenReturn(new Object[]{200L, 1880L}); // mean 9.4
+        when(gameRatingRepository.findCountAndSum(2L))
+            .thenReturn(Collections.singletonList(new Object[]{200L, 1880L})); // mean 9.4
 
         gameRatingService.recomputeAggregate(popular);
         double wellSupported = popular.getBayesianScore();
@@ -80,7 +82,8 @@ class GameRatingServiceTest {
     void aGameWithNoRatingsHasNoScoreRatherThanAZero() {
         // Null keeps "nobody has rated this" distinguishable from "rated badly", which a
         // zero or a defaulted mid-scale value would not.
-        when(gameRatingRepository.findCountAndSum(1L)).thenReturn(new Object[]{0L, 0L});
+        when(gameRatingRepository.findCountAndSum(1L))
+            .thenReturn(Collections.singletonList(new Object[]{0L, 0L}));
         when(gameRepository.save(any(Game.class))).thenAnswer(i -> i.getArgument(0));
 
         gameRatingService.recomputeAggregate(game);

@@ -21,7 +21,7 @@ public interface GameRatingRepository extends JpaRepository<GameRating, Long> {
     List<Object[]> findScoreDistribution(@Param("gameId") Long gameId);
 
     @Query("SELECT COUNT(r), COALESCE(SUM(r.score), 0) FROM GameRating r WHERE r.game.id = :gameId")
-    Object[] findCountAndSum(@Param("gameId") Long gameId);
+    List<Object[]> findCountAndSum(@Param("gameId") Long gameId);
 
     /**
      * Mean score across every rated game, weighting each game equally rather than each

@@ -86,7 +86,7 @@ public class GameRatingService {
      */
     @Transactional
     public void recomputeAggregate(Game game) {
-        Object[] row = gameRatingRepository.findCountAndSum(game.getId());
+        Object[] row = gameRatingRepository.findCountAndSum(game.getId()).get(0);
         long count = ((Number) row[0]).longValue();
         long sum = ((Number) row[1]).longValue();
 
