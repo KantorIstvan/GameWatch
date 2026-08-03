@@ -12,6 +12,7 @@ import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
 import com.gamewatch.repository.UserGameRepository;
+import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,7 @@ public class GameService {
     private final UserGameRepository userGameRepository;
     private final PlaythroughRepository playthroughRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
+    private final PlaythroughService playthroughService;
 
     @Transactional
     public GameDto createGame(CreateGameRequest request, User user) {
@@ -43,8 +46,20 @@ public class GameService {
             if (userGameRepository.existsByUserAndGameExternalId(user, request.getExternalId())) {
                 throw new IllegalArgumentException("You already have this game in your library");
             }
+
+            // The catalogue is shared. Adding a game someone else already added links to
+            // the existing row rather than inserting a private copy of it - without this
+            // every user held their own unrelated row for the same game, and nothing that
+            // aggregates across users could be built on top.
+            Optional<Game> catalogued = gameRepository.findFirstByExternalId(request.getExternalId());
+            if (catalogued.isPresent()) {
+                Game existing = catalogued.get();
+                userGameRepository.save(UserGame.builder().user(user).game(existing).build());
+                log.info("Linked existing catalogue game {} to user {}", existing.getId(), user.getAuth0UserId());
+                return mapToDtoWithStats(existing, List.of());
+            }
         }
-        
+
         Game game = Game.builder()
             .name(request.getName())
             .bannerImageUrl(request.getBannerImageUrl())
@@ -137,18 +152,35 @@ public class GameService {
         return mapToDtoWithStats(game, user);
     }
 
+    /**
+     * Removes a game from this user's library, together with their own playthroughs of it.
+     *
+     * The catalogue row itself stays. It used to be deleted outright, which was survivable
+     * only while every user had a private copy of every game; against a shared catalogue
+     * that same call would delete the game, and by cascade every other user's playthroughs
+     * and session history for it, on one person's say-so.
+     *
+     * Playthroughs are removed one by one through PlaythroughService rather than left to
+     * the foreign key, so each one still releases anything that imported from it and
+     * rebuilds the health metrics for the days it contributed to.
+     */
     @Transactional
     public void deleteGame(Long id, User user) {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Game not found"));
-        
+
         UserGame userGame = userGameRepository.findByUserAndGame(user, game)
             .orElseThrow(() -> new RuntimeException("Game not found or access denied"));
-        
+
+        List<Playthrough> ownPlaythroughs = playthroughRepository
+            .findByUserIdAndGameIdOrderByCreatedAtDesc(user.getId(), game.getId());
+        for (Playthrough playthrough : ownPlaythroughs) {
+            playthroughService.deletePlaythrough(user, playthrough.getId());
+        }
+
         userGameRepository.delete(userGame);
-        
-        gameRepository.deleteById(id);
-        log.info("Deleted game with id: {} for user: {}", id, user.getAuth0UserId());
+        log.info("Removed game {} and {} playthroughs from user {}'s library",
+            id, ownPlaythroughs.size(), user.getAuth0UserId());
     }
 
     private GameDto mapToDto(Game game) {
@@ -328,11 +360,16 @@ public class GameService {
     public GameStatisticsDto getGameStatistics(Long gameId, User user) {
         Game game = gameRepository.findById(gameId)
             .orElseThrow(() -> new RuntimeException("Game not found"));
-        
-        if (!userGameRepository.existsByUserAndGame(user, game)) {
-            throw new RuntimeException("Game not found or access denied");
-        }
-        
+
+        // The library link, not the catalogue row, is what records when *this* user added
+        // the game. Against a shared catalogue games.createdAt is when the game first
+        // entered the catalogue, which can predate the user entirely.
+        UserGame libraryEntry = userGameRepository.findByUserAndGame(user, game)
+            .orElseThrow(() -> new RuntimeException("Game not found or access denied"));
+        LocalDate addedToLibraryDate = libraryEntry.getCreatedAt()
+            .atZone(TimezoneUtils.resolveZone(user))
+            .toLocalDate();
+
         List<Playthrough> playthroughs = playthroughRepository
             .findByUserIdAndGameIdOrderByCreatedAtDesc(user.getId(), game.getId());
         
@@ -345,7 +382,7 @@ public class GameService {
                 .gameId(game.getId())
                 .gameName(game.getName())
                 .gameBannerImageUrl(game.getBannerImageUrl())
-                .gameAddedDate(game.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate())
+                .gameAddedDate(addedToLibraryDate)
                 .totalPlayTimeSeconds(0L)
                 .totalSessions(0)
                 .averageSessionTimeSeconds(0L)
@@ -387,7 +424,6 @@ public class GameService {
             .map(instant -> instant.atZone(java.time.ZoneId.systemDefault()).toLocalDate())
             .orElse(null);
         
-        LocalDate gameAddedDate = game.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         
         List<Long> completionTimes = playthroughs.stream()
             .filter(p -> p.getIsCompleted() != null && p.getIsCompleted())
@@ -446,7 +482,7 @@ public class GameService {
             .gameId(game.getId())
             .gameName(game.getName())
             .gameBannerImageUrl(game.getBannerImageUrl())
-            .gameAddedDate(gameAddedDate)
+            .gameAddedDate(addedToLibraryDate)
             .totalPlayTimeSeconds(totalPlayTimeSeconds)
             .totalSessions(totalSessions)
             .averageSessionTimeSeconds(averageSessionTimeSeconds)

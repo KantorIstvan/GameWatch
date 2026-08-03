@@ -40,6 +40,9 @@ class GameServiceTest {
     @Mock
     private SessionHistoryRepository sessionHistoryRepository;
 
+    @Mock
+    private PlaythroughService playthroughService;
+
     @InjectMocks
     private GameService gameService;
 
@@ -235,17 +238,54 @@ class GameServiceTest {
             .game(testGame)
             .build();
 
+        Playthrough own = Playthrough.builder()
+            .id(5L).user(testUser).game(testGame).playthroughType("story")
+            .durationSeconds(3600L).importedDurationSeconds(0L)
+            .isActive(false).isCompleted(false).isDropped(false).isPaused(false)
+            .build();
+
         when(gameRepository.findById(1L)).thenReturn(Optional.of(testGame));
         when(userGameRepository.findByUserAndGame(testUser, testGame)).thenReturn(Optional.of(userGame));
-        doNothing().when(userGameRepository).delete(userGame);
-        doNothing().when(gameRepository).deleteById(1L);
+        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
+            .thenReturn(List.of(own));
 
         gameService.deleteGame(1L, testUser);
 
-        verify(gameRepository).findById(1L);
-        verify(userGameRepository).findByUserAndGame(testUser, testGame);
         verify(userGameRepository).delete(userGame);
-        verify(gameRepository).deleteById(1L);
+        // The user's own playthroughs go, routed through PlaythroughService so each one
+        // still releases its imports and rebuilds the affected health metrics.
+        verify(playthroughService).deletePlaythrough(testUser, 5L);
+        // The catalogue row survives. Deleting it would, against a shared catalogue, take
+        // every other user's playthroughs and session history for that game with it.
+        verify(gameRepository, never()).deleteById(any());
+        verify(gameRepository, never()).delete(any());
+    }
+
+    @Test
+    void createGame_ReusesTheCatalogueRowWhenTheGameIsAlreadyKnown() {
+        // Every add used to insert a brand new games row, so two users playing the same
+        // game held two unrelated rows and nothing could be aggregated across them.
+        when(userGameRepository.existsByUserAndGameExternalId(testUser, 12345)).thenReturn(false);
+        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.of(testGame));
+
+        GameDto result = gameService.createGame(createGameRequest, testUser);
+
+        assertThat(result.getId()).isEqualTo(1L);
+        verify(userGameRepository).save(any(UserGame.class));
+        verify(gameRepository, never()).save(any(Game.class));
+    }
+
+    @Test
+    void createGame_InsertsACatalogueRowWhenTheGameIsNew() {
+        when(userGameRepository.existsByUserAndGameExternalId(testUser, 12345)).thenReturn(false);
+        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.empty());
+        when(gameRepository.save(any(Game.class))).thenReturn(testGame);
+        when(userGameRepository.save(any(UserGame.class))).thenReturn(new UserGame());
+
+        gameService.createGame(createGameRequest, testUser);
+
+        verify(gameRepository).save(any(Game.class));
+        verify(userGameRepository).save(any(UserGame.class));
     }
 
     @Test
