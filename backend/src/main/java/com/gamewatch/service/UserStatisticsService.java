@@ -189,17 +189,8 @@ public class UserStatisticsService {
             .sum();
     }
 
-    /**
-     * A playthrough that absorbed another one via "import" already had that chunk
-     * counted once through the source playthrough's own record, so aggregate totals
-     * must exclude it here (same approach as GameService's per-game totals) —
-     * otherwise the imported hours are counted twice: once via the source, once via
-     * the target that absorbed it.
-     */
     private long effectivePlaytimeSeconds(Playthrough playthrough) {
-        long duration = playthrough.getDurationSeconds() != null ? playthrough.getDurationSeconds() : 0L;
-        long imported = playthrough.getImportedDurationSeconds() != null ? playthrough.getImportedDurationSeconds() : 0L;
-        return Math.max(0L, duration - imported);
+        return playthrough.effectivePlaytimeSeconds();
     }
 
     /**

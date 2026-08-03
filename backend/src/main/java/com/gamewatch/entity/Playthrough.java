@@ -124,4 +124,30 @@ public class Playthrough {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    /**
+     * The playtime this playthrough contributes to any aggregate total.
+     *
+     * A playthrough that absorbed another one's timer value via a one-time import has that
+     * chunk inside its own durationSeconds, while the source playthrough still reports the
+     * same time under its own record - so the imported part is deducted here to keep it
+     * from being counted twice.
+     *
+     * The deduction is conditional on the source still existing. It used to be
+     * unconditional, which meant deleting the source made those hours disappear from every
+     * total in the app: the source no longer contributed them, and the target went on
+     * subtracting them from a duration that was now the only remaining record of them.
+     */
+    public long effectivePlaytimeSeconds() {
+        long duration = durationSeconds != null ? durationSeconds : 0L;
+
+        // A lazy association is a proxy reference; testing it for null reads the foreign
+        // key that is already loaded and does not fetch the source row.
+        if (importedFromPlaythrough == null) {
+            return Math.max(0L, duration);
+        }
+
+        long imported = importedDurationSeconds != null ? importedDurationSeconds : 0L;
+        return Math.max(0L, duration - imported);
+    }
 }
