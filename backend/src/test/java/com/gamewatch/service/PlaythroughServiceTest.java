@@ -10,6 +10,7 @@ import com.gamewatch.entity.User;
 import com.gamewatch.repository.GameRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.SessionHistoryRepository;
+import com.gamewatch.repository.UserGameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,9 @@ class PlaythroughServiceTest {
 
     @Mock
     private GameRepository gameRepository;
+
+    @Mock
+    private UserGameRepository userGameRepository;
 
     @Mock
     private SessionHistoryRepository sessionHistoryRepository;
@@ -100,6 +104,7 @@ class PlaythroughServiceTest {
             .build();
 
         when(gameRepository.findById(1L)).thenReturn(Optional.of(testGame));
+        when(userGameRepository.existsByUserAndGame(testUser, testGame)).thenReturn(true);
         when(colorExtractionService.extractDominantColors(anyString())).thenReturn(new String[]{"#FF5733", "#33C4FF"});
         when(playthroughRepository.save(any(Playthrough.class))).thenReturn(testPlaythrough);
 
@@ -132,6 +137,23 @@ class PlaythroughServiceTest {
             .hasMessageContaining("Game not found");
 
         verify(gameRepository).findById(999L);
+        verify(playthroughRepository, never()).save(any());
+    }
+
+    @Test
+    void createPlaythrough_GameNotInUserLibrary_ThrowsException() {
+        CreatePlaythroughRequest request = CreatePlaythroughRequest.builder()
+            .gameId(1L)
+            .playthroughType("story")
+            .build();
+
+        when(gameRepository.findById(1L)).thenReturn(Optional.of(testGame));
+        when(userGameRepository.existsByUserAndGame(testUser, testGame)).thenReturn(false);
+
+        assertThatThrownBy(() -> playthroughService.createPlaythrough(testUser, request))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Game not found");
+
         verify(playthroughRepository, never()).save(any());
     }
 
