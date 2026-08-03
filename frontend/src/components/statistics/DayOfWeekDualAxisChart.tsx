@@ -93,7 +93,7 @@ function DayOfWeekDualAxisChart({
                 style={{ backgroundColor: isCurrentDay ? vibrantSecondary : normalSecondary }}
               />
               <span className="text-caption text-text-secondary sm:text-body-sm">
-                {t('statistics.userStats.avg')}: <strong className="font-semibold text-text-primary">{formatDuration(payload[1]?.value || 0)}</strong>
+                {t('statistics.userStats.avgPerDay')}: <strong className="font-semibold text-text-primary">{formatDuration(payload[1]?.value || 0)}</strong>
               </span>
             </div>
           </div>
@@ -202,7 +202,7 @@ function DayOfWeekDualAxisChart({
                 dataKey="avgHours"
                 stroke={normalSecondary}
                 strokeWidth={window.innerWidth < 600 ? 2.5 : 3}
-                name={t('statistics.userStats.avgSession')}
+                name={t('statistics.userStats.avgPerDay')}
                 dot={(dotProps: any) => {
                   const isCurrentDay = dotProps.index === currentDayMappedIndex
                   const isMobile = window.innerWidth < 600
