@@ -107,6 +107,17 @@ export const ratingsApi = {
   removeRating: (gameId: number) => apiClient.delete(`/games/${gameId}/rating`),
 }
 
+export const reviewsApi = {
+  getReviews: (gameId: number, sort: string, language?: string) =>
+    apiClient.get(`/games/${gameId}/reviews`, { params: { sort, language } }),
+  submitReview: (
+    gameId: number,
+    review: { body: string; containsSpoilers: boolean; language: string }
+  ) => apiClient.put(`/games/${gameId}/reviews`, review),
+  deleteReview: (gameId: number) => apiClient.delete(`/games/${gameId}/reviews`),
+  toggleHelpful: (reviewId: number) => apiClient.post(`/reviews/${reviewId}/helpful`),
+}
+
 export const profilesApi = {
   getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
