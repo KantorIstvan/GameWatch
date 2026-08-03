@@ -101,13 +101,13 @@ export default function MoodPromptModal({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3">
           {!required && (
-            <Button variant="ghost" onClick={handleSkip} disabled={submitting} className="h-12 flex-1">
+            <Button variant="ghost" onClick={handleSkip} disabled={submitting} className="h-12 w-full">
               {t('mood.skip')}
             </Button>
           )}
-          <Button onClick={handleSubmit} disabled={submitting} className="h-12 flex-1">
+          <Button onClick={handleSubmit} disabled={submitting} className="h-12 w-full">
             {submitting ? t('mood.submitting') : t('mood.submit')}
           </Button>
         </div>

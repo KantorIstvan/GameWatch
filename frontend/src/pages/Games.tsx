@@ -313,13 +313,13 @@ function Games() {
 
   const dialogActions = useMemo(() => (
     <>
-      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="h-12 flex-1">
+      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="h-12 w-full">
         {t('common.cancel')}
       </Button>
       <Button
         onClick={handleCreateGame}
         size="lg"
-        className="h-12 flex-1 bg-success text-white hover:bg-success/90"
+        className="h-12 w-full bg-success text-white hover:bg-success/90"
         disabled={!selectedGame}
       >
         {t('games.addGame')}

@@ -89,13 +89,13 @@ function CreatePlaythroughDialog({
       icon={<ListPlus className="size-10 sm:size-12" />}
       actions={
         <>
-          <Button onClick={onClose} variant="outline" size="lg" className="h-12 flex-1">
+          <Button onClick={onClose} variant="outline" size="lg" className="h-12 w-full">
             {t('common.cancel')}
           </Button>
           <Button
             onClick={onSubmit}
             size="lg"
-            className="h-12 flex-1"
+            className="h-12 w-full"
             disabled={!selectedGame || !playthroughType || !platform || !startDate}
           >
             {t('playthrough.create')}

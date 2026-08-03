@@ -137,11 +137,11 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
           )}
         </div>
 
-        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-          <Button onClick={handleClose} variant="outline" className="h-12 flex-1">
+        <div className="flex flex-col gap-3 pt-2">
+          <Button onClick={handleClose} variant="outline" className="h-12 w-full">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={!startDateTime || !endDateTime || submitting} className="h-12 flex-1">
+          <Button onClick={handleSubmit} disabled={!startDateTime || !endDateTime || submitting} className="h-12 w-full">
             {t('common.save')}
           </Button>
         </div>

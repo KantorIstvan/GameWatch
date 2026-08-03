@@ -94,15 +94,15 @@ function TypedConfirmDialog({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={handleClose} variant="outline" className="h-12 flex-1">
+        <div className="flex flex-col gap-3">
+          <Button onClick={handleClose} variant="outline" className="h-12 w-full">
             {cancelText ?? t('common.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={!isValid}
             variant={destructive ? 'destructive' : 'default'}
-            className="h-12 flex-1"
+            className="h-12 w-full"
           >
             {confirmText}
           </Button>

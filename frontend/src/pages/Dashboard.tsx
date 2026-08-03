@@ -71,13 +71,13 @@ function Dashboard() {
 
   const dialogActions = useMemo(() => (
     <>
-      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="flex-1">
+      <Button onClick={handleCloseDialog} variant="outline" size="lg" className="h-12 w-full">
         {t('common.cancel')}
       </Button>
       <Button
         onClick={handleCreatePlaythrough}
         size="lg"
-        className="flex-1"
+        className="h-12 w-full"
         disabled={!selectedGameId}
       >
         {t('playthrough.create')}

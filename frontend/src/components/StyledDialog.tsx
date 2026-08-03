@@ -57,7 +57,7 @@ const StyledDialog = React.memo(({
         <div className="px-0 pb-2">{children}</div>
 
         {actions && (
-          <div className="flex flex-col gap-3 pb-1 pt-2 sm:flex-row">{actions}</div>
+          <div className="flex flex-col gap-3 pb-1 pt-2">{actions}</div>
         )}
       </DialogContent>
     </Dialog>
