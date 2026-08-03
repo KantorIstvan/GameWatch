@@ -154,6 +154,33 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
+export interface ComparisonSide {
+  handle: string | null
+  displayName: string | null
+  profilePictureUrl: string | null
+  totalPlaytimeSeconds: number
+  gamesInLibrary: number
+  gamesCompleted: number
+  totalSessions: number
+}
+
+export interface SharedGame {
+  gameId: number
+  gameName: string
+  bannerImageUrl: string | null
+  yourSeconds: number
+  theirSeconds: number
+  youFinished: boolean
+  theyFinished: boolean
+}
+
+export interface ProfileComparison {
+  you: ComparisonSide
+  them: ComparisonSide
+  sharedGames: SharedGame[]
+  sharedGameCount: number
+}
+
 export interface ActivityEvent {
   id: string
   actorHandle: string | null

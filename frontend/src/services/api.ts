@@ -125,6 +125,7 @@ export const reviewsApi = {
 export const profilesApi = {
   getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
+  compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
 }
 
 export const feedApi = {
