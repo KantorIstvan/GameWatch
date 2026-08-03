@@ -364,6 +364,34 @@ class PlaythroughServiceTest {
     }
 
     @Test
+    void endSession_WithManuallyEditedTime_DerivesEndFromTheSessionNotTheLifetimeTotal() {
+        // Hand-editing the duration mid-session detaches the recorded time from the wall
+        // clock, so the session end is derived from its start. Deriving it from the
+        // playthrough's lifetime total instead put the end of a 30-minute session on a
+        // 50-hour playthrough two days into the future.
+        Instant sessionStart = Instant.now().minus(2, ChronoUnit.HOURS);
+        testPlaythrough.setIsPaused(true);
+        testPlaythrough.setManualTimeSet(true);
+        testPlaythrough.setSessionStartTime(sessionStart);
+        testPlaythrough.setSessionStartDurationSeconds(180_000L); // 50 h already recorded
+        testPlaythrough.setDurationSeconds(181_800L);             // + 30 min this session
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
+        when(sessionHistoryRepository.save(any(SessionHistory.class))).thenAnswer(i -> i.getArgument(0));
+
+        playthroughService.endSessionPlaythrough(testUser, 1L);
+
+        ArgumentCaptor<SessionHistory> captor = ArgumentCaptor.forClass(SessionHistory.class);
+        verify(sessionHistoryRepository).save(captor.capture());
+        SessionHistory recorded = captor.getValue();
+
+        assertThat(recorded.getDurationSeconds()).isEqualTo(1_800L);
+        assertThat(recorded.getEndedAt()).isEqualTo(sessionStart.plusSeconds(1_800L));
+        assertThat(recorded.getEndedAt()).isBefore(Instant.now());
+    }
+
+    @Test
     void endSession_WithoutOpenSession_DoesNotIncrementSessionCount() {
         // sessionCount was incremented before the null check guarding the row write, so a
         // playthrough with no open session drifted permanently out of step with the number
