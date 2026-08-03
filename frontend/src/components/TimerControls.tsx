@@ -90,13 +90,14 @@ function TimerControls({
         )}
       </div>
 
-      {!playthrough.isActive && !playthrough.isPaused && !playthrough.isDropped && (
+      {/* Available on completed and dropped playthroughs too: forgotten time is usually
+          remembered after finishing, and editing the duration can only revise downwards. */}
+      {!playthrough.isActive && !playthrough.isPaused && (
         <div className="mt-2 flex justify-center px-4 sm:px-0">
           <Button
             variant="outline"
             onClick={onOpenManualSession}
-            disabled={playthrough.isCompleted}
-            className="h-11 min-w-auto border-white/50 px-4 text-body-sm text-white hover:border-white hover:bg-white/10 disabled:border-white/20 disabled:text-white/30 sm:min-w-45"
+            className="h-11 min-w-auto border-white/50 px-4 text-body-sm text-white hover:border-white hover:bg-white/10 sm:min-w-45"
           >
             <Clock className="size-4" />
             {t('playthrough.logManualSession')}

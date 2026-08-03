@@ -711,8 +711,6 @@ function PlaythroughDetail() {
           onClose={() => setManualSessionDialogOpen(false)}
           onSubmit={handleLogManualSession}
           playthroughStartDate={playthrough.startDate}
-          isCompleted={playthrough.isCompleted}
-          isDropped={playthrough.isDropped}
           submitting={isSubmitting}
         />
 

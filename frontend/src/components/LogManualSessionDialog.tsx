@@ -11,12 +11,10 @@ interface LogManualSessionDialogProps {
   onClose: () => void
   onSubmit: (startedAt: string, endedAt: string) => void
   playthroughStartDate?: string | null
-  isCompleted?: boolean
-  isDropped?: boolean
   submitting?: boolean
 }
 
-function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, isCompleted, isDropped, submitting }: LogManualSessionDialogProps) {
+function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate, submitting }: LogManualSessionDialogProps) {
   const { t } = useTranslation()
   const { timezone } = useTimeFormat()
   const [startDateTime, setStartDateTime] = useState('')
@@ -27,7 +25,7 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
     setError('')
 
     if (!startDateTime || !endDateTime) {
-      setError('Both start and end times are required')
+      setError(t('playthrough.manualSession.bothTimesRequired'))
       return
     }
 
@@ -39,42 +37,38 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
     const end = dayjs.tz(endDateTime, timezone)
 
     if (!start.isValid() || !end.isValid()) {
-      setError('Invalid date/time format')
+      setError(t('playthrough.manualSession.invalidFormat'))
       return
     }
 
     if (!start.isBefore(end)) {
-      setError('Start time must be before end time')
+      setError(t('playthrough.manualSession.startBeforeEnd'))
       return
     }
 
     const now = dayjs()
     if (start.isAfter(now)) {
-      setError('Start time cannot be in the future')
+      setError(t('playthrough.manualSession.startInFuture'))
       return
     }
 
     if (end.isAfter(now)) {
-      setError('End time cannot be in the future')
+      setError(t('playthrough.manualSession.endInFuture'))
       return
     }
 
-    if (isCompleted) {
-      setError('Cannot log session for a completed playthrough')
-      return
-    }
-
-    if (isDropped) {
-      setError('Cannot log session for a dropped playthrough')
-      return
-    }
+    // Completed and dropped playthroughs accept manual sessions: forgotten time is
+    // usually remembered after finishing, and a duration edit can only revise downwards,
+    // so refusing here left those hours with nowhere to go.
 
     if (playthroughStartDate) {
       const playthroughStart = dayjs.tz(playthroughStartDate, timezone).startOf('day')
       const sessionStart = start.startOf('day')
 
       if (sessionStart.isBefore(playthroughStart)) {
-        setError(`Cannot log session before playthrough start date: ${playthroughStart.format('YYYY-MM-DD')}`)
+        setError(t('playthrough.manualSession.beforePlaythroughStart', {
+          date: playthroughStart.format('YYYY-MM-DD'),
+        }))
         return
       }
     }
