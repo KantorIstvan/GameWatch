@@ -149,8 +149,36 @@ export interface UserStatistics {
   libraryCompletionPercentage: number
   consistencyStats?: ConsistencyStats
   backlogStats?: BacklogStats
+  trendStats?: TrendStats
   favoriteDeveloper?: string
   favoritePublisher?: string
+}
+
+export interface CompletionComparison {
+  gameId: number
+  gameName: string
+  bannerImageUrl?: string
+  yourSeconds: number
+  typicalSeconds: number
+  /** Above 1 means slower than typical, below 1 faster. */
+  ratio: number
+}
+
+export interface TrendStats {
+  /** Null for the all-time view, which has no preceding period. */
+  previousPeriodPlaytimeSeconds: number | null
+  /** Null when the previous period was empty. */
+  playtimeChangePercentage: number | null
+  weekdayPlaytimeSeconds: number
+  weekendPlaytimeSeconds: number
+  weekendIntensityRatio: number | null
+  topThreeSharePercentage: number
+  varietyScore: number
+  playthroughsDropped: number
+  playthroughsCompleted: number
+  dropRatePercentage: number | null
+  medianSecondsBeforeDropping: number | null
+  completionComparisons: CompletionComparison[]
 }
 
 export interface BacklogStats {
@@ -193,6 +221,8 @@ export interface TimeOfDayStats {
 export interface DailyPlaytime {
   date: string
   playtimeSeconds: number
+  /** Trailing seven-day mean, for the trend line on the daily chart. */
+  rollingAverageSeconds?: number | null
 }
 
 export interface GameRanking {

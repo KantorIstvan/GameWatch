@@ -193,6 +193,23 @@
     "failedToLoad": "Failed to load statistics",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
+    "trends": {
+      "title": "Trends",
+      "sevenDayAverage": "7-day average",
+      "vsPreviousPeriod": "vs Previous Period",
+      "weekendIntensity": "Weekend Intensity",
+      "varietyScore": "Variety Score",
+      "topThreeShare": "Top 3 Games Share",
+      "dropRate": "Drop Rate",
+      "medianBeforeDropping": "Median Before Dropping",
+      "weekendHeavy": "You play {{ratio}}× as much per weekend day as per weekday.",
+      "weekdayHeavy": "You play {{ratio}}× as much per weekday as per weekend day.",
+      "comparisonTitle": "How long you took",
+      "comparisonSubtitle": "Your finish times against how long these games usually take.",
+      "yoursVsTypical": "{{yours}} · usually {{typical}}",
+      "slower": "{{factor}}× slower",
+      "faster": "{{factor}}× faster"
+    },
     "backlog": {
       "title": "Backlog",
       "funnelTitle": "How far your games get",

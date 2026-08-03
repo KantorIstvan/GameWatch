@@ -1,14 +1,15 @@
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface DailyPlaytimeChartProps {
-  data: Array<{ date: string; hours: number }>
+  data: Array<{ date: string; hours: number; rollingHours?: number | null }>
   title: string
   yAxisLabel: string
   seriesName: string
+  trendSeriesName: string
   valueFormatter?: (hours: number) => string
 }
 
-function DailyPlaytimeChart({ data, title, yAxisLabel, seriesName, valueFormatter }: DailyPlaytimeChartProps) {
+function DailyPlaytimeChart({ data, title, yAxisLabel, seriesName, trendSeriesName, valueFormatter }: DailyPlaytimeChartProps) {
   if (data.length === 0) return null
 
   // Thin out date labels as the range grows so they never overlap, instead of
@@ -23,7 +24,7 @@ function DailyPlaytimeChart({ data, title, yAxisLabel, seriesName, valueFormatte
       <p className="mb-2 text-body-sm font-bold sm:text-body-lg">{title}</p>
       <div className="h-70 w-full sm:h-75">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
+          <ComposedChart
             data={data}
             margin={{
               top: 10,
@@ -76,7 +77,19 @@ function DailyPlaytimeChart({ data, title, yAxisLabel, seriesName, valueFormatte
               fill="url(#colorHours)"
               name={seriesName}
             />
-          </AreaChart>
+            {/* Trailing seven-day mean. Daily play is spiky enough that the area alone
+                says very little about which way things are heading. */}
+            <Line
+              type="monotone"
+              dataKey="rollingHours"
+              stroke="var(--color-text-secondary)"
+              strokeWidth={2}
+              strokeDasharray="4 3"
+              dot={false}
+              activeDot={false}
+              name={trendSeriesName}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

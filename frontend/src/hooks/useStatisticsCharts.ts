@@ -23,12 +23,17 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
   return useMemo(() => {
     if (!statistics) return null
 
-    const dailyPlaytimeData = statistics.dailyPlaytime
-      .filter(dp => dp.playtimeSeconds > 0)
-      .map((dp) => ({
-        date: new Date(dp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        hours: Math.round((dp.playtimeSeconds / 3600) * 10) / 10,
-      }))
+    // Days with no play are kept. Dropping them left the x-axis an index of played days
+    // rather than a time axis, so the area was drawn as a straight run between dates that
+    // could be weeks apart - a sparse month looked like continuous play. It also makes the
+    // trailing average meaningful, since consecutive points are now consecutive days.
+    const dailyPlaytimeData = statistics.dailyPlaytime.map((dp) => ({
+      date: new Date(dp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      hours: Math.round((dp.playtimeSeconds / 3600) * 10) / 10,
+      rollingHours: dp.rollingAverageSeconds === undefined || dp.rollingAverageSeconds === null
+        ? null
+        : Math.round((dp.rollingAverageSeconds / 3600) * 10) / 10,
+    }))
 
     const timeOfDayData = [
       { name: t('statistics.userStats.dawn'), fullName: `${t('statistics.userStats.dawn')} (4-7)`, value: statistics.timeOfDayStats.dawnSeconds / 3600, fill: '#ffd93d' },

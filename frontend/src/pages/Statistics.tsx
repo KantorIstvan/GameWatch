@@ -8,6 +8,7 @@ import { useStatisticsCharts } from '../hooks/useStatisticsCharts'
 import StatCard from '../components/StatCard'
 import ConsistencySection from '../components/statistics/ConsistencySection'
 import BacklogSection from '../components/statistics/BacklogSection'
+import TrendsSection from '../components/statistics/TrendsSection'
 import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
@@ -234,6 +235,8 @@ function Statistics() {
 
       {hasData && <ConsistencySection stats={statistics.consistencyStats} />}
 
+      {hasData && <TrendsSection stats={statistics.trendStats} />}
+
       {/* Not gated on hasData: the backlog is a fact about the library, and a library
           with nothing played yet is exactly when it is worth seeing. */}
       <BacklogSection stats={statistics.backlogStats} />
@@ -248,6 +251,7 @@ function Statistics() {
                   title={t('statistics.userStats.dailyPlaytime')}
                   yAxisLabel={t('statistics.userStats.hours')}
                   seriesName={t('statistics.userStats.hoursPlayed')}
+                  trendSeriesName={t('statistics.trends.sevenDayAverage')}
                   valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
                 />
               </div>
