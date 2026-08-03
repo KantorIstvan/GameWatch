@@ -48,7 +48,10 @@ public class UserStatisticsService {
             ? fetchAllSessions(allPlaythroughs)
             : sessionHistoryRepository.findSessionsByUserAndDateRange(user.getId(), range.start(), range.end());
 
-        List<Playthrough> playthroughs = filterPlaythroughsByInterval(allPlaythroughs, sessions, range);
+        Set<Long> playthroughIdsWithAnySession = findPlaythroughIdsWithAnySession(allPlaythroughs);
+
+        List<Playthrough> playthroughs =
+            filterPlaythroughsByInterval(allPlaythroughs, sessions, playthroughIdsWithAnySession, range);
 
         if (playthroughs.isEmpty()) {
             return createEmptyStatistics();
@@ -57,7 +60,7 @@ public class UserStatisticsService {
         List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData = calculateDailyPlaytime(sessions, range, zone);
 
         return UserStatisticsDto.builder()
-            .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, range))
+            .totalPlaytimeSeconds(calculateTotalPlaytimeForRange(playthroughs, sessions, playthroughIdsWithAnySession, range))
             .averageSessionPlaytimeSeconds(calculateAverageSessionPlaytime(sessions))
             .gamesCompleted(countCompletedGames(playthroughs))
             .gamesInProgress(countInProgressGames(playthroughs))
@@ -143,14 +146,30 @@ public class UserStatisticsService {
         return sessionHistoryRepository.findByPlaythroughIdsOrderByPlaythroughAndSession(playthroughIds);
     }
 
+    private Set<Long> findPlaythroughIdsWithAnySession(List<Playthrough> playthroughs) {
+        if (playthroughs.isEmpty()) {
+            return Set.of();
+        }
+        List<Long> ids = playthroughs.stream().map(Playthrough::getId).collect(Collectors.toList());
+        return sessionHistoryRepository.findPlaythroughIdsWithAnySession(ids);
+    }
+
     /**
-     * A playthrough is in-scope for a period if it has a session inside the window
-     * (covers ongoing playthroughs that also have activity outside it) OR its
-     * lastPlayedAt falls inside the window (covers manually-logged time with no
-     * discrete session rows).
+     * A playthrough is in-scope for a period if it has a session inside the window, or if
+     * it has no session rows at all and its lastPlayedAt falls inside the window.
+     *
+     * That second clause used to read "has no session in *this window*", which is a much
+     * weaker condition and the source of a large overcount: any playthrough touched during
+     * the period — pausing one is enough, since pause moves lastPlayedAt — was pulled in
+     * even when all of its sessions sat in other periods, and then had its entire lifetime
+     * playtime counted against this one. Restricting it to playthroughs with no session
+     * rows anywhere keeps the fallback doing only the job it was meant for: legacy rows and
+     * time that only ever existed as a hand-edited total, neither of which carries
+     * timestamps that could place it more precisely.
      */
     private List<Playthrough> filterPlaythroughsByInterval(
-            List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange, DateRange range) {
+            List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange,
+            Set<Long> playthroughIdsWithAnySession, DateRange range) {
         if (range.start().equals(Instant.EPOCH)) {
             return playthroughs;
         }
@@ -161,10 +180,15 @@ public class UserStatisticsService {
 
         return playthroughs.stream()
             .filter(p -> playthroughIdsWithSessionInRange.contains(p.getId())
-                || (p.getLastPlayedAt() != null
-                    && p.getLastPlayedAt().isAfter(range.start())
-                    && p.getLastPlayedAt().isBefore(range.end())))
+                || (!playthroughIdsWithAnySession.contains(p.getId())
+                    && isWithin(p.getLastPlayedAt(), range)))
             .collect(Collectors.toList());
+    }
+
+    private boolean isWithin(Instant instant, DateRange range) {
+        return instant != null
+            && !instant.isBefore(range.start())
+            && !instant.isAfter(range.end());
     }
 
     private Long calculateTotalPlaytime(List<Playthrough> playthroughs) {
@@ -187,13 +211,18 @@ public class UserStatisticsService {
     }
 
     /**
-     * For a bounded period, a playthrough's full lifetime durationSeconds overcounts
-     * if it also has activity outside the window (e.g. an ongoing playthrough touched
-     * again after this week). Sum actual session time inside the window instead, and
-     * fall back to durationSeconds only for playthroughs with no session rows at all
-     * (pure manually-logged time, which carries no per-session timestamps).
+     * For a bounded period, a playthrough's full lifetime durationSeconds overcounts if it
+     * also has activity outside the window. Sum the session time actually inside the window
+     * instead, and fall back to durationSeconds only for playthroughs that have no session
+     * rows at all — legacy data and hand-edited totals, which carry no timestamps that
+     * could place them any more precisely than lastPlayedAt.
+     *
+     * The fallback previously keyed off "no session in this window" rather than "no session
+     * rows anywhere", so a playthrough with a hundred hours recorded across earlier months
+     * contributed all hundred to any period in which it was merely touched.
      */
-    private Long calculateTotalPlaytimeForRange(List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange, DateRange range) {
+    private Long calculateTotalPlaytimeForRange(List<Playthrough> playthroughs, List<SessionHistory> sessionsInRange,
+                                                Set<Long> playthroughIdsWithAnySession, DateRange range) {
         if (range.start().equals(Instant.EPOCH)) {
             return calculateTotalPlaytime(playthroughs);
         }
@@ -202,16 +231,12 @@ public class UserStatisticsService {
             .mapToLong(SessionHistory::getDurationSeconds)
             .sum();
 
-        Set<Long> playthroughIdsWithSessionInRange = sessionsInRange.stream()
-            .map(s -> s.getPlaythrough().getId())
-            .collect(Collectors.toSet());
-
-        long manualOnlyTotal = playthroughs.stream()
-            .filter(p -> !playthroughIdsWithSessionInRange.contains(p.getId()))
+        long sessionlessTotal = playthroughs.stream()
+            .filter(p -> !playthroughIdsWithAnySession.contains(p.getId()))
             .mapToLong(this::effectivePlaytimeSeconds)
             .sum();
 
-        return sessionTotal + manualOnlyTotal;
+        return sessionTotal + sessionlessTotal;
     }
 
     private Double calculateAverageSessionPlaytime(List<SessionHistory> sessions) {
