@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Timer, Gamepad2, CircleCheck, CalendarDays, Lock } from 'lucide-react'
+import { Timer, Gamepad2, CircleCheck, CalendarDays, Lock, GitCompare } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import StatCard from '../components/StatCard'
@@ -101,16 +102,28 @@ function Profile() {
         </div>
 
         {!profile.isOwnProfile && (
-          <FollowButton
-            state={{
-              handle: profile.handle,
-              following: profile.viewerIsFollowing,
-              requestPending: profile.viewerRequestPending,
-              followerCount: profile.followerCount,
-              followingCount: profile.followingCount,
-            }}
-            onChange={handleFollowChange}
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Only offered when the library is actually visible - the comparison is
+                gated on the same thing, so linking to it otherwise would dead-end. */}
+            {profile.library && (
+              <Button asChild variant="outline">
+                <Link to={`/u/${profile.handle}/compare`}>
+                  <GitCompare className="size-4" />
+                  {t('compare.compareWith')}
+                </Link>
+              </Button>
+            )}
+            <FollowButton
+              state={{
+                handle: profile.handle,
+                following: profile.viewerIsFollowing,
+                requestPending: profile.viewerRequestPending,
+                followerCount: profile.followerCount,
+                followingCount: profile.followingCount,
+              }}
+              onChange={handleFollowChange}
+            />
+          </div>
         )}
       </header>
 

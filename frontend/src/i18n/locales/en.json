@@ -167,6 +167,19 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "compare": {
+    "title": "Compare",
+    "unavailable": "That profile does not exist, or its library is not shared with you.",
+    "you": "You",
+    "totalPlaytime": "Total playtime",
+    "gamesInLibrary": "Games in library",
+    "gamesCompleted": "Games completed",
+    "totalSessions": "Sessions",
+    "sharedGames_one": "{{count}} game in common",
+    "sharedGames_other": "{{count}} games in common",
+    "noSharedGames": "You have not played any of the same games yet.",
+    "compareWith": "Compare"
+  },
   "feed": {
     "title": "Activity",
     "emptyTitle": "Nothing here yet",
