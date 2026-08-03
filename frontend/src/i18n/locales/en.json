@@ -167,6 +167,19 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
+  "community": {
+    "title": "How others played it",
+    "playerCount_one": "{{count}} player here",
+    "playerCount_other": "{{count}} players here",
+    "finisherCount_one": "{{count}} finished it",
+    "finisherCount_other": "{{count}} finished it",
+    "medianCompletion": "Median time to finish",
+    "range": "Fastest to slowest",
+    "dropRate": "Abandoned",
+    "medianBeforeDropping": "Median time before abandoning",
+    "vsTypical": "Measured here: {{measured}}. Commonly quoted: {{typical}}.",
+    "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person."
+  },
   "reviews": {
     "title": "Reviews",
     "writeOne": "Write a review",

@@ -107,6 +107,10 @@ export const ratingsApi = {
   removeRating: (gameId: number) => apiClient.delete(`/games/${gameId}/rating`),
 }
 
+export const communityApi = {
+  getCommunityStats: (gameId: number) => apiClient.get(`/games/${gameId}/community`),
+}
+
 export const reviewsApi = {
   getReviews: (gameId: number, sort: string, language?: string) =>
     apiClient.get(`/games/${gameId}/reviews`, { params: { sort, language } }),
