@@ -3,8 +3,15 @@ package com.gamewatch.util;
 import com.gamewatch.entity.User;
 
 import java.time.DateTimeException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.ZoneId;
 
+/**
+ * Resolves the calendar settings — zone and week start — that a user's day, week and month
+ * boundaries should be computed against. Anything that buckets activity by date has to go
+ * through here, so that two pages never disagree about which day a session belongs to.
+ */
 public final class TimezoneUtils {
 
     private TimezoneUtils() {
@@ -25,5 +32,23 @@ public final class TimezoneUtils {
         } catch (DateTimeException e) {
             return ZoneId.systemDefault();
         }
+    }
+
+    /**
+     * The first day of the week containing {@code reference}, honouring the user's
+     * Monday/Sunday preference. Defaults to Monday when unset or unrecognised.
+     */
+    public static LocalDate startOfWeek(User user, LocalDate reference) {
+        DayOfWeek startDay = "SUNDAY".equals(user.getFirstDayOfWeek())
+            ? DayOfWeek.SUNDAY
+            : DayOfWeek.MONDAY;
+
+        LocalDate weekStart = reference.with(startDay);
+        // LocalDate.with(DayOfWeek) can move forward, which would put the "start" of the
+        // week after the day it is supposed to contain.
+        if (weekStart.isAfter(reference)) {
+            weekStart = weekStart.minusWeeks(1);
+        }
+        return weekStart;
     }
 }
