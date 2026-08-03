@@ -557,23 +557,6 @@ class UserStatisticsServiceTest {
     }
 
     @Test
-    void completionComparison_setsFinishTimesAgainstTheGamesTypicalLength() {
-        Game quickGame = Game.builder().id(2L).name("Short One").playtime(10).build();
-        Playthrough finished = Playthrough.builder()
-            .id(1L).user(testUser).game(quickGame).playthroughType("story")
-            .durationSeconds(72_000L).importedDurationSeconds(0L) // 20 h against a typical 10
-            .isActive(false).isCompleted(true).isDropped(false).isPaused(false)
-            .lastPlayedAt(Instant.now()).build();
-
-        UserStatisticsDto stats = trendStatsFor(List.of(finished));
-
-        assertThat(stats.getTrendStats().getCompletionComparisons()).hasSize(1);
-        assertThat(stats.getTrendStats().getCompletionComparisons().get(0).getRatio()).isEqualTo(2.0);
-        assertThat(stats.getTrendStats().getCompletionComparisons().get(0).getTypicalSeconds())
-            .isEqualTo(36_000L);
-    }
-
-    @Test
     void rollingAverage_startsWithTheChartRatherThanAWeekIntoIt() {
         UserStatisticsDto stats = statsForDaysAgo(0, 1, 2);
         List<UserStatisticsDto.DailyPlaytime> days = stats.getDailyPlaytime();

@@ -440,17 +440,6 @@ public class UserStatisticsService {
     }
 
     /**
-     * Splits each playthrough's time evenly across its game's genres, so the distribution
-     * sums to the playtime it is describing.
-     *
-     * Each genre used to receive the playthrough's <em>full</em> playtime, so a game tagged
-     * Action/RPG/Adventure contributed three times its hours. The pie normalises its slices
-     * and so still looked plausible, but the hour figures in the legend were inflated and
-     * heavily-tagged games crowded out single-genre ones purely on tag count.
-     */
-    private static final int MAX_COMPLETION_COMPARISONS = 5;
-
-    /**
      * Direction and shape of play rather than volume.
      */
     private UserStatisticsDto.TrendStats calculateTrendStats(
@@ -511,7 +500,6 @@ public class UserStatisticsService {
             .medianSecondsBeforeDropping(secondsBeforeDropping.isEmpty()
                 ? null
                 : percentile(secondsBeforeDropping, 0.50))
-            .completionComparisons(findCompletionComparisons(allPlaythroughs))
             .build();
     }
 
@@ -573,37 +561,6 @@ public class UserStatisticsService {
         }
         long current = sessions.stream().mapToLong(SessionHistory::getDurationSeconds).sum();
         return ((double) current - previousTotal) / previousTotal * 100.0;
-    }
-
-    /**
-     * Finished playthroughs set against the average playtime RAWG records for the game.
-     *
-     * Ordered by how far the user diverged from typical in either direction, since a game
-     * finished in half or double the usual time is the interesting one.
-     */
-    private List<UserStatisticsDto.CompletionComparison> findCompletionComparisons(
-            List<Playthrough> allPlaythroughs) {
-
-        return allPlaythroughs.stream()
-            .filter(p -> Boolean.TRUE.equals(p.getIsCompleted()))
-            .filter(p -> p.effectivePlaytimeSeconds() > 0)
-            .filter(p -> p.getGame().getPlaytime() != null && p.getGame().getPlaytime() > 0)
-            .map(p -> {
-                long yours = p.effectivePlaytimeSeconds();
-                long typical = p.getGame().getPlaytime() * 3600L;
-                return UserStatisticsDto.CompletionComparison.builder()
-                    .gameId(p.getGame().getId())
-                    .gameName(p.getGame().getName())
-                    .bannerImageUrl(p.getGame().getBannerImageUrl())
-                    .yourSeconds(yours)
-                    .typicalSeconds(typical)
-                    .ratio((double) yours / typical)
-                    .build();
-            })
-            .sorted(Comparator.comparingDouble(
-                (UserStatisticsDto.CompletionComparison c) -> Math.abs(Math.log(c.getRatio()))).reversed())
-            .limit(MAX_COMPLETION_COMPARISONS)
-            .collect(Collectors.toList());
     }
 
     /** How far back "recently" reaches when comparing games added against games finished. */
@@ -840,6 +797,15 @@ public class UserStatisticsService {
         return ascending.get(Math.max(0, Math.min(ascending.size() - 1, rank)));
     }
 
+    /**
+     * Splits each playthrough's time evenly across its game's genres, so the distribution
+     * sums to the playtime it is describing.
+     *
+     * Each genre used to receive the playthrough's <em>full</em> playtime, so a game tagged
+     * Action/RPG/Adventure contributed three times its hours. The pie normalises its slices
+     * and so still looked plausible, but the hour figures in the legend were inflated and
+     * heavily-tagged games crowded out single-genre ones purely on tag count.
+     */
     private Map<String, Long> calculateGenreDistribution(List<Playthrough> playthroughs) {
         Map<String, Long> genreMap = new HashMap<>();
 

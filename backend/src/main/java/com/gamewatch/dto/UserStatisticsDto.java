@@ -71,26 +71,6 @@ public class UserStatisticsDto {
         private Integer playthroughsCompleted;
         private Double dropRatePercentage;
         private Long medianSecondsBeforeDropping;
-
-        private List<CompletionComparison> completionComparisons;
-    }
-
-    /**
-     * How long this user took to finish a game against how long it takes people generally,
-     * using the average playtime RAWG already stores against the game.
-     */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class CompletionComparison {
-        private Long gameId;
-        private String gameName;
-        private String bannerImageUrl;
-        private Long yourSeconds;
-        private Long typicalSeconds;
-        /** Above 1 means slower than typical, below 1 faster. */
-        private Double ratio;
     }
 
     /**
