@@ -46,7 +46,7 @@ public class UserStatisticsService {
         // surfaces the sessions it actually has inside this narrower window.
         List<SessionHistory> sessions = range.start().equals(Instant.EPOCH)
             ? fetchAllSessions(allPlaythroughs)
-            : sessionHistoryRepository.findSessionsByUserAndDateRange(user.getId(), range.start(), range.end());
+            : sessionHistoryRepository.findSessionsStartedByUserBetween(user.getId(), range.start(), range.end());
 
         Set<Long> playthroughIdsWithAnySession = findPlaythroughIdsWithAnySession(allPlaythroughs);
 
