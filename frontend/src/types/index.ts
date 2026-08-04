@@ -376,6 +376,41 @@ export interface FollowPerson {
   createdAt: string
 }
 
+/** Kinds of thing the server records against an account. */
+export type ServerNotificationType =
+  | 'FOLLOW_REQUEST'
+  | 'FOLLOW_ACCEPTED'
+  | 'NEW_FOLLOWER'
+  | 'REVIEW_REPLY'
+  | 'REVIEW_HELPFUL'
+
+/**
+ * One thing that happened to the viewer.
+ *
+ * Carries no message: the wording lives in the translation files, so a notification from
+ * last month still reads in whatever language is selected today.
+ */
+export interface ServerNotification {
+  id: number
+  type: ServerNotificationType
+  actorHandle: string | null
+  actorDisplayName: string | null
+  actorPictureUrl: string | null
+  gameId: number | null
+  /** IGDB's id, which is the only address a catalog page has. */
+  gameExternalId: number | null
+  gameName: string | null
+  reviewId: number | null
+  read: boolean
+  createdAt: string
+}
+
+export interface NotificationFeed {
+  notifications: ServerNotification[]
+  /** Counted server-side, so it can exceed the length of the capped list above. */
+  unreadCount: number
+}
+
 /** Who may see part of a profile. Health data is never shareable and has no setting. */
 export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
 

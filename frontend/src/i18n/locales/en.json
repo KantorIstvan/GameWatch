@@ -941,14 +941,29 @@
     "submitting": "Submitting..."
   },
   "notifications": {
-    "breakReminder": "⏸️ Time for a break! Take a few minutes to rest your eyes.",
-    "hydrationReminder": "💧 Stay hydrated! Grab a glass of water.",
-    "standReminder": "🧘 Time to stand up and stretch!",
-    "goalReachedHours": "⚠️ Daily goal reached! You've played {{current}} hours (limit: {{max}} hours)",
-    "goalReachedSessions": "⚠️ Daily goal reached! You've had {{current}} sessions (limit: {{max}} sessions)",
-    "goalExceededHours": "🚨 Daily limit exceeded! You've played {{current}} hours (limit: {{max}} hours)",
-    "goalExceededSessions": "🚨 Daily limit exceeded! You've had {{current}} sessions (limit: {{max}} sessions)",
-    "lateNightWarning": "🌙 Late night gaming detected. Consider taking a break for better sleep."
+    "title": "Notifications",
+    "open": "Notifications",
+    "openWithCount_one": "Notifications, {{count}} unread",
+    "openWithCount_other": "Notifications, {{count}} unread",
+    "empty": "Nothing new.",
+    "clearAll": "Clear all",
+    "someone": "Someone",
+    "aGame": "a game",
+    "items": {
+      "FOLLOW_REQUEST": "{{name}} asked to follow you.",
+      "FOLLOW_ACCEPTED": "{{name}} accepted your follow request.",
+      "NEW_FOLLOWER": "{{name}} started following you.",
+      "REVIEW_REPLY": "{{name}} replied to your review of {{game}}.",
+      "REVIEW_HELPFUL": "{{name}} found your review of {{game}} helpful."
+    },
+    "breakReminder": "Time for a break. Take a few minutes to rest your eyes.",
+    "hydrationReminder": "Stay hydrated. Grab a glass of water.",
+    "standReminder": "Time to stand up and stretch.",
+    "goalReachedHours": "Daily goal reached: you've played {{current}} hours (limit: {{max}} hours).",
+    "goalReachedSessions": "Daily goal reached: you've had {{current}} sessions (limit: {{max}} sessions).",
+    "goalExceededHours": "Daily limit exceeded: you've played {{current}} hours (limit: {{max}} hours).",
+    "goalExceededSessions": "Daily limit exceeded: you've had {{current}} sessions (limit: {{max}} sessions).",
+    "lateNightWarning": "Late night gaming detected. Consider taking a break for better sleep."
   },
   "faq": {
     "title": "Help & FAQ",
