@@ -30,6 +30,25 @@ public class IgdbApiService {
             + "keywords.id,keywords.name,slug,websites.url,websites.type,"
             + "age_ratings.organization.name,age_ratings.rating_category.rating,alternative_names.name;";
 
+    /**
+     * Restricts a candidate search to things you could actually sit down and play: full
+     * games and major expansions. IGDB's catalogue also carries entries the recommender
+     * has no business suggesting - patch records ("Cyberpunk 2077: 2.0 Update"), bundles,
+     * packs, mods, seasons and episodes - and game_type is what separates them. The
+     * allowed ids are main_game (0), expansion (2), standalone_expansion (4), remake (8),
+     * remaster (9) and expanded_game (10).
+     *
+     * version_parent additionally marks a re-release of a game that IGDB already
+     * represents with its own base entry - "The Witcher: Enhanced Edition", "Game of the
+     * Year Edition" - so requiring it to be null keeps one entry per game instead of
+     * filling a top five with editions of the same title.
+     *
+     * Deliberately not applied to searchGames: when a user is adding a game by hand they
+     * may well be looking for a specific edition or DLC.
+     */
+    private static final String PLAYABLE_GAME_FILTER =
+            " & game_type = (0,2,4,8,9,10) & version_parent = null";
+
     private final WebClient webClient;
     private final WebClient authClient;
     private final String clientId;
@@ -172,20 +191,24 @@ public class IgdbApiService {
 
     public List<GameSearchResultDto> searchGamesByDeveloperId(Integer developerId, int pageSize) {
         return queryGames(GAME_FIELDS + " where involved_companies.company = (" + developerId + ")"
-                + " & involved_companies.developer = true; sort rating desc; limit " + pageSize + ";");
+                + " & involved_companies.developer = true" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<GameSearchResultDto> searchGamesByPublisherId(Integer publisherId, int pageSize) {
         return queryGames(GAME_FIELDS + " where involved_companies.company = (" + publisherId + ")"
-                + " & involved_companies.publisher = true; sort rating desc; limit " + pageSize + ";");
+                + " & involved_companies.publisher = true" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<GameSearchResultDto> searchGamesByGenre(Integer genreId, int pageSize) {
-        return queryGames(GAME_FIELDS + " where genres = (" + genreId + "); sort rating desc; limit " + pageSize + ";");
+        return queryGames(GAME_FIELDS + " where genres = (" + genreId + ")" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<GameSearchResultDto> searchGamesByTag(Integer keywordId, int pageSize) {
-        return queryGames(GAME_FIELDS + " where keywords = (" + keywordId + "); sort rating desc; limit " + pageSize + ";");
+        return queryGames(GAME_FIELDS + " where keywords = (" + keywordId + ")" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<GameSearchResultDto> searchGamesByMultipleGenres(List<Integer> genreIds, int pageSize) {
@@ -193,7 +216,8 @@ public class IgdbApiService {
             return new ArrayList<>();
         }
         String ids = genreIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        return queryGames(GAME_FIELDS + " where genres = (" + ids + "); sort rating desc; limit " + pageSize + ";");
+        return queryGames(GAME_FIELDS + " where genres = (" + ids + ")" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<GameSearchResultDto> searchGamesByMultipleTags(List<Integer> keywordIds, int pageSize) {
@@ -201,7 +225,8 @@ public class IgdbApiService {
             return new ArrayList<>();
         }
         String ids = keywordIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        return queryGames(GAME_FIELDS + " where keywords = (" + ids + "); sort rating desc; limit " + pageSize + ";");
+        return queryGames(GAME_FIELDS + " where keywords = (" + ids + ")" + PLAYABLE_GAME_FILTER
+                + "; sort rating desc; limit " + pageSize + ";");
     }
 
     public List<Integer> extractGenreIdsFromDetails(JsonNode gameDetailsNode) {
@@ -325,6 +350,12 @@ public class IgdbApiService {
         return extractNames(node, "platforms");
     }
 
+    /**
+     * IGDB routinely lists the same studio under several involved_companies rows for one
+     * game (separate regional or role entries), which without the distinct() produced
+     * "CD Projekt RED, CD Projekt RED" - rendered as a repeated badge, and double-counted
+     * by the recommendation scorer.
+     */
     private String extractCompanyNames(JsonNode node, String role) {
         if (!node.has("involved_companies")) {
             return null;
@@ -333,6 +364,7 @@ public class IgdbApiService {
                 .filter(involved -> involved.has(role) && involved.get(role).asBoolean())
                 .filter(involved -> involved.has("company") && involved.get("company").has("name"))
                 .map(involved -> involved.get("company").get("name").asText())
+                .distinct()
                 .collect(Collectors.joining(", "));
         return names.isEmpty() ? null : names;
     }
