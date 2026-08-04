@@ -16,7 +16,8 @@ public class CreatePlaythroughRequest {
     
     @NotBlank(message = "Playthrough type is required")
     private String playthroughType = "story";
-    
+
+    @NotBlank(message = "Playthrough title is required")
     private String title;
     
     private String platform;

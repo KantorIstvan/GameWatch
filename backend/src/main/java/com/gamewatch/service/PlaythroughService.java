@@ -60,7 +60,7 @@ public class PlaythroughService {
             .user(user)
             .game(game)
             .playthroughType(request.getPlaythroughType())
-            .title(request.getTitle())
+            .title(request.getTitle().trim())
             .platform(request.getPlatform())
             .startDate(request.getStartDate())
             .isActive(false)
@@ -392,9 +392,14 @@ public class PlaythroughService {
         Playthrough playthrough = playthroughRepository.findByIdAndUserId(playthroughId, user.getId())
             .orElseThrow(() -> new RuntimeException("Playthrough not found or access denied"));
 
-        playthrough.setTitle(title);
+        String trimmed = title == null ? "" : title.trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException("Playthrough title is required");
+        }
+
+        playthrough.setTitle(trimmed);
         playthrough = playthroughRepository.save(playthrough);
-        log.info("Updated title for playthrough {} to '{}'", playthroughId, title);
+        log.info("Updated title for playthrough {} to '{}'", playthroughId, trimmed);
 
         return mapToDto(playthrough);
     }

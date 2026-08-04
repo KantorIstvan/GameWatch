@@ -129,7 +129,7 @@ public class PlaythroughController {
     public ResponseEntity<PlaythroughDto> updateTitle(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestBody UpdateTitleRequest request) {
+            @Valid @RequestBody UpdateTitleRequest request) {
         User user = userService.getOrCreateUser(authentication);
         PlaythroughDto playthrough = playthroughService.updateTitle(user, id, request.getTitle());
         return ResponseEntity.ok(playthrough);
