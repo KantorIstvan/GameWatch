@@ -27,6 +27,9 @@ export interface Game {
   alternativeNames?: string
   description?: string
   slug?: string
+  /** This app's own shrunk community score - only populated by the catalog endpoints. */
+  communityRatingScore?: number | null
+  communityRatingCount?: number
 }
 
 export interface Playthrough {

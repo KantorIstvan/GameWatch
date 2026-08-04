@@ -2,16 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Search, SlidersHorizontal, Trash2, Download, ChevronLeft, ChevronRight,
-  Timer, CalendarDays, Clock, RotateCcw, PlayCircle, History, PlusCircle, Trophy, Zap
+  Timer, CalendarDays, Clock, RotateCcw, PlayCircle, History, PlusCircle, Trophy, Zap, Users
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { gamesApi, playthroughsApi } from '../services/api'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StatCard from '../components/StatCard'
-import GameRatingPanel from '../components/ratings/GameRatingPanel'
-import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
-import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -270,10 +267,16 @@ function GameStatisticsPage() {
             <p className="mt-1 text-body-sm text-text-secondary">{t('statistics.gameStats.title')}</p>
           </div>
         </div>
-        <Button onClick={handleExport} className="bg-success text-white hover:bg-success/90">
-          <Download className="size-4" />
-          {t('statistics.exportCSV')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => navigate(`/catalog/${statistics.gameId}`)}>
+            <Users className="size-4" />
+            {t('statistics.gameStats.viewCommunityPage')}
+          </Button>
+          <Button onClick={handleExport} className="bg-success text-white hover:bg-success/90">
+            <Download className="size-4" />
+            {t('statistics.exportCSV')}
+          </Button>
+        </div>
       </div>
 
       <section className="mb-6 md:mb-8">
@@ -645,20 +648,6 @@ function GameStatisticsPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Last, because it is the part of the page that is not about this user's own play:
-          the numbers they came for come first, other people's opinions after. */}
-      <section>
-        <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('statistics.gameStats.community')}</p>
-
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-          <div className="flex flex-col gap-4 sm:gap-5">
-            <GameRatingPanel gameId={statistics.gameId} />
-            <GameCommunityPanel gameId={statistics.gameId} />
-          </div>
-          <GameReviewsPanel gameId={statistics.gameId} />
         </div>
       </section>
 

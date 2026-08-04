@@ -53,6 +53,9 @@ export const gamesApi = {
   search: (query: string) => apiClient.get('/games/search', { params: { query } }),
   getDetails: (externalId: string) => apiClient.get(`/games/details/${externalId}`),
   getStatistics: (id: number) => apiClient.get(`/games/${id}/statistics`),
+  // The universal catalog: every game anyone has added, not just the caller's library.
+  getCatalog: () => apiClient.get('/games/catalog'),
+  getCatalogById: (id: number) => apiClient.get(`/games/catalog/${id}`),
 }
 
 export const playthroughsApi = {

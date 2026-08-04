@@ -11,6 +11,7 @@
     "timers": "Timers",
     "statistics": "Statistics",
     "myGames": "My Games",
+    "catalog": "Catalog",
     "calendar": "Timeline",
     "health": "Health",
     "settings": "Settings",
@@ -481,7 +482,7 @@
       "deleteSessionTitle": "Delete Session",
       "deleteSessionConfirm": "Are you sure you want to delete session #{{sessionNumber}}? This action cannot be undone.",
       "overview": "Overview",
-      "community": "Community",
+      "viewCommunityPage": "View Community Page",
       "rangeOfTotal": "{{from}}-{{to}} of {{total}}",
       "totalPlayTime": "Total Play Time",
       "totalSessions": "Total Sessions",
@@ -637,6 +638,19 @@
     "cardSizeMedium": "Medium",
     "cardSizeLarge": "Large",
     "released": "Released"
+  },
+  "catalog": {
+    "title": "Catalog",
+    "subtitle": "Every game the community is tracking",
+    "gamePageSubtitle": "Ratings and reviews from everyone tracking this game",
+    "failedToLoad": "Failed to load the catalog. Please try again.",
+    "failedToLoadGame": "Failed to load this game. Please try again.",
+    "searchPlaceholder": "Search the catalog by name, genre, developer...",
+    "sortBy": "Sort by",
+    "sortRatingHigh": "Highest Rated",
+    "sortRatingCount": "Most Rated",
+    "noGames": "No games in the catalog yet.",
+    "noGamesDescription": "Games appear here once someone adds them to their library."
   },
   "playthrough": {
     "title": "Playthrough Details",
