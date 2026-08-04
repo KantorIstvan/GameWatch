@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
