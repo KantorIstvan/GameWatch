@@ -626,7 +626,7 @@
       "q3": "Appið er að hlaða hægt",
       "a3": "Hægt hleðsla getur stafað af stórum gagnasöfnum eða netmálum. Reyndu að endurnýja síðuna, hreinsa vafraforritið þitt eða athuga nettenginuna þína. Appið virkar best á nútíma vöfrum eins og Chrome, Firefox eða Edge.",
       "q4": "Leikirnir mínir birtast ekki í leit",
-      "a4": "Leikjaleit notar RAWG API. Reyndu að nota önnur leitarskilyrði, athugaðu stafsetningu eða leitaðu eftir upprunalega nafni leiksins. Sumir eldri eða minna þekktir leikir eru kannski ekki í gagnagrunninum."
+      "a4": "Leikjaleit notar IGDB API. Reyndu að nota önnur leitarskilyrði, athugaðu stafsetningu eða leitaðu eftir upprunalega nafni leiksins. Sumir eldri eða minna þekktir leikir eru kannski ekki í gagnagrunninum."
     }
   }
 }

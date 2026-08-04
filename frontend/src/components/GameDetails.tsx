@@ -22,23 +22,8 @@ function GameDetails({ game, t }: GameDetailsProps) {
           <div className="mb-4">
             <p className="text-body-sm font-semibold text-text-secondary">{t('game.rating')}</p>
             <p className="text-body">
-              {game.rating}/5 ⭐ {(game.ratingTop ?? 0) > 0 && `(${t('game.top')}: ${game.ratingTop})`}
+              {game.rating}/5 ⭐
               {(game.ratingsCount ?? 0) > 0 && ` - ${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
-            </p>
-          </div>
-        )}
-
-        {(game.metacritic ?? 0) > 0 && (
-          <div className="mb-4">
-            <p className="text-body-sm font-semibold text-text-secondary">{t('game.metacriticScore')}</p>
-            <p className="text-body">
-              {game.metacriticUrl ? (
-                <a href={game.metacriticUrl} target="_blank" rel="noopener noreferrer" className="text-inherit underline">
-                  {game.metacritic}/100
-                </a>
-              ) : (
-                `${game.metacritic}/100`
-              )}
             </p>
           </div>
         )}
@@ -106,26 +91,6 @@ function GameDetails({ game, t }: GameDetailsProps) {
           </div>
         )}
       </div>
-
-      {(game.redditUrl || game.redditName) && (
-        <div className="col-span-full">
-          <Separator className="my-4" />
-          <div className="mb-4">
-            <p className="mb-1 text-body-sm font-semibold text-text-secondary">{t('game.redditCommunity')}</p>
-            {game.redditUrl && (
-              <p className="text-body">
-                <a href={game.redditUrl} target="_blank" rel="noopener noreferrer" className="text-inherit underline">
-                  r/{game.redditName || t('game.visitSubreddit')}
-                </a>
-                {game.redditCount && ` - ${game.redditCount.toLocaleString()} ${t('game.members')}`}
-              </p>
-            )}
-            {game.redditDescription && (
-              <p className="mt-1 text-body-sm text-text-secondary">{game.redditDescription}</p>
-            )}
-          </div>
-        </div>
-      )}
 
       {game.alternativeNames && (
         <div className="col-span-full">

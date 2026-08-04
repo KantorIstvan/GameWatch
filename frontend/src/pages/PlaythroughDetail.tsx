@@ -344,51 +344,17 @@ function PlaythroughDetail() {
               )}
             </div>
 
-            {(game.rating || (game.metacritic ?? 0) > 0) && (
+            {game.rating && (
               <div className="mb-6 flex flex-row flex-wrap gap-6">
-                {game.rating && (
-                  <div>
-                    <div className="mb-1 flex items-center gap-1">
-                      <span className="text-h4 font-bold">{game.rating}/5</span>
-                      <Star className="size-4 fill-warning text-warning" />
-                    </div>
-                    <p className="text-body-sm text-text-secondary">
-                      {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
-                      {(game.ratingTop ?? 0) > 0 && ` • ${t('game.top')}: ${game.ratingTop}`}
-                    </p>
+                <div>
+                  <div className="mb-1 flex items-center gap-1">
+                    <span className="text-h4 font-bold">{game.rating}/5</span>
+                    <Star className="size-4 fill-warning text-warning" />
                   </div>
-                )}
-                {(game.metacritic ?? 0) > 0 && (
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const score = game.metacritic ?? 0
-                      const color = score >= 75 ? '#66cc33' : score >= 50 ? '#ffcc33' : '#ff6666'
-                      const label = score >= 75
-                        ? t('game.metacriticFavorable')
-                        : score >= 50
-                          ? t('game.metacriticMixed')
-                          : t('game.metacriticUnfavorable')
-                      const Comp = game.metacriticUrl ? 'a' : 'div'
-                      return (
-                        <>
-                          <Comp
-                            href={game.metacriticUrl || undefined}
-                            target={game.metacriticUrl ? '_blank' : undefined}
-                            rel={game.metacriticUrl ? 'noopener noreferrer' : undefined}
-                            className="flex size-12 items-center justify-center rounded border-2 text-h4 font-bold text-white no-underline transition-transform hover:scale-105"
-                            style={{ backgroundColor: color, borderColor: color }}
-                          >
-                            {score}
-                          </Comp>
-                          <div>
-                            <p className="text-h4 font-semibold leading-tight">{t('game.metacriticLabel')}</p>
-                            <p className="text-caption text-text-secondary">{label}</p>
-                          </div>
-                        </>
-                      )
-                    })()}
-                  </div>
-                )}
+                  <p className="text-body-sm text-text-secondary">
+                    {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -461,23 +427,6 @@ function PlaythroughDetail() {
                 </div>
               )}
 
-              {(game.redditUrl || game.redditName) && (
-                <div className="mb-4">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.redditCommunity')}</p>
-                  {game.redditUrl && (
-                    <p className="mt-0.5">
-                      <a href={game.redditUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-accent no-underline transition-opacity hover:opacity-70">
-                        r/{game.redditName || t('game.visitSubreddit')}
-                      </a>
-                      {game.redditCount && ` • ${game.redditCount.toLocaleString()} ${t('game.members')}`}
-                    </p>
-                  )}
-                  {game.redditDescription && (
-                    <p className="mt-1 text-body-sm leading-7 text-text-secondary">{game.redditDescription}</p>
-                  )}
-                </div>
-              )}
-
               {game.alternativeNames && (
                 <div className="mb-4">
                   <p className="text-caption font-semibold uppercase tracking-wide text-text-secondary">{t('game.alsoKnownAs')}</p>
@@ -502,7 +451,6 @@ function PlaythroughDetail() {
                   <Separator className="my-6" />
                   <p className="text-caption text-text-secondary">
                     {t('game.slug')}: {game.slug}
-                    {game.updated && ` • ${t('game.lastUpdated')}: ${new Date(game.updated).toLocaleDateString()}`}
                   </p>
                 </>
               )}

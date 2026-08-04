@@ -629,7 +629,7 @@
       "q3": "Rakendus laadib aeglaselt",
       "a3": "Aeglane laadimine võib olla põhjustatud suurtest andmekogumitest või võrguprobleemidest. Proovi lehte värskendada, brauseri vahemälu tühjendada või kontrolli oma internetiühendust. Rakendus töötab kõige paremini kaasaegsetes brauserites nagu Chrome, Firefox või Edge.",
       "q4": "Minu mängud ei ilmu otsingusse",
-      "a4": "Mängude otsing kasutab RAWG API-d. Proovi erinevaid otsingusõnu, kontrolli õigekirja või otsi mängu originaalpealkirja järgi. Mõned vanemad või vähem tuntud mängud ei pruugi andmebaasis olla."
+      "a4": "Mängude otsing kasutab IGDB API-d. Proovi erinevaid otsingusõnu, kontrolli õigekirja või otsi mängu originaalpealkirja järgi. Mõned vanemad või vähem tuntud mängud ei pruugi andmebaasis olla."
     }
   }
 }

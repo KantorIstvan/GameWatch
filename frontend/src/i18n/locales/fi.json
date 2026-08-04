@@ -629,7 +629,7 @@
       "q3": "Sovellus latautuu hitaasti",
       "a3": "Hidas latautuminen voi johtua suurista tietomääristä tai verkko-ongelmista. Kokeile päivittää sivu, tyhjentää selaimen välimuisti tai tarkistaa internet-yhteytesi. Sovellus toimii parhaiten moderneilla selaimilla kuten Chrome, Firefox tai Edge.",
       "q4": "Pelini eivät näy haussa",
-      "a4": "Pelihaku käyttää RAWG API:a. Kokeile käyttää erilaisia hakutermejä, tarkista kirjoitusasu tai etsi pelin alkuperäisellä nimellä. Jotkin vanhemmat tai vähemmän tunnetut pelit eivät välttämättä ole tietokannassa."
+      "a4": "Pelihaku käyttää IGDB API:a. Kokeile käyttää erilaisia hakutermejä, tarkista kirjoitusasu tai etsi pelin alkuperäisellä nimellä. Jotkin vanhemmat tai vähemmän tunnetut pelit eivät välttämättä ole tietokannassa."
     }
   }
 }

@@ -626,7 +626,7 @@
       "q3": "Aplikasi memuat dengan lambat",
       "a3": "Pemuatan lambat dapat disebabkan oleh kumpulan data besar atau masalah jaringan. Coba segarkan halaman, bersihkan cache browser Anda, atau periksa koneksi internet Anda. Aplikasi bekerja paling baik di browser modern seperti Chrome, Firefox, atau Edge.",
       "q4": "Permainan saya tidak muncul di pencarian",
-      "a4": "Pencarian permainan menggunakan RAWG API. Coba gunakan kata kunci pencarian yang berbeda, periksa ejaan, atau cari dengan judul asli permainan. Beberapa permainan lama atau kurang dikenal mungkin tidak ada dalam database."
+      "a4": "Pencarian permainan menggunakan IGDB API. Coba gunakan kata kunci pencarian yang berbeda, periksa ejaan, atau cari dengan judul asli permainan. Beberapa permainan lama atau kurang dikenal mungkin tidak ada dalam database."
     }
   }
 }

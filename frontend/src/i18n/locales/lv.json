@@ -626,7 +626,7 @@
       "q3": "Lietotne ielādējas lēni",
       "a3": "Lēnu ielādi var izraisīt lieli datu kopumi vai tīkla problēmas. Mēģiniet atsvaidzināt lapu, notīrīt pārlūkprogrammas kešatmiņu vai pārbaudīt interneta savienojumu. Lietotne vislabāk darbojas modernās pārlūkprogrammās, piemēram, Chrome, Firefox vai Edge.",
       "q4": "Manas spēles neparādās meklēšanā",
-      "a4": "Spēļu meklēšanā tiek izmantots RAWG API. Mēģiniet izmantot dažādus meklēšanas vārdus, pārbaudīt pareizrakstību vai meklēt pēc spēles oriģinālā nosaukuma. Dažas vecākas vai mazāk pazīstamas spēles var nebūt datubāzē."
+      "a4": "Spēļu meklēšanā tiek izmantots IGDB API. Mēģiniet izmantot dažādus meklēšanas vārdus, pārbaudīt pareizrakstību vai meklēt pēc spēles oriģinālā nosaukuma. Dažas vecākas vai mazāk pazīstamas spēles var nebūt datubāzē."
     }
   }
 }

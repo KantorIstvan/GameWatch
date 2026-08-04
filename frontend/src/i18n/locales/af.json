@@ -629,7 +629,7 @@
       "q3": "Die toepassing laai stadig",
       "a3": "Stadige laai kan veroorsaak word deur groot datastelle of netwerkprobleme. Probeer om die bladsy te ververs, jou blaaier se kas skoon te maak, of jou internetverbinding te kontroleer. Die toepassing werk die beste op moderne blaaiers soos Chrome, Firefox of Edge.",
       "q4": "My speletjies verskyn nie in die soektog nie",
-      "a4": "Spelsoektog gebruik die RAWG API. Probeer verskillende soekterme, kontroleer spelling, of soek op die spel se oorspronklike titel. Sommige ouer of minder bekende speletjies is dalk nie in die databasis nie."
+      "a4": "Spelsoektog gebruik die IGDB API. Probeer verskillende soekterme, kontroleer spelling, of soek op die spel se oorspronklike titel. Sommige ouer of minder bekende speletjies is dalk nie in die databasis nie."
     }
   }
 }

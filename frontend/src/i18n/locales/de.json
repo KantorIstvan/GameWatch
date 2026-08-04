@@ -628,7 +628,7 @@
       "q3": "Die App lädt langsam",
       "a3": "Langsames Laden kann durch große Datensätze oder Netzwerkprobleme verursacht werden. Versuchen Sie, die Seite zu aktualisieren, Ihren Browser-Cache zu löschen oder Ihre Internetverbindung zu überprüfen. Die App funktioniert am besten auf modernen Browsern wie Chrome, Firefox oder Edge.",
       "q4": "Meine Spiele erscheinen nicht in der Suche",
-      "a4": "Die Spielsuche verwendet die RAWG-API. Versuchen Sie, andere Suchbegriffe zu verwenden, die Schreibweise zu überprüfen oder nach dem Originaltitel des Spiels zu suchen. Einige ältere oder weniger bekannte Spiele sind möglicherweise nicht in der Datenbank."
+      "a4": "Die Spielsuche verwendet die IGDB-API. Versuchen Sie, andere Suchbegriffe zu verwenden, die Schreibweise zu überprüfen oder nach dem Originaltitel des Spiels zu suchen. Einige ältere oder weniger bekannte Spiele sind möglicherweise nicht in der Datenbank."
     }
   }
 }

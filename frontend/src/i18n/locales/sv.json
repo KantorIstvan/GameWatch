@@ -629,7 +629,7 @@
       "q3": "Appen laddar långsamt",
       "a3": "Långsam inläsning kan orsakas av stora datamängder eller nätverksproblem. Prova att uppdatera sidan, rensa webbläsarens cache eller kontrollera din internetanslutning. Appen fungerar bäst i moderna webbläsare som Chrome, Firefox eller Edge.",
       "q4": "Mina spel visas inte i sökningen",
-      "a4": "Spelsök använder RAWG API. Försök med andra sökord, kontrollera stavning eller sök efter spelets ursprungliga titel. Vissa äldre eller mindre kända spel kanske inte finns i databasen."
+      "a4": "Spelsök använder IGDB API. Försök med andra sökord, kontrollera stavning eller sök efter spelets ursprungliga titel. Vissa äldre eller mindre kända spel kanske inte finns i databasen."
     }
   }
 }

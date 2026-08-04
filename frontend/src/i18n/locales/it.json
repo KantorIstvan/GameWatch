@@ -604,7 +604,7 @@
       "q3": "L'app si carica lentamente",
       "a3": "Il caricamento lento può essere causato da grandi set di dati o problemi di rete. Prova ad aggiornare la pagina, cancellare la cache del browser o controllare la tua connessione internet. L'app funziona meglio su browser moderni come Chrome, Firefox o Edge.",
       "q4": "I miei giochi non appaiono nella ricerca",
-      "a4": "La ricerca giochi utilizza l'API RAWG. Prova a usare termini di ricerca diversi, controllare l'ortografia o cercare per il titolo originale del gioco. Alcuni giochi più vecchi o meno conosciuti potrebbero non essere nel database."
+      "a4": "La ricerca giochi utilizza l'API IGDB. Prova a usare termini di ricerca diversi, controllare l'ortografia o cercare per il titolo originale del gioco. Alcuni giochi più vecchi o meno conosciuti potrebbero non essere nel database."
     },
    "startEvents": "Inizio",
     "finishEvents": "Fine",

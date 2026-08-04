@@ -629,7 +629,7 @@
       "q3": "L'application se charge lentement",
       "a3": "Un chargement lent peut être causé par de grands ensembles de données ou des problèmes de réseau. Essayez d'actualiser la page, de vider le cache de votre navigateur ou de vérifier votre connexion Internet. L'application fonctionne mieux sur les navigateurs modernes comme Chrome, Firefox ou Edge.",
       "q4": "Mes jeux n'apparaissent pas dans la recherche",
-      "a4": "La recherche de jeux utilise l'API RAWG. Essayez d'utiliser différents termes de recherche, de vérifier l'orthographe ou de rechercher par le titre original du jeu. Certains jeux plus anciens ou moins connus peuvent ne pas être dans la base de données."
+      "a4": "La recherche de jeux utilise l'API IGDB. Essayez d'utiliser différents termes de recherche, de vérifier l'orthographe ou de rechercher par le titre original du jeu. Certains jeux plus anciens ou moins connus peuvent ne pas être dans la base de données."
     }
   }
 }

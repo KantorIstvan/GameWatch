@@ -629,7 +629,7 @@
       "q3": "Aplikacija se nalaga počasi",
       "a3": "Počasno nalaganje je lahko posledica velikih količin podatkov ali težav z omrežjem. Poskusite osvežiti stran, počistiti predpomnilnik brskalnika ali preveriti internetno povezavo. Aplikacija najbolje deluje v sodobnih brskalnikih, kot so Chrome, Firefox ali Edge.",
       "q4": "Moje igre se ne prikazujejo v iskanju",
-      "a4": "Iskanje iger uporablja RAWG API. Poskusite z drugačnimi iskalnimi izrazi, preverite črkovanje ali poiščite po izvirnem naslovu igre. Nekatere starejše ali manj znane igre morda niso v bazi."
+      "a4": "Iskanje iger uporablja IGDB API. Poskusite z drugačnimi iskalnimi izrazi, preverite črkovanje ali poiščite po izvirnem naslovu igre. Nekatere starejše ali manj znane igre morda niso v bazi."
     }
   }
 }

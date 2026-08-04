@@ -628,7 +628,7 @@
       "q3": "Aplikacja działa wolno",
       "a3": "Wolne ładowanie może być spowodowane dużą ilością danych lub problemami z siecią. Spróbuj odświeżyć stronę, wyczyścić pamięć podręczną lub sprawdzić połączenie internetowe.",
       "q4": "Moje gry nie pojawiają się w wyszukiwarce",
-      "a4": "Wyszukiwarka gier korzysta z API RAWG. Spróbuj użyć innych haseł, sprawdź pisownię lub wyszukaj oryginalny tytuł gry. Niektóre starsze lub mniej znane gry mogą nie znajdować się w bazie danych."
+      "a4": "Wyszukiwarka gier korzysta z API IGDB. Spróbuj użyć innych haseł, sprawdź pisownię lub wyszukaj oryginalny tytuł gry. Niektóre starsze lub mniej znane gry mogą nie znajdować się w bazie danych."
     }
   }
 }

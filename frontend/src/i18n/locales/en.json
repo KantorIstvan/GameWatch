@@ -781,13 +781,7 @@
   "game": {
     "released": "Released",
     "rating": "Rating",
-    "top": "Top",
     "ratings": "ratings",
-    "metacriticScore": "Metacritic Score",
-    "metacriticLabel": "Metacritic",
-    "metacriticFavorable": "Generally favorable",
-    "metacriticMixed": "Mixed or average",
-    "metacriticUnfavorable": "Generally unfavorable",
     "esrbRating": "ESRB Rating",
     "genres": "Genres",
     "tags": "Tags",
@@ -796,13 +790,9 @@
     "publishers": "Publishers",
     "officialWebsite": "Official Website",
     "visitWebsite": "Visit Website",
-    "redditCommunity": "Reddit Community",
-    "visitSubreddit": "Visit Subreddit",
-    "members": "members",
     "alsoKnownAs": "Also Known As",
     "aboutThisGame": "About this game",
-    "slug": "Slug",
-    "lastUpdated": "Last updated"
+    "slug": "Slug"
   },
   "calendar": {
     "title": "Timeline",
@@ -964,7 +954,7 @@
       "q3": "The app is loading slowly",
       "a3": "Slow loading can be caused by large datasets or network issues. Try refreshing the page, clearing your browser cache, or checking your internet connection. The app works best on modern browsers like Chrome, Firefox, or Edge.",
       "q4": "My games aren't appearing in search",
-      "a4": "Game search uses the RAWG API. Try using different search terms, checking spelling, or searching by the game's original title. Some older or lesser-known games may not be in the database."
+      "a4": "Game search uses the IGDB API. Try using different search terms, checking spelling, or searching by the game's original title. Some older or lesser-known games may not be in the database."
     }
   }
 }

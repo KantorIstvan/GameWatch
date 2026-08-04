@@ -629,7 +629,7 @@
       "q3": "Programėlė kraunasi lėtai",
       "a3": "Lėtas krovimas gali būti dėl didelių duomenų kiekių arba tinklo problemų. Pabandykite atnaujinti puslapį, išvalyti talpyklą arba patikrinti interneto ryšį. Programėlė geriausiai veikia moderniose naršyklėse: Chrome, Firefox, Edge.",
       "q4": "Mano žaidimų nerandu paieškoje",
-      "a4": "Žaidimų paieška naudoja RAWG API. Pabandykite naudoti kitus raktažodžius, patikrinti rašybą arba ieškoti pagal originalią žaidimo pavadinimą. Kai kurios senesnės ar mažai žinomos žaidimai gali nebūti duomenų bazėje."
+      "a4": "Žaidimų paieška naudoja IGDB API. Pabandykite naudoti kitus raktažodžius, patikrinti rašybą arba ieškoti pagal originalią žaidimo pavadinimą. Kai kurios senesnės ar mažai žinomos žaidimai gali nebūti duomenų bazėje."
     }
   }
 }

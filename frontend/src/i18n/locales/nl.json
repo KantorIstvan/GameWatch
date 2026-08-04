@@ -628,7 +628,7 @@
       "q3": "Appen laster sakte",
       "a3": "Store datamengder eller nettverksproblemer kan påvirke ytelsen. Prøv å oppdatere siden, tømme cache eller sjekke internettforbindelsen. Appen fungerer best i moderne nettlesere som Chrome, Firefox eller Edge.",
       "q4": "Mine spill vises ikke i søk",
-      "a4": "Søket bruker RAWG API. Prøv andre søkeord, sjekk stavemåten eller søk på originaltittel. Eldre eller mindre kjente spill kan mangle i databasen."
+      "a4": "Søket bruker IGDB API. Prøv andre søkeord, sjekk stavemåten eller søk på originaltittel. Eldre eller mindre kjente spill kan mangle i databasen."
     }
   }
 }

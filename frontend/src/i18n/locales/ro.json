@@ -629,7 +629,7 @@
       "q3": "Aplicația se încarcă greu",
       "a3": "Încărcarea lentă poate fi cauzată de volumul mare de date sau probleme de rețea. Încearcă să reîncarci pagina sau să verifici conexiunea la internet.",
       "q4": "Jocurile mele nu apar în căutare",
-      "a4": "Căutarea jocurilor folosește API-ul RAWG. Încearcă alți termeni, verifică ortografia sau caută titlul original. Unele jocuri mai vechi sau obscure s-ar putea să nu fie în baza de date."
+      "a4": "Căutarea jocurilor folosește API-ul IGDB. Încearcă alți termeni, verifică ortografia sau caută titlul original. Unele jocuri mai vechi sau obscure s-ar putea să nu fie în baza de date."
     }
   }
 }

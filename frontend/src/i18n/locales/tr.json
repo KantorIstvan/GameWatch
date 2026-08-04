@@ -629,7 +629,7 @@
 "q3": "Uygulama yavaş yükleniyor",
 "a3": "Yavaş yükleme büyük veri setleri veya ağ sorunları nedeniyle olabilir. Sayfayı yenilemeyi, tarayıcı önbelleğini temizlemeyi veya internet bağlantınızı kontrol etmeyi deneyin. Uygulama, modern tarayıcılarda (Chrome, Firefox, Edge) en iyi performansı verir.",
 "q4": "Oyunlar aramada görünmüyor",
-"a4": "Oyun araması RAWG API'sini kullanır. Farklı arama terimleri deneyin, yazımı kontrol edin veya oyunun orijinal başlığını arayın. Bazı eski veya daha az bilinen oyunlar veritabanında olmayabilir."
+"a4": "Oyun araması IGDB API'sini kullanır. Farklı arama terimleri deneyin, yazımı kontrol edin veya oyunun orijinal başlığını arayın. Bazı eski veya daha az bilinen oyunlar veritabanında olmayabilir."
 }
 }
 }

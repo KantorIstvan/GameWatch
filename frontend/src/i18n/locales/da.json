@@ -629,7 +629,7 @@
       "q3": "Appen indlæser langsomt",
       "a3": "Langsom indlæsning kan skyldes store datasæt eller netværksproblemer. Prøv at opdatere siden, rydde din browsercache eller kontrollere din internetforbindelse. Appen fungerer bedst på moderne browsere som Chrome, Firefox eller Edge.",
       "q4": "Mine spil vises ikke i søgningen",
-      "a4": "Spilsøgning bruger RAWG API. Prøv at bruge forskellige søgetermer, kontroller stavning eller søg efter spillets originaltitel. Nogle ældre eller mindre kendte spil er muligvis ikke i databasen."
+      "a4": "Spilsøgning bruger IGDB API. Prøv at bruge forskellige søgetermer, kontroller stavning eller søg efter spillets originaltitel. Nogle ældre eller mindre kendte spil er muligvis ikke i databasen."
     }
   }
 }

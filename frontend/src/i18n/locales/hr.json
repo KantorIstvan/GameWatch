@@ -629,7 +629,7 @@
       "q3": "Aplikacija se sporo učitava",
       "a3": "Sporo učitavanje može uzrokovati veliki skup podataka ili problemi s mrežom. Pokušajte osvježiti stranicu, očistiti predmemoriju preglednika ili provjeriti internetsku vezu. Aplikacija najbolje radi u modernim preglednicima poput Chromea, Firefoxa ili Edgea.",
       "q4": "Moje igre se ne pojavljuju u pretraživanju",
-      "a4": "Pretraživanje igara koristi RAWG API. Pokušajte drugačije termine pretraživanja, provjerite pravopis ili pretražite originalni naslov igre. Neke starije ili manje poznate igre možda nisu u bazi podataka."
+      "a4": "Pretraživanje igara koristi IGDB API. Pokušajte drugačije termine pretraživanja, provjerite pravopis ili pretražite originalni naslov igre. Neke starije ili manje poznate igre možda nisu u bazi podataka."
     }
   }
 }

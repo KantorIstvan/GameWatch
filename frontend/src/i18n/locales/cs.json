@@ -622,7 +622,7 @@
       "q3": "Aplikace se načítá pomalu",
       "a3": "Pomalé načítání může být způsobeno velkými datovými sadami nebo problémy se sítí. Zkuste obnovit stránku, vymazat mezipaměť prohlížeče nebo zkontrolovat připojení k internetu. Aplikace funguje nejlépe v moderních prohlížečích jako Chrome, Firefox nebo Edge.",
       "q4": "Moje hry se nezobrazují při vyhledávání",
-      "a4": "Vyhledávání her používá RAWG API. Zkuste použít různé vyhledávací termíny, zkontrolovat pravopis nebo hledat podle původního názvu hry. Některé starší nebo méně známé hry nemusí být v databázi."
+      "a4": "Vyhledávání her používá IGDB API. Zkuste použít různé vyhledávací termíny, zkontrolovat pravopis nebo hledat podle původního názvu hry. Některé starší nebo méně známé hry nemusí být v databázi."
     }
   }
 }

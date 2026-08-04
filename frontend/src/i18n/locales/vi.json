@@ -629,7 +629,7 @@
       "q3": "Ứng dụng tải chậm",
       "a3": "Tốc độ chậm có thể do dữ liệu lớn hoặc mạng. Thử làm mới trang, xoá cache hoặc kiểm tra kết nối. Ứng dụng hoạt động tốt trên các trình duyệt hiện đại như Chrome, Firefox, Edge.",
       "q4": "Trò chơi của tôi không xuất hiện khi tìm kiếm",
-      "a4": "Tìm kiếm trò chơi sử dụng API RAWG. Thử dùng từ khóa khác, kiểm tra chính tả hoặc tìm theo tên gốc. Một số trò cũ hoặc ít được biết có thể không có trong cơ sở dữ liệu."
+      "a4": "Tìm kiếm trò chơi sử dụng API IGDB. Thử dùng từ khóa khác, kiểm tra chính tả hoặc tìm theo tên gốc. Một số trò cũ hoặc ít được biết có thể không có trong cơ sở dữ liệu."
     }
   }
 }

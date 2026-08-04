@@ -18,23 +18,15 @@ export interface Game {
   platforms?: string
   releaseDate?: string
   rating?: number
-  ratingTop?: number
   ratingsCount?: number
-  metacritic?: number
-  metacriticUrl?: string
   esrbRating?: string
   tags?: string
   developers?: string
   publishers?: string
   website?: string
-  redditUrl?: string
-  redditName?: string
-  redditCount?: number
-  redditDescription?: string
   alternativeNames?: string
   description?: string
   slug?: string
-  updated?: string
 }
 
 export interface Playthrough {
@@ -69,10 +61,7 @@ export interface Playthrough {
   dominantColor2?: string
   bannerImageUrl?: string
   rating?: number
-  ratingTop?: number
   ratingsCount?: number
-  metacritic?: number
-  metacriticUrl?: string
   esrbRating?: string
   genres?: string
   tags?: string
@@ -80,14 +69,9 @@ export interface Playthrough {
   developers?: string
   publishers?: string
   website?: string
-  redditUrl?: string
-  redditName?: string
-  redditCount?: number
-  redditDescription?: string
   alternativeNames?: string[]
   description?: string
   slug?: string
-  updated?: string
   releaseDate?: string
 }
 
@@ -242,7 +226,7 @@ export interface GameCommunity {
   medianCompletionSeconds: number | null
   fastestCompletionSeconds: number | null
   slowestCompletionSeconds: number | null
-  /** RAWG's own average, for comparison against what was measured here. */
+  /** IGDB's own average time-to-beat, for comparison against what was measured here. */
   typicalCompletionSeconds: number | null
   dropRatePercentage: number | null
   medianSecondsBeforeDropping: number | null

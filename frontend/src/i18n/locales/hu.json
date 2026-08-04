@@ -655,7 +655,7 @@
       "q3": "Az alkalmazás lassan töltődik",
       "a3": "A lassú betöltést nagy adatkészletek vagy hálózati problémák okozhatják. Próbáld meg frissíteni az oldalt, törölni a böngésző gyorsítótárát vagy ellenőrizni az internetkapcsolatot. Az alkalmazás a modern böngészőkön működik a legjobban, mint a Chrome, Firefox vagy Edge.",
       "q4": "A játékaim nem jelennek meg a keresésben",
-      "a4": "A játékkeresés a RAWG API-t használja. Próbálj meg más keresési kifejezéseket használni, ellenőrizd a helyesírást vagy keress a játék eredeti címére. Néhány régebbi vagy kevésbé ismert játék lehet, hogy nincs az adatbázisban."
+      "a4": "A játékkeresés a IGDB API-t használja. Próbálj meg más keresési kifejezéseket használni, ellenőrizd a helyesírást vagy keress a játék eredeti címére. Néhány régebbi vagy kevésbé ismert játék lehet, hogy nincs az adatbázisban."
     }
   }
 }
