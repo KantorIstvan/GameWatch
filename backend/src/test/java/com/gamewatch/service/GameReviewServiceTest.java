@@ -32,6 +32,7 @@ class GameReviewServiceTest {
     @Mock private GameRepository gameRepository;
     @Mock private UserGameRepository userGameRepository;
     @Mock private PlaythroughRepository playthroughRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private GameReviewService gameReviewService;
 

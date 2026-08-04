@@ -56,6 +56,7 @@ public class GameReviewService {
     private final GameRepository gameRepository;
     private final UserGameRepository userGameRepository;
     private final PlaythroughRepository playthroughRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public GameReviewDto submitReview(User user, Long gameId, SubmitReviewRequest request) {
@@ -154,12 +155,15 @@ public class GameReviewService {
             throw new IllegalArgumentException("You cannot mark your own review helpful");
         }
 
-        GameReview target = review;
-        reviewVoteRepository.findByReviewAndUser(review, user)
-            .ifPresentOrElse(
-                reviewVoteRepository::delete,
-                () -> reviewVoteRepository.save(
-                    ReviewVote.builder().review(target).user(user).build()));
+        ReviewVote existing = reviewVoteRepository.findByReviewAndUser(review, user).orElse(null);
+        if (existing != null) {
+            reviewVoteRepository.delete(existing);
+        } else {
+            reviewVoteRepository.save(ReviewVote.builder().review(review).user(user).build());
+            // Only the mark is announced, never its withdrawal: someone changing their mind
+            // about a review is not news the author needs delivered to them.
+            notificationService.notifyReviewHelpful(user, review);
+        }
         reviewVoteRepository.flush();
 
         review.setHelpfulCount((int) reviewVoteRepository.countByReview(review));
@@ -202,6 +206,8 @@ public class GameReviewService {
             .user(user)
             .body(body)
             .build());
+
+        notificationService.notifyReviewReply(user, review);
 
         log.info("User {} replied to review {}", user.getId(), reviewId);
         return reloadReview(review, user);
