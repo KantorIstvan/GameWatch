@@ -1349,14 +1349,24 @@ public class UserStatisticsService {
             publisherNameWeights.size(), publisherIdWeights.size(),
             genreIdWeights.size(), tagIdWeights.size());
         
-        Set<Integer> excludedExternalIds = playthroughs.stream()
-            .filter(p -> Boolean.TRUE.equals(p.getIsCompleted()) || 
-                        (p.getDurationSeconds() != null && p.getDurationSeconds() > 0))
+        // Everything already in the library is excluded, not just what has been played.
+        // A recommendation is only useful if it is something the user does not already own -
+        // suggesting a game sitting unplayed in their own library is what the backlog
+        // section is for.
+        Set<Integer> excludedExternalIds = userGameRepository.findGamesByUser(user).stream()
+            .map(Game::getExternalId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(HashSet::new));
+
+        // Belt and braces: a playthrough should always have its game in the library, but a
+        // recommendation for something the user has demonstrably played would be the most
+        // obviously wrong result possible, so it is excluded on its own terms too.
+        playthroughs.stream()
             .map(p -> p.getGame().getExternalId())
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-        
-        log.info("Excluding {} games that are completed or started", excludedExternalIds.size());
+            .forEach(excludedExternalIds::add);
+
+        log.info("Excluding {} games already in the user's library or played", excludedExternalIds.size());
 
         Map<Integer, GameSearchResultDto> candidateGamesMap = new HashMap<>();
         
@@ -1367,7 +1377,7 @@ public class UserStatisticsService {
             log.info("Searching for games by top developer IDs: {}", topDeveloperIds);
             
             for (Integer developerId : topDeveloperIds) {
-                List<GameSearchResultDto> devGames = igdbApiService.searchGamesByDeveloperId(developerId, 20);
+                List<GameSearchResultDto> devGames = igdbApiService.searchGamesByDeveloperId(developerId, 30);
                 log.info("Found {} games from developer ID {}", devGames.size(), developerId);
                 for (GameSearchResultDto game : devGames) {
                     if (!excludedExternalIds.contains(game.getId())) {
@@ -1380,7 +1390,7 @@ public class UserStatisticsService {
             log.info("Searching for games by top publisher IDs: {}", topPublisherIds);
             
             for (Integer publisherId : topPublisherIds) {
-                List<GameSearchResultDto> pubGames = igdbApiService.searchGamesByPublisherId(publisherId, 20);
+                List<GameSearchResultDto> pubGames = igdbApiService.searchGamesByPublisherId(publisherId, 30);
                 log.info("Found {} games from publisher ID {}", pubGames.size(), publisherId);
                 for (GameSearchResultDto game : pubGames) {
                     if (!excludedExternalIds.contains(game.getId())) {
@@ -1459,60 +1469,66 @@ public class UserStatisticsService {
             }
             
             double score = 0.0;
-            List<String> matchingGenres = new ArrayList<>();
-            List<String> matchingTags = new ArrayList<>();
-            List<String> matchingDevelopers = new ArrayList<>();
-            List<String> matchingPublishers = new ArrayList<>();
-            
+            // Sets, not lists: a duplicate name in the candidate's own metadata used to
+            // score twice and render as a repeated badge. Insertion-ordered so the badges
+            // still appear in the order IGDB listed them.
+            Set<String> matchingGenres = new LinkedHashSet<>();
+            Set<String> matchingTags = new LinkedHashSet<>();
+            Set<String> matchingDevelopers = new LinkedHashSet<>();
+            Set<String> matchingPublishers = new LinkedHashSet<>();
+            Set<String> matchingPlatforms = new LinkedHashSet<>();
+
             if (candidate.getDevelopers() != null) {
                 for (String developer : candidate.getDevelopers().split(",")) {
                     String cleanDev = developer.trim();
-                    if (developerNameWeights.containsKey(cleanDev)) {
+                    if (developerNameWeights.containsKey(cleanDev) && matchingDevelopers.add(cleanDev)) {
                         score += developerNameWeights.get(cleanDev) * 50.0;
-                        matchingDevelopers.add(cleanDev);
                     }
                 }
             }
-            
+
             if (candidate.getPublishers() != null) {
                 for (String publisher : candidate.getPublishers().split(",")) {
                     String cleanPub = publisher.trim();
-                    if (publisherNameWeights.containsKey(cleanPub)) {
+                    // A studio that both developed and published this game already scored
+                    // as a developer; counting it again would make self-published titles
+                    // outrank everything on one company match.
+                    if (matchingDevelopers.contains(cleanPub)) {
+                        continue;
+                    }
+                    if (publisherNameWeights.containsKey(cleanPub) && matchingPublishers.add(cleanPub)) {
                         score += publisherNameWeights.get(cleanPub) * 30.0;
-                        matchingPublishers.add(cleanPub);
                     }
                 }
             }
-            
+
             if (candidate.getGenres() != null) {
                 for (String genre : candidate.getGenres().split(",")) {
                     String cleanGenre = genre.trim();
-                    if (genreNameWeights.containsKey(cleanGenre)) {
+                    if (genreNameWeights.containsKey(cleanGenre) && matchingGenres.add(cleanGenre)) {
                         score += genreNameWeights.get(cleanGenre) * 3.0;
-                        matchingGenres.add(cleanGenre);
                     }
                 }
             }
-            
+
             if (candidate.getTags() != null) {
                 for (String tag : candidate.getTags().split(",")) {
                     String cleanTag = tag.trim();
-                    if (tagNameWeights.containsKey(cleanTag)) {
+                    if (tagNameWeights.containsKey(cleanTag) && matchingTags.add(cleanTag)) {
                         score += tagNameWeights.get(cleanTag) * 2.0;
-                        matchingTags.add(cleanTag);
                     }
                 }
             }
-            
+
             if (candidate.getPlatforms() != null) {
                 for (String platform : candidate.getPlatforms().split(",")) {
                     String cleanPlat = platform.trim();
-                    if (platformWeights.containsKey(cleanPlat)) {
+                    if (platformWeights.containsKey(cleanPlat) && matchingPlatforms.add(cleanPlat)) {
                         score += platformWeights.get(cleanPlat) * 1.0;
                     }
                 }
             }
-            
+
             score += candidate.getRating() * 5.0;
             
             if (candidate.getRatingsCount() != null && candidate.getRatingsCount() > 0) {
@@ -1525,19 +1541,19 @@ public class UserStatisticsService {
             if (score > 0 && (hasDeveloperMatch || hasFeatureMatch)) {
                 List<String> platforms = new ArrayList<>();
                 if (candidate.getPlatforms() != null && !candidate.getPlatforms().isEmpty()) {
-                    platforms = Arrays.asList(candidate.getPlatforms().split(","))
-                        .stream()
+                    platforms = Arrays.stream(candidate.getPlatforms().split(","))
                         .map(String::trim)
+                        .distinct()
                         .collect(Collectors.toList());
                 }
-                
+
                 scoredGames.add(new ScoredGame(
                     candidate,
                     score,
-                    matchingGenres,
-                    matchingTags,
-                    matchingDevelopers,
-                    matchingPublishers,
+                    new ArrayList<>(matchingGenres),
+                    new ArrayList<>(matchingTags),
+                    new ArrayList<>(matchingDevelopers),
+                    new ArrayList<>(matchingPublishers),
                     platforms
                 ));
             }
