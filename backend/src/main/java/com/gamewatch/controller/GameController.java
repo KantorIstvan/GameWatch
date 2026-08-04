@@ -56,6 +56,21 @@ public class GameController {
         return ResponseEntity.ok(games);
     }
 
+    /**
+     * The universal, community-wide game catalog - every game anyone has added, not just
+     * the caller's own library. Any signed-in user can browse it, unlike {@link
+     * #getAllGames} and {@link #getGameById} which are scoped to what the caller owns.
+     */
+    @GetMapping("/catalog")
+    public ResponseEntity<List<GameDto>> getCatalogGames() {
+        return ResponseEntity.ok(gameService.getCatalogGames());
+    }
+
+    @GetMapping("/catalog/{id}")
+    public ResponseEntity<GameDto> getCatalogGameById(@PathVariable Long id) {
+        return ResponseEntity.ok(gameService.getCatalogGameById(id));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<GameDto> getGameById(
             @PathVariable Long id,

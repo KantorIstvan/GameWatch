@@ -115,6 +115,41 @@ public class GameService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * The full shared catalogue, not scoped to any one user's library.
+     *
+     * Backs the community-facing Catalog page: every game anyone has ever added, together
+     * with the cached community rating aggregate that lives on the row already (see
+     * {@link GameRatingService#recomputeAggregate}), so listing the catalogue is a single
+     * table scan rather than N calls into the rating service.
+     */
+    @Transactional(readOnly = true)
+    public List<GameDto> getCatalogGames() {
+        return gameRepository.findAll().stream()
+            .map(this::mapToCatalogDto)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * A single catalogue game, for the Catalog's own detail page. Unlike {@link
+     * #getGameById}, this does not require the viewer to have the game in their library -
+     * the catalogue and its community data (ratings, reviews) are public to any signed-in
+     * user, only a personal library entry is private.
+     */
+    @Transactional(readOnly = true)
+    public GameDto getCatalogGameById(Long id) {
+        Game game = gameRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Game not found"));
+        return mapToCatalogDto(game);
+    }
+
+    private GameDto mapToCatalogDto(Game game) {
+        GameDto dto = mapToDto(game);
+        dto.setCommunityRatingScore(game.getBayesianScore());
+        dto.setCommunityRatingCount(game.getRatingCount());
+        return dto;
+    }
+
     @Transactional(readOnly = true)
     public GameDto getGameById(Long id, User user) {
         Game game = gameRepository.findById(id)

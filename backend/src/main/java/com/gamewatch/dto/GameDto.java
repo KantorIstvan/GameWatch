@@ -39,4 +39,13 @@ public class GameDto {
     private Integer playthroughCount;
     private Integer sessionCount;
     private String lastPlayedDate;
+
+    /**
+     * This app's own shrunk community score and how many ratings back it - populated only
+     * for the catalog (see {@link com.gamewatch.controller.GameController}'s /catalog
+     * endpoints). Deliberately absent from the library-scoped responses above, which is
+     * why {@link com.gamewatch.service.GameService}'s per-user mappers never set these.
+     */
+    private Double communityRatingScore;
+    private Integer communityRatingCount;
 }
