@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Timer, Gamepad2, CircleCheck, CalendarDays, Lock, GitCompare } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { GitCompare, SquarePen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import StatCard from '../components/StatCard'
+import ProfileView from '../components/profile/ProfileView'
 import FollowButton from '../components/social/FollowButton'
 import { profilesApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
-import { formatTime } from '../utils/formatters'
-import { statColors, statForegrounds } from '../lib/statColors'
 import type { PublicProfile, FollowState } from '../types'
 
 /**
@@ -76,35 +73,22 @@ function Profile() {
   }
 
   return (
-    <div>
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Avatar className="size-20 shrink-0">
-            <AvatarImage src={profile.profilePictureUrl ?? undefined} alt="" />
-            <AvatarFallback>{profile.handle.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-
-          <div className="min-w-0">
-            <h1 className="text-h2 font-bold">{profile.displayName ?? profile.handle}</h1>
-            <p className="text-body-sm text-text-secondary">@{profile.handle}</p>
-
-            {profile.bio && <p className="mt-2 max-w-prose text-body-sm">{profile.bio}</p>}
-
-            <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-secondary">
-              <span>{t('profile.followers', { count: profile.followerCount })}</span>
-              <span>{t('profile.following', { count: profile.followingCount })}</span>
-              <span className="flex items-center gap-1">
-                <CalendarDays className="size-3" />
-                {t('profile.joined', { date: new Date(profile.joinedDate).toLocaleDateString() })}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        {!profile.isOwnProfile && (
-          <div className="flex shrink-0 items-center gap-2">
-            {/* Only offered when the library is actually visible - the comparison is
-                gated on the same thing, so linking to it otherwise would dead-end. */}
+    <ProfileView
+      profile={profile}
+      actions={
+        profile.isOwnProfile ? (
+          // Reachable by searching yourself up or following a link back to your own handle.
+          // Sending it to the real profile page is better than offering nothing at all.
+          <Button asChild variant="outline">
+            <Link to="/profile">
+              <SquarePen className="size-4" />
+              {t('profile.editProfile')}
+            </Link>
+          </Button>
+        ) : (
+          <>
+            {/* Only offered when the library is actually visible - the comparison is gated
+                on the same thing, so linking to it otherwise would dead-end. */}
             {profile.library && (
               <Button asChild variant="outline">
                 <Link to={`/u/${profile.handle}/compare`}>
@@ -123,73 +107,10 @@ function Profile() {
               }}
               onChange={handleFollowChange}
             />
-          </div>
-        )}
-      </header>
-
-      {profile.library ? (
-        <>
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-4">
-            <StatCard
-              title={t('profile.totalPlaytime')}
-              value={formatTime(profile.library.totalPlaytimeSeconds)}
-              icon={<Timer className="size-5" />}
-              color={statColors.blue}
-              foreground={statForegrounds.blue}
-            />
-            <StatCard
-              title={t('profile.gamesInLibrary')}
-              value={profile.library.gamesInLibrary}
-              icon={<Gamepad2 className="size-5" />}
-            />
-            <StatCard
-              title={t('profile.gamesCompleted')}
-              value={profile.library.gamesCompleted}
-              icon={<CircleCheck className="size-5" />}
-            />
-            <StatCard
-              title={t('profile.totalSessions')}
-              value={profile.library.totalSessions}
-              icon={<CalendarDays className="size-5" />}
-            />
-          </div>
-
-          {profile.library.topGames.length > 0 && (
-            <section>
-              <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.topGames')}</p>
-              <ul className="flex flex-col gap-3">
-                {profile.library.topGames.map((game) => (
-                  <li
-                    key={game.gameId}
-                    className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
-                  >
-                    {game.bannerImageUrl && (
-                      <img
-                        src={game.bannerImageUrl}
-                        alt=""
-                        className="h-12 w-20 shrink-0 rounded-md object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
-                      {game.gameName}
-                    </span>
-                    <span className="shrink-0 text-body-sm text-text-secondary">
-                      {formatTime(game.playtimeSeconds)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
-      ) : (
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-6 backdrop-blur-xl">
-          <Lock className="size-5 shrink-0 text-text-secondary" />
-          <p className="text-body-sm text-text-secondary">{t('profile.libraryHidden')}</p>
-        </div>
-      )}
-    </div>
+          </>
+        )
+      }
+    />
   )
 }
 

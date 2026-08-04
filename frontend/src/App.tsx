@@ -15,6 +15,7 @@ import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import MyProfile from './pages/MyProfile'
 import People from './pages/People'
 import Feed from './pages/Feed'
 import Compare from './pages/Compare'
@@ -62,6 +63,9 @@ function AppContent() {
           <Route path="people" element={<People />} />
           <Route path="feed" element={<Feed />} />
           <Route path="groups" element={<Groups />} />
+          {/* Your own profile has its own route rather than /u/<your handle>: it has to
+              render before a handle is claimed, since claiming one happens here. */}
+          <Route path="profile" element={<MyProfile />} />
           <Route path="u/:handle" element={<Profile />} />
           <Route path="u/:handle/compare" element={<Compare />} />
           <Route path="settings" element={<Settings />} />

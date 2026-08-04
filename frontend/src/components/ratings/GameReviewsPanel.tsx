@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import ReviewReplies from './ReviewReplies'
 import { reviewsApi } from '../../services/api'
 import { formatTime } from '../../utils/formatters'
 import type { GameReview } from '../../types'
@@ -94,18 +95,24 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
     }
   }, [gameId, load, t])
 
+  // Every endpoint that touches a single review hands the whole thing back, so nothing here
+  // has to reload the list to show one changed vote count or one new reply.
+  const replaceReview = useCallback((updated: GameReview) => {
+    setReviews((current) =>
+      current.map((review) => (review.id === updated.id ? updated : review))
+    )
+  }, [])
+
   const toggleHelpful = useCallback(
     async (reviewId: number) => {
       try {
         const response = await reviewsApi.toggleHelpful(reviewId)
-        setReviews((current) =>
-          current.map((review) => (review.id === reviewId ? response.data : review))
-        )
+        replaceReview(response.data)
       } catch (err: any) {
         toast.error(err.response?.data?.message || t('reviews.failed'))
       }
     },
-    [t]
+    [replaceReview, t]
   )
 
   const reveal = useCallback((reviewId: number) => {
@@ -242,6 +249,8 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
               ) : (
                 <p className="whitespace-pre-wrap text-body-sm">{review.body}</p>
               )}
+
+              <ReviewReplies review={review} onReviewChange={replaceReview} />
             </li>
           )
         })}

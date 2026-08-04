@@ -4,18 +4,23 @@ import { Check, X, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import SettingsSection from '../settings/SettingsSection'
 import { followsApi } from '../../services/api'
 import type { FollowPerson } from '../../types'
+
+interface FollowRequestsSectionProps {
+  /** Fires on an accept, since that is a follower the count above has not counted yet. */
+  onAccepted?: () => void
+}
 
 /**
  * Pending follow requests, with the accept/reject decision that makes followers-only
  * visibility mean anything.
  *
- * Only rendered when there is something to answer: a permanently empty panel in settings
- * is noise for the many users who will never receive a request.
+ * Sits above your own follower list rather than in settings, which is where the question
+ * "who follows me" is actually being asked. Only rendered when there is something to answer:
+ * a permanently empty panel is noise for the many users who will never receive a request.
  */
-function FollowRequestsSection() {
+function FollowRequestsSection({ onAccepted }: FollowRequestsSectionProps) {
   const { t } = useTranslation()
   const [requests, setRequests] = useState<FollowPerson[]>([])
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -40,13 +45,14 @@ function FollowRequestsSection() {
         }
         setRequests((current) => current.filter((request) => request.followId !== followId))
         toast.success(accept ? t('social.requests.accepted') : t('social.requests.rejected'))
+        if (accept) onAccepted?.()
       } catch {
         toast.error(t('social.requests.failed'))
       } finally {
         setBusyId(null)
       }
     },
-    [t]
+    [t, onAccepted]
   )
 
   if (requests.length === 0) {
@@ -54,15 +60,17 @@ function FollowRequestsSection() {
   }
 
   return (
-    <SettingsSection
-      icon={<UserPlus className="size-5" />}
-      title={t('social.requests.title')}
-      description={t('social.requests.description')}
-    >
+    <section className="mb-6 rounded-xl border border-accent/30 bg-accent-subtle/40 p-4 sm:p-6">
+      <div className="mb-1 flex items-center gap-3">
+        <UserPlus className="size-5 text-accent" />
+        <p className="text-h4 font-medium">{t('social.requests.title')}</p>
+      </div>
+      <p className="mb-4 text-body-sm text-text-secondary">{t('social.requests.description')}</p>
+
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
           <li key={request.followId} className="flex items-center gap-3">
-            <Avatar className="size-10 shrink-0">
+            <Avatar className="size-11 shrink-0">
               <AvatarImage src={request.profilePictureUrl ?? undefined} alt="" />
               <AvatarFallback>{(request.handle ?? '?').charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
@@ -96,7 +104,7 @@ function FollowRequestsSection() {
           </li>
         ))}
       </ul>
-    </SettingsSection>
+    </section>
   )
 }
 

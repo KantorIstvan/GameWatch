@@ -17,7 +17,8 @@
     "settings": "Settings",
     "account": "Account",
     "social": "Social",
-    "people": "People"
+    "people": "People",
+    "profile": "Profile"
   },
   "settings": {
     "title": "Settings",
@@ -89,7 +90,15 @@
       "save": "Save Profile",
       "saving": "Saving...",
       "saved": "Profile updated",
-      "saveFailed": "Failed to update profile"
+      "saveFailed": "Failed to update profile",
+      "openProfile": "Go to your profile",
+      "addPicture": "Add picture",
+      "changePicture": "Change picture",
+      "removePicture": "Remove",
+      "pictureHint": "JPEG, PNG or WebP. Cropped to a square.",
+      "pictureSaved": "Picture updated",
+      "pictureRemoved": "Picture removed",
+      "pictureFailed": "Could not update your picture"
     },
     "timeFormat": "Time Format",
     "timeFormatDescription": "Choose how times are displayed",
@@ -247,7 +256,17 @@
     "onlyMyLanguage": "My language only",
     "spoilerHidden": "This review mentions spoilers. Click to read it.",
     "finished": "Finished",
-    "none": "No reviews yet."
+    "none": "No reviews yet.",
+    "replies": {
+      "reply": "Reply",
+      "count_one": "{{count}} reply",
+      "count_other": "{{count}} replies",
+      "placeholder": "Ask something, or answer the reviewer.",
+      "send": "Post reply",
+      "delete": "Delete reply",
+      "deleted": "Reply deleted",
+      "failed": "Could not post your reply"
+    }
   },
   "ratings": {
     "title": "Rating",
@@ -279,7 +298,23 @@
     "gamesCompleted": "Completed",
     "totalSessions": "Sessions",
     "topGames": "Most Played",
-    "libraryHidden": "This library is not shared with you."
+    "libraryHidden": "This library is not shared with you.",
+    "followersLabel_one": "follower",
+    "followersLabel_other": "followers",
+    "followingLabel_one": "following",
+    "followingLabel_other": "following",
+    "editProfile": "Edit profile",
+    "tabs": {
+      "overview": "Overview",
+      "followers": "Followers",
+      "following": "Following"
+    },
+    "noFollowers": "No followers yet.",
+    "notFollowingAnyone": "Not following anyone yet.",
+    "listUnavailable": "This list could not be loaded.",
+    "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
+    "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
+    "claimHandleAction": "Claim a handle"
   },
   "social": {
     "follow": {

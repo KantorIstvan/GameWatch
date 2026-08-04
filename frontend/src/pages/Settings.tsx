@@ -1,16 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import ProfileSettingsSection from '../components/settings/ProfileSettingsSection'
 import SettingsSection from '../components/settings/SettingsSection'
-import FollowRequestsSection from '../components/social/FollowRequestsSection'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
 import TypedConfirmDialog from '../components/TypedConfirmDialog'
-import { Languages, Clock, Trash2, Heart, Globe, HardDriveUpload, Upload, CalendarDays, ChevronsUpDown } from 'lucide-react'
+import { Languages, Clock, Trash2, Heart, Globe, HardDriveUpload, Upload, CalendarDays, ChevronsUpDown, UserRound } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { userApi } from '../services/api'
 import healthApi, { HealthSettings as HealthSettingsType } from '../services/healthApi'
 import backupApi, { BackupData } from '../services/backupApi'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../contexts/AuthContext'
 import { toast } from 'sonner'
 import { User } from '../types'
@@ -260,9 +258,21 @@ function Settings() {
         <h1 className="mb-6 text-h2 font-bold text-text-primary md:mb-8">{t('settings.title')}</h1>
 
         <div className="flex flex-col gap-8 rounded-xl border border-border bg-surface/90 p-4 backdrop-blur-xl sm:p-6">
-          <ProfileSettingsSection />
-
-          <FollowRequestsSection />
+          {/* The profile fields themselves live on the profile page now: "what strangers see
+              of me" is a different question from "how the app behaves for me", and it is
+              answered by looking at the profile being edited. This is the signpost. */}
+          <SettingsSection
+            icon={<UserRound className="size-5" />}
+            title={t('settings.profile.title')}
+            description={t('settings.profile.description')}
+          >
+            <Button asChild variant="outline">
+              <Link to="/profile">
+                <UserRound className="size-4" />
+                {t('settings.profile.openProfile')}
+              </Link>
+            </Button>
+          </SettingsSection>
 
           <SettingsSection
             icon={<Languages className="size-5" />}

@@ -282,6 +282,20 @@ export interface GameReview {
   viewerFoundHelpful: boolean
   isOwnReview: boolean
   createdAt: string
+  /** The conversation under the review, oldest first. Flat - replies are never replied to. */
+  replies: ReviewReply[]
+}
+
+export interface ReviewReply {
+  id: number
+  authorHandle: string | null
+  authorDisplayName: string | null
+  authorPictureUrl: string | null
+  body: string
+  isOwnReply: boolean
+  /** True for the reply's author and for whoever wrote the review it sits under. */
+  viewerCanDelete: boolean
+  createdAt: string
 }
 
 export interface GameRatingSummary {
@@ -321,15 +335,28 @@ export interface PublicProfile {
   library: ProfileLibrary | null
 }
 
-/** One row of a user search result - just enough to render the row and its follow button. */
-export interface ProfileSearchResult {
-  handle: string
+/**
+ * One row in a list of people - a search result, a follower, someone being followed.
+ *
+ * Carries the viewer's own relationship to that person, so a follow button in a row starts
+ * in the right state instead of defaulting to "Follow" for someone already followed.
+ */
+export interface ProfileSummary {
+  /**
+   * Null for an account that has never claimed one.
+   *
+   * Such a person can still follow others and so still turns up in these lists, but has no
+   * address - nothing to link to, and nothing the follow endpoints can be keyed by.
+   */
+  handle: string | null
   displayName: string | null
   profilePictureUrl: string | null
   followerCount: number
   followingCount: number
   viewerIsFollowing: boolean
   viewerRequestPending: boolean
+  /** The viewer's own row, which gets no follow button - you cannot follow yourself. */
+  isOwnProfile: boolean
 }
 
 export interface FollowState {
@@ -359,6 +386,8 @@ export interface ProfileSettings {
   bio: string | null
   profileVisibility: Visibility
   libraryVisibility: Visibility
+  /** Read-only here: the picture is changed through the avatar upload endpoint. */
+  profilePictureUrl: string | null
 }
 
 export interface TrendStats {

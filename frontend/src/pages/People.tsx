@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search, Users } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import FollowButton from '../components/social/FollowButton'
+import ProfileListRow from '../components/social/ProfileListRow'
 import { profilesApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
-import type { FollowState, ProfileSearchResult } from '../types'
+import type { FollowState, ProfileSummary } from '../types'
 
 const MIN_QUERY_LENGTH = 2
 const DEBOUNCE_MS = 300
@@ -23,7 +21,7 @@ function People() {
   const { t } = useTranslation()
   const { isAuthReady } = useAuthContext()
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<ProfileSearchResult[]>([])
+  const [results, setResults] = useState<ProfileSummary[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -124,37 +122,12 @@ function People() {
 
       {!loading && results.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {results.map((result) => (
-            <li
-              key={result.handle}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl sm:p-4"
-            >
-              <Link to={`/u/${result.handle}`} className="flex min-w-0 flex-1 items-center gap-3">
-                <Avatar className="size-11 shrink-0">
-                  <AvatarImage src={result.profilePictureUrl ?? undefined} alt="" />
-                  <AvatarFallback>{result.handle.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <span className="min-w-0">
-                  <span className="block truncate text-body-sm font-medium text-text-primary">
-                    {result.displayName ?? result.handle}
-                  </span>
-                  <span className="block truncate text-caption text-text-secondary">
-                    @{result.handle} · {t('profile.followers', { count: result.followerCount })}
-                  </span>
-                </span>
-              </Link>
-
-              <FollowButton
-                state={{
-                  handle: result.handle,
-                  following: result.viewerIsFollowing,
-                  requestPending: result.viewerRequestPending,
-                  followerCount: result.followerCount,
-                  followingCount: result.followingCount,
-                }}
-                onChange={(next) => handleFollowChange(result.handle, next)}
-              />
-            </li>
+          {results.map((result, index) => (
+            <ProfileListRow
+              key={result.handle ?? `unclaimed-${index}`}
+              person={result}
+              onFollowChange={handleFollowChange}
+            />
           ))}
         </ul>
       )}

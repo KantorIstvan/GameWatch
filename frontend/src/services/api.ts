@@ -109,6 +109,16 @@ export const userApi = {
     apiClient.put('/users/me/profile', settings),
   isHandleAvailable: (handle: string) =>
     apiClient.get('/users/me/handle-available', { params: { handle } }),
+  // The blob is already downscaled by the picker - see AvatarPicker - so what goes over the
+  // wire is an avatar rather than whatever came off the camera.
+  uploadAvatar: (image: Blob) => {
+    const form = new FormData()
+    form.append('file', image, 'avatar')
+    return apiClient.post('/users/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+  deleteAvatar: () => apiClient.delete('/users/me/avatar'),
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 
@@ -131,12 +141,21 @@ export const reviewsApi = {
   ) => apiClient.put(`/games/${gameId}/reviews`, review),
   deleteReview: (gameId: number) => apiClient.delete(`/games/${gameId}/reviews`),
   toggleHelpful: (reviewId: number) => apiClient.post(`/reviews/${reviewId}/helpful`),
+  // Both return the parent review, so a thread re-renders from the one response.
+  addReply: (reviewId: number, body: string) =>
+    apiClient.post(`/reviews/${reviewId}/replies`, { body }),
+  deleteReply: (replyId: number) => apiClient.delete(`/reviews/replies/${replyId}`),
 }
 
 export const profilesApi = {
   getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
+  // Its own route rather than getProfile(ownHandle): an account that has not claimed a
+  // handle still has a profile page, and that page is where the handle gets claimed.
+  getMyProfile: () => apiClient.get('/profiles/me'),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
   compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
+  getFollowers: (handle: string) => apiClient.get(`/profiles/${handle}/followers`),
+  getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
 }
 
 export const groupsApi = {

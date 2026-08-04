@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound, UserRound } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -177,6 +177,12 @@ function Layout() {
               <DropdownMenuLabel className="font-medium">{user?.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <UserRound className="size-4" />
+                  {t('nav.profile')}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link to="/settings">
                   <SettingsIcon className="size-4" />
                   {t('nav.settings')}
@@ -296,6 +302,17 @@ function Layout() {
               </Button>
             ))}
             <SidebarSeparator className="mx-0 my-1" />
+            <Button
+              variant="ghost"
+              asChild
+              className="h-12 justify-start gap-3 text-body"
+              onClick={() => setAccountSheetOpen(false)}
+            >
+              <Link to="/profile">
+                <UserRound className="size-4.5" />
+                {t('nav.profile')}
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               asChild
