@@ -18,16 +18,6 @@ function GameDetails({ game, t }: GameDetailsProps) {
           </div>
         )}
 
-        {game.rating && (
-          <div className="mb-4">
-            <p className="text-body-sm font-semibold text-text-secondary">{t('game.rating')}</p>
-            <p className="text-body">
-              {game.rating}/5 ⭐
-              {(game.ratingsCount ?? 0) > 0 && ` - ${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
-            </p>
-          </div>
-        )}
-
         {game.esrbRating && (
           <div className="mb-4">
             <p className="text-body-sm font-semibold text-text-secondary">{t('game.esrbRating')}</p>

@@ -64,8 +64,6 @@ function SearchFilterBar({
           <SelectItem value="name-desc">{t('games.sortNameDesc')}</SelectItem>
           <SelectItem value="date-newest">{t('games.sortNewest')}</SelectItem>
           <SelectItem value="date-oldest">{t('games.sortOldest')}</SelectItem>
-          <SelectItem value="rating-high">{t('games.sortRatingHigh')}</SelectItem>
-          <SelectItem value="rating-low">{t('games.sortRatingLow')}</SelectItem>
           <SelectItem value="sessions-high">{t('games.sortSessionsHigh')}</SelectItem>
           <SelectItem value="sessions-low">{t('games.sortSessionsLow')}</SelectItem>
           <SelectItem value="playtime-high">{t('games.sortPlaytimeHigh')}</SelectItem>

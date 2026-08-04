@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Check, Clock, Pencil, Star } from 'lucide-react'
+import { ArrowLeft, Check, Clock, Pencil } from 'lucide-react'
 import { playthroughsApi } from '../services/api'
 import { Playthrough } from '../types'
 import Loading from '../components/Loading'
@@ -343,20 +343,6 @@ function PlaythroughDetail() {
                 </div>
               )}
             </div>
-
-            {game.rating && (
-              <div className="mb-6 flex flex-row flex-wrap gap-6">
-                <div>
-                  <div className="mb-1 flex items-center gap-1">
-                    <span className="text-h4 font-bold">{game.rating}/5</span>
-                    <Star className="size-4 fill-warning text-warning" />
-                  </div>
-                  <p className="text-body-sm text-text-secondary">
-                    {(game.ratingsCount ?? 0) > 0 && `${game.ratingsCount?.toLocaleString()} ${t('game.ratings')}`}
-                  </p>
-                </div>
-              </div>
-            )}
 
             {(game.developers || game.publishers) && (
               <div className="mb-4 flex items-center gap-2">
