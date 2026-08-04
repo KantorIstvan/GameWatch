@@ -2,6 +2,7 @@ package com.gamewatch.service;
 
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
+import com.gamewatch.entity.Follow;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
@@ -64,7 +65,7 @@ public class ProfileService {
                 && followRepository.isAcceptedFollower(viewer.getId(), owner.getId()))
             .viewerRequestPending(!isOwnProfile && viewer != null
                 && followRepository.findByFollowerAndFollowee(viewer, owner)
-                    .map(follow -> follow.getStatus() == com.gamewatch.entity.Follow.FollowStatus.PENDING)
+                    .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
                     .orElse(false))
             .isOwnProfile(isOwnProfile)
             // Null, not an empty block: zeros are indistinguishable from a real empty
@@ -118,7 +119,13 @@ public class ProfileService {
      * Handle search, restricted to profiles the viewer could actually open.
      *
      * Returning profiles the viewer cannot view would turn search into a way to enumerate
-     * accounts that have deliberately hidden themselves.
+     * accounts that have deliberately hidden themselves. The viewer's own account never
+     * appears here - there is nothing to search yourself up to do, and following yourself
+     * is rejected anyway.
+     *
+     * Each result carries the same follow-state fields {@link #getProfile} returns, so a
+     * follow button in a result row starts in the right state instead of defaulting to
+     * "Follow" for someone already followed.
      */
     @Transactional(readOnly = true)
     public List<PublicProfileDto> search(User viewer, String query) {
@@ -127,6 +134,7 @@ public class ProfileService {
         }
 
         return userRepository.searchByHandleOrDisplayName(query.trim().toLowerCase()).stream()
+            .filter(candidate -> viewer == null || !candidate.getId().equals(viewer.getId()))
             .filter(candidate -> candidate.getProfileVisibility() != Visibility.PRIVATE)
             .filter(candidate -> followService.canView(viewer, candidate, candidate.getProfileVisibility()))
             .sorted(Comparator.comparing(User::getHandle))
@@ -136,6 +144,14 @@ public class ProfileService {
                 .displayName(candidate.getDisplayName() != null
                     ? candidate.getDisplayName() : candidate.getUsername())
                 .profilePictureUrl(candidate.getProfilePictureUrl())
+                .followerCount(followRepository.countAcceptedFollowers(candidate.getId()))
+                .followingCount(followRepository.countAcceptedFollowing(candidate.getId()))
+                .viewerIsFollowing(viewer != null
+                    && followRepository.isAcceptedFollower(viewer.getId(), candidate.getId()))
+                .viewerRequestPending(viewer != null
+                    && followRepository.findByFollowerAndFollowee(viewer, candidate)
+                        .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
+                        .orElse(false))
                 .build())
             .collect(Collectors.toList());
     }

@@ -13,6 +13,7 @@ import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import People from './pages/People'
 import Feed from './pages/Feed'
 import Compare from './pages/Compare'
 import Groups from './pages/Groups'
@@ -53,6 +54,7 @@ function AppContent() {
           <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
+          <Route path="people" element={<People />} />
           <Route path="feed" element={<Feed />} />
           <Route path="groups" element={<Groups />} />
           <Route path="u/:handle" element={<Profile />} />
