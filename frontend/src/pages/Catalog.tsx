@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Search, SearchX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import RecentCatalogGames from '../components/catalog/RecentCatalogGames'
 import { gamesApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
 import type { GameSearchResult } from '../types'
@@ -90,12 +91,9 @@ function Catalog() {
         </div>
       )}
 
-      {!loading && trimmedQuery.length === 0 && (
-        <div className="flex items-start gap-3 rounded-xl border border-dashed border-border p-6">
-          <Search className="mt-0.5 size-5 shrink-0 text-text-secondary" />
-          <p className="text-body-sm text-text-secondary">{t('catalog.prompt')}</p>
-        </div>
-      )}
+      {/* Only with an empty box: once someone is searching, the results are the answer and
+          what they looked at yesterday is in the way of it. */}
+      {!loading && trimmedQuery.length === 0 && <RecentCatalogGames />}
 
       {!loading && trimmedQuery.length > 0 && trimmedQuery.length < MIN_QUERY_LENGTH && (
         <p className="text-body-sm text-text-secondary">{t('catalog.typeMore')}</p>
