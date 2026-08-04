@@ -50,6 +50,10 @@ function CreatePlaythroughDialog({
   const [gamePickerOpen, setGamePickerOpen] = useState(false)
   const gameListRef = useRef<HTMLDivElement>(null)
 
+  // Whitespace-only is not a name - the backend rejects it too, so the button has to
+  // agree with the server rather than letting a submit fail on a technicality.
+  const hasTitle = playthroughTitle.trim().length > 0
+
   // The game list is a Popover nested inside a Dialog. Radix's dialog scroll-lock
   // registers a capture-phase wheel listener on the document that stops propagation
   // before it reaches the popover's own scroll container, so a listener on the list
@@ -96,7 +100,7 @@ function CreatePlaythroughDialog({
             onClick={onSubmit}
             size="lg"
             className="h-12 w-full"
-            disabled={!selectedGame || !playthroughType || !platform || !startDate}
+            disabled={!selectedGame || !hasTitle || !playthroughType || !platform || !startDate}
           >
             {t('playthrough.create')}
           </Button>
@@ -146,11 +150,13 @@ function CreatePlaythroughDialog({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label>{t('playthrough.playthroughTitle')}</Label>
+          <Label htmlFor="playthrough-title">{t('playthrough.titleLabel')} *</Label>
           <Input
+            id="playthrough-title"
+            required
             value={playthroughTitle}
             onChange={(e) => setPlaythroughTitle(e.target.value)}
-            placeholder={selectedGame ? `${selectedGame.name} playthrough` : ''}
+            placeholder={selectedGame ? t('playthrough.titlePlaceholder', { game: selectedGame.name }) : ''}
           />
           <p className="text-caption text-text-secondary">{t('playthrough.playthroughTitleHelper')}</p>
         </div>
