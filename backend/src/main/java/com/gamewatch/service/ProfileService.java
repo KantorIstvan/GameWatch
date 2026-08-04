@@ -116,12 +116,18 @@ public class ProfileService {
     }
 
     /**
-     * Handle search, restricted to profiles the viewer could actually open.
+     * People search: who exists and can be followed, not what they have.
      *
-     * Returning profiles the viewer cannot view would turn search into a way to enumerate
-     * accounts that have deliberately hidden themselves. The viewer's own account never
-     * appears here - there is nothing to search yourself up to do, and following yourself
-     * is rejected anyway.
+     * PRIVATE profiles are excluded, because returning them would turn search into a way
+     * to enumerate accounts that have deliberately hidden themselves. FOLLOWERS-only
+     * profiles are included, and deliberately so: they accept follow requests, and a
+     * request can only be sent to someone who can be found - filtering them out here left
+     * the consent step that makes FOLLOWERS mean anything unreachable. Only identity is
+     * returned either way; {@link #getProfile} still refuses the contents of a profile the
+     * viewer has not been let into.
+     *
+     * The viewer's own account never appears - there is nothing to search yourself up to
+     * do, and following yourself is rejected anyway.
      *
      * Each result carries the same follow-state fields {@link #getProfile} returns, so a
      * follow button in a result row starts in the right state instead of defaulting to
@@ -133,11 +139,13 @@ public class ProfileService {
             return List.of();
         }
 
-        return userRepository.searchByHandleOrDisplayName(query.trim().toLowerCase()).stream()
+        String normalized = query.trim().toLowerCase();
+
+        return userRepository.searchByHandleOrName(normalized).stream()
             .filter(candidate -> viewer == null || !candidate.getId().equals(viewer.getId()))
             .filter(candidate -> candidate.getProfileVisibility() != Visibility.PRIVATE)
-            .filter(candidate -> followService.canView(viewer, candidate, candidate.getProfileVisibility()))
-            .sorted(Comparator.comparing(User::getHandle))
+            .sorted(Comparator.comparingInt((User candidate) -> matchRank(candidate, normalized))
+                .thenComparing(User::getHandle))
             .limit(20)
             .map(candidate -> PublicProfileDto.builder()
                 .handle(candidate.getHandle())
@@ -154,5 +162,28 @@ public class ProfileService {
                         .orElse(false))
                 .build())
             .collect(Collectors.toList());
+    }
+
+    /**
+     * How closely a candidate answers what was typed - lower sorts first.
+     *
+     * Someone who types a full handle wants that person, not the twenty accounts whose
+     * display name happens to contain the same letters, and alphabetical order alone
+     * buried them. Ties fall back to the handle, so the order stays stable.
+     */
+    private int matchRank(User candidate, String query) {
+        String handle = candidate.getHandle().toLowerCase();
+        if (handle.equals(query)) {
+            return 0;
+        }
+        if (handle.startsWith(query)) {
+            return 1;
+        }
+        return startsWith(candidate.getDisplayName(), query)
+            || startsWith(candidate.getUsername(), query) ? 2 : 3;
+    }
+
+    private boolean startsWith(String value, String query) {
+        return value != null && value.toLowerCase().startsWith(query);
     }
 }

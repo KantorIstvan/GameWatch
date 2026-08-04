@@ -3,6 +3,7 @@ package com.gamewatch.service;
 import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.repository.UserRepository;
+import com.gamewatch.util.HandleGenerator;
 import com.gamewatch.util.HandleValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +41,39 @@ public class UserService {
                 .auth0UserId(auth0UserId)
                 .email(email)
                 .username(username)
+                .handle(generateHandle(username, email))
                 .profilePictureUrl(pictureUrl)
                 .build();
             return userRepository.save(newUser);
         } catch (Exception e) {
-            log.debug("Concurrent user creation detected, fetching existing user");
+            // Two races end up here. The same account signing in twice at once is the
+            // common one, and the row the other request wrote is what we want. The other
+            // is two different accounts whose generated handles collided in the window
+            // between the availability check and the insert, which leaves nothing to
+            // return - but is self-correcting, because the winning handle is committed by
+            // then and the next attempt generates a different one.
+            log.debug("User creation failed for {}, re-reading", auth0UserId, e);
             return userRepository.findByAuth0UserId(auth0UserId)
                 .orElseThrow(() -> new RuntimeException("Failed to create or find user"));
         }
+    }
+
+    /**
+     * Picks the handle a brand new account starts life with.
+     *
+     * Nickname first, email local-part second: the nickname is the closest thing Auth0
+     * gives us to a name the person chose. Both can be absent for some connections, in
+     * which case {@link HandleGenerator} falls back to a generic base.
+     *
+     * The uniqueness check races against concurrent sign-ups exactly as the settings form
+     * does, and loses the same way - the caller already re-reads the row when the insert
+     * violates a constraint.
+     */
+    private String generateHandle(String username, String email) {
+        String source = username != null && !username.isBlank() ? username : email;
+        return HandleGenerator.generateUnique(
+            source,
+            candidate -> userRepository.findByHandleIgnoreCase(candidate).isPresent());
     }
 
     public User getUserByAuth0Id(String auth0UserId) {
