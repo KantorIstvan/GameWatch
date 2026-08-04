@@ -1,6 +1,7 @@
 package com.gamewatch.controller;
 
 import com.gamewatch.entity.User;
+import com.gamewatch.service.UserAvatarService;
 import com.gamewatch.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private UserAvatarService userAvatarService;
 
     private User testUser;
 

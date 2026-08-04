@@ -74,6 +74,90 @@ public class ProfileService {
             .build();
     }
 
+    /**
+     * The viewer's own profile, as their own profile page renders it.
+     *
+     * Separate from {@link #getProfile} rather than a call to it with your own handle,
+     * because a user who has not claimed a handle yet has nothing to look themselves up by -
+     * and that is exactly the state the own-profile page has to render, since it is where
+     * they go to claim one.
+     */
+    @Transactional(readOnly = true)
+    public PublicProfileDto getOwnProfile(User viewer) {
+        return PublicProfileDto.builder()
+            .handle(viewer.getHandle())
+            .displayName(viewer.getDisplayName() != null ? viewer.getDisplayName() : viewer.getUsername())
+            .bio(viewer.getBio())
+            .profilePictureUrl(viewer.getProfilePictureUrl())
+            .joinedDate(viewer.getCreatedAt().atZone(TimezoneUtils.resolveZone(viewer)).toLocalDate())
+            .followerCount(followRepository.countAcceptedFollowers(viewer.getId()))
+            .followingCount(followRepository.countAcceptedFollowing(viewer.getId()))
+            .isOwnProfile(true)
+            // Your own library is always yours to see, whatever the visibility says.
+            .library(buildLibrary(viewer))
+            .build();
+    }
+
+    /**
+     * Who follows this profile, and who it follows.
+     *
+     * Gated on the profile's own visibility rather than being open: a private account's
+     * follower list is a list of the people it has let in, and handing that to anyone who
+     * knows the handle would give away exactly what the account is set to hide. The lists
+     * themselves are not separately configurable - a profile you can open is one whose
+     * social graph you can see, which is the same bargain Instagram makes.
+     */
+    @Transactional(readOnly = true)
+    public List<PublicProfileDto> getFollowers(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        return followRepository.findAcceptedFollowers(owner.getId()).stream()
+            .map(follow -> toSummary(follow.getFollower(), viewer))
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PublicProfileDto> getFollowing(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        return followRepository.findAcceptedFollowing(owner.getId()).stream()
+            .map(follow -> toSummary(follow.getFollowee(), viewer))
+            .collect(Collectors.toList());
+    }
+
+    private User requireViewableProfile(User viewer, String handle) {
+        User owner = userRepository.findByHandleIgnoreCase(handle)
+            .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
+        if (!followService.canView(viewer, owner, owner.getProfileVisibility())) {
+            throw new IllegalArgumentException("Profile not found");
+        }
+        return owner;
+    }
+
+    /**
+     * One row of a list of people - a search result, a follower, someone being followed.
+     *
+     * Carries the same follow-state fields {@link #getProfile} returns, so a follow button
+     * in a row starts in the right state instead of defaulting to "Follow" for someone the
+     * viewer already follows.
+     */
+    private PublicProfileDto toSummary(User person, User viewer) {
+        boolean isSelf = viewer != null && person.getId().equals(viewer.getId());
+        return PublicProfileDto.builder()
+            .handle(person.getHandle())
+            .displayName(person.getDisplayName() != null
+                ? person.getDisplayName() : person.getUsername())
+            .profilePictureUrl(person.getProfilePictureUrl())
+            .followerCount(followRepository.countAcceptedFollowers(person.getId()))
+            .followingCount(followRepository.countAcceptedFollowing(person.getId()))
+            .viewerIsFollowing(!isSelf && viewer != null
+                && followRepository.isAcceptedFollower(viewer.getId(), person.getId()))
+            .viewerRequestPending(!isSelf && viewer != null
+                && followRepository.findByFollowerAndFollowee(viewer, person)
+                    .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
+                    .orElse(false))
+            .isOwnProfile(isSelf)
+            .build();
+    }
+
     private PublicProfileDto.ProfileLibraryDto buildLibrary(User owner) {
         List<Playthrough> playthroughs = playthroughRepository.findByUserIdOrderByCreatedAtDesc(owner.getId());
 
@@ -139,20 +223,7 @@ public class ProfileService {
             .filter(candidate -> followService.canView(viewer, candidate, candidate.getProfileVisibility()))
             .sorted(Comparator.comparing(User::getHandle))
             .limit(20)
-            .map(candidate -> PublicProfileDto.builder()
-                .handle(candidate.getHandle())
-                .displayName(candidate.getDisplayName() != null
-                    ? candidate.getDisplayName() : candidate.getUsername())
-                .profilePictureUrl(candidate.getProfilePictureUrl())
-                .followerCount(followRepository.countAcceptedFollowers(candidate.getId()))
-                .followingCount(followRepository.countAcceptedFollowing(candidate.getId()))
-                .viewerIsFollowing(viewer != null
-                    && followRepository.isAcceptedFollower(viewer.getId(), candidate.getId()))
-                .viewerRequestPending(viewer != null
-                    && followRepository.findByFollowerAndFollowee(viewer, candidate)
-                        .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
-                        .orElse(false))
-                .build())
+            .map(candidate -> toSummary(candidate, viewer))
             .collect(Collectors.toList());
     }
 }

@@ -29,6 +29,33 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.search(viewer, query));
     }
 
+    /**
+     * The viewer's own profile.
+     *
+     * Its own route rather than {@code /profiles/{ownHandle}}, because someone who has not
+     * claimed a handle has nothing to look themselves up by, and their own profile page is
+     * where they go to claim one.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<PublicProfileDto> getOwnProfile(Authentication authentication) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getOwnProfile(viewer));
+    }
+
+    @GetMapping("/{handle}/followers")
+    public ResponseEntity<List<PublicProfileDto>> getFollowers(Authentication authentication,
+                                                               @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getFollowers(viewer, handle));
+    }
+
+    @GetMapping("/{handle}/following")
+    public ResponseEntity<List<PublicProfileDto>> getFollowing(Authentication authentication,
+                                                               @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getFollowing(viewer, handle));
+    }
+
     @GetMapping("/{handle}/compare")
     public ResponseEntity<ProfileComparisonDto> compare(Authentication authentication,
                                                         @PathVariable String handle) {

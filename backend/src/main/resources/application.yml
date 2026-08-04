@@ -37,6 +37,14 @@ spring:
             factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
     open-in-view: false
   
+  # Avatar uploads are downscaled in the browser before they are sent, so a real one lands
+  # far under this. The cap is a backstop against a direct API call, and matches the one
+  # UserAvatarService enforces on the bytes it stores.
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
   flyway:
     enabled: true
     baseline-on-migrate: true

@@ -3,6 +3,7 @@ package com.gamewatch.dto;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * A review, with the evidence behind its author's opinion.
@@ -31,4 +32,13 @@ public class GameReviewDto {
     private boolean viewerFoundHelpful;
     private boolean isOwnReview;
     private Instant createdAt;
+
+    /**
+     * The conversation under the review, oldest first.
+     *
+     * Inline rather than behind its own request: replies are short, flat and few, and a
+     * separate round trip per review to find out there are none would cost more than
+     * carrying them.
+     */
+    private List<ReviewReplyDto> replies;
 }
