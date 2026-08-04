@@ -645,10 +645,14 @@
     "gamePageSubtitle": "Ratings and reviews from everyone tracking this game",
     "failedToLoadGame": "Failed to load this game. Please try again.",
     "searchPlaceholder": "Search for any game",
-    "prompt": "Start typing to search for a game.",
     "typeMore": "Keep typing - at least 2 characters.",
     "noResults": "No games found for \"{{query}}\".",
-    "averageCompletion": "Around {{time}} to beat"
+    "averageCompletion": "Around {{time}} to beat",
+    "recent": {
+      "title": "Recently viewed",
+      "clearAll": "Clear all",
+      "remove": "Remove {{game}} from recently viewed"
+    }
   },
   "playthrough": {
     "title": "Playthrough Details",

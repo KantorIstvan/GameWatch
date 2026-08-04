@@ -1,4 +1,4 @@
-import { Trash2, Clock, Play, Gamepad2, Star } from 'lucide-react'
+import { Trash2, Clock, Play, Gamepad2, Star, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,20 @@ interface GameCardProps {
   game: Game
   /** Omitted on the Catalog page - deleting only makes sense from your own library. */
   onDelete?: (id: number) => void
+  /**
+   * Accessible name for the overlay action, when it does something other than delete the
+   * game - the catalog's recently-viewed row removes a card from a list, and a screen
+   * reader announcing "delete" there would describe a far more destructive act.
+   */
+  deleteLabel?: string
+  /**
+   * Keeps the overlay action on screen instead of revealing it on hover.
+   *
+   * For rows where removing a card is a normal, expected action rather than a rare and
+   * destructive one - hover is not a gesture a touch device has, so an action people are
+   * meant to use routinely cannot be hidden behind it.
+   */
+  alwaysShowDelete?: boolean
   onClick?: (id: number) => void
 }
 
@@ -26,7 +40,13 @@ interface GameCardProps {
  * component naturally renders as a plain community tile without a separate variant prop -
  * only the community rating badge, present exclusively on catalog games, is added back.
  */
-function GameCard({ game, onDelete, onClick }: GameCardProps) {
+function GameCard({
+  game,
+  onDelete,
+  deleteLabel,
+  alwaysShowDelete = false,
+  onClick,
+}: GameCardProps) {
   const { t } = useTranslation()
 
   const getStatusInfo = (status: string) => {
@@ -85,14 +105,17 @@ function GameCard({ game, onDelete, onClick }: GameCardProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t('common.delete')}
+            aria-label={deleteLabel ?? t('common.delete')}
             onClick={(e) => {
               e.stopPropagation()
               onDelete(game.id)
             }}
-            className="absolute right-2 top-2 bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-150 ease-standard hover:bg-destructive hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+            className={cn(
+              'absolute right-2 top-2 bg-black/70 text-white backdrop-blur-xs transition-all duration-150 ease-standard hover:bg-destructive hover:text-white focus-visible:opacity-100',
+              alwaysShowDelete ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            )}
           >
-            <Trash2 className="size-4" />
+            {alwaysShowDelete ? <X className="size-4" /> : <Trash2 className="size-4" />}
           </Button>
         )}
       </div>

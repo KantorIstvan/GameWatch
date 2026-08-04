@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock } from 'lucide-react'
 import Loading from '../components/Loading'
@@ -6,6 +7,7 @@ import GameRatingPanel from '../components/ratings/GameRatingPanel'
 import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
 import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
 import { useCatalogGame } from '../hooks/useCatalogGame'
+import { rememberCatalogGame } from '../hooks/useRecentCatalogGames'
 import { useTranslation } from 'react-i18next'
 import { formatTime } from '../utils/formatters'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +26,18 @@ function CatalogGameDetail() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { game, loading, error, gameId, ensureGameId } = useCatalogGame(Number(externalId))
+
+  // Recorded once the game has actually loaded, so a mistyped or dead id never lands in the
+  // catalog's recently-viewed row as a card nobody can open.
+  useEffect(() => {
+    if (!game) return
+    rememberCatalogGame({
+      externalId: game.externalId,
+      name: game.name,
+      bannerImageUrl: game.bannerImageUrl,
+      releaseDate: game.releaseDate,
+    })
+  }, [game])
 
   if (loading) return <Loading />
 
