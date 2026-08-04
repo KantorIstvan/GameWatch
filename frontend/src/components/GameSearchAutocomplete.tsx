@@ -133,7 +133,6 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
                     <p className="text-body">{option.name}</p>
                     <p className="text-caption text-text-secondary">
                       {option.releaseDate && `${t('games.released')}: ${option.releaseDate}`}
-                      {option.rating && ` • ${t('games.rating')}: ${option.rating}/5`}
                     </p>
                     {option.genres && (
                       <p className="block text-caption text-text-secondary">{option.genres}</p>

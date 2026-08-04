@@ -39,7 +39,12 @@ function Games() {
     return saved ? parseInt(saved, 10) : 2
   })
   const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('gamesSearchQuery') || '')
-  const [sortBy, setSortBy] = useState(() => localStorage.getItem('gamesSortBy') || 'name-asc')
+  const [sortBy, setSortBy] = useState(() => {
+    // The rating sorts are gone along with the fetched score they ordered by, so a
+    // persisted 'rating-high'/'rating-low' would leave the Select showing no selection.
+    const saved = localStorage.getItem('gamesSortBy')
+    return saved && !saved.startsWith('rating-') ? saved : 'name-asc'
+  })
   const [filterGenre, setFilterGenre] = useState(() => localStorage.getItem('gamesFilterGenre') || '')
   const [filterPlatform, setFilterPlatform] = useState(() => localStorage.getItem('gamesFilterPlatform') || '')
   const [filterYear, setFilterYear] = useState(() => localStorage.getItem('gamesFilterYear') || '')
@@ -238,12 +243,6 @@ function Games() {
           if (!b.releaseDate) return -1
           return a.releaseDate.localeCompare(b.releaseDate)
         })
-        break
-      case 'rating-high':
-        result.sort((a: Game, b: Game) => (b.rating || 0) - (a.rating || 0))
-        break
-      case 'rating-low':
-        result.sort((a: Game, b: Game) => (a.rating || 0) - (b.rating || 0))
         break
       case 'sessions-high':
         result.sort((a: Game, b: Game) => (b.sessionCount || 0) - (a.sessionCount || 0))

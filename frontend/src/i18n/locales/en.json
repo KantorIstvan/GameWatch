@@ -608,8 +608,6 @@
     "sortNameDesc": "Name (Z-A)",
     "sortNewest": "Newest First",
     "sortOldest": "Oldest First",
-    "sortRatingHigh": "Highest Rated",
-    "sortRatingLow": "Lowest Rated",
     "sortSessionsHigh": "Most Sessions",
     "sortSessionsLow": "Least Sessions",
     "sortPlaytimeHigh": "Most Playtime",
@@ -628,8 +626,7 @@
     "cardSizeSmall": "Small",
     "cardSizeMedium": "Medium",
     "cardSizeLarge": "Large",
-    "released": "Released",
-    "rating": "Rating"
+    "released": "Released"
   },
   "playthrough": {
     "title": "Playthrough Details",
@@ -785,8 +782,6 @@
   },
   "game": {
     "released": "Released",
-    "rating": "Rating",
-    "ratings": "ratings",
     "esrbRating": "ESRB Rating",
     "genres": "Genres",
     "tags": "Tags",
