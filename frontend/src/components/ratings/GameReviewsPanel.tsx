@@ -47,7 +47,7 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
       .getReviews(gameId, sort, onlyMyLanguage ? i18n.language : undefined)
       .then((response) => {
         setReviews(response.data)
-        const own = response.data.find((review: GameReview) => review.isOwnReview)
+        const own = response.data.find((review: GameReview) => review.ownReview)
         if (own) {
           setBody(own.body)
           setSpoilers(own.containsSpoilers)
@@ -119,7 +119,7 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
     setRevealed((current) => new Set(current).add(reviewId))
   }, [])
 
-  const ownReview = reviews.find((review) => review.isOwnReview)
+  const ownReview = reviews.find((review) => review.ownReview)
 
   return (
     <div className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6">
@@ -224,7 +224,7 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
                   </p>
                 </div>
 
-                {!review.isOwnReview && (
+                {!review.ownReview && (
                   <Button
                     size="sm"
                     variant={review.viewerFoundHelpful ? 'default' : 'outline'}

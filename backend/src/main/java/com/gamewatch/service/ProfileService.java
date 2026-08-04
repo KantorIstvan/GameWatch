@@ -67,7 +67,7 @@ public class ProfileService {
                 && followRepository.findByFollowerAndFollowee(viewer, owner)
                     .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
                     .orElse(false))
-            .isOwnProfile(isOwnProfile)
+            .ownProfile(isOwnProfile)
             // Null, not an empty block: zeros are indistinguishable from a real empty
             // library, which misleads the viewer and hints that a hidden one exists.
             .library(libraryVisible ? buildLibrary(owner) : null)
@@ -92,7 +92,7 @@ public class ProfileService {
             .joinedDate(viewer.getCreatedAt().atZone(TimezoneUtils.resolveZone(viewer)).toLocalDate())
             .followerCount(followRepository.countAcceptedFollowers(viewer.getId()))
             .followingCount(followRepository.countAcceptedFollowing(viewer.getId()))
-            .isOwnProfile(true)
+            .ownProfile(true)
             // Your own library is always yours to see, whatever the visibility says.
             .library(buildLibrary(viewer))
             .build();
@@ -154,7 +154,7 @@ public class ProfileService {
                 && followRepository.findByFollowerAndFollowee(viewer, person)
                     .map(follow -> follow.getStatus() == Follow.FollowStatus.PENDING)
                     .orElse(false))
-            .isOwnProfile(isSelf)
+            .ownProfile(isSelf)
             .build();
     }
 

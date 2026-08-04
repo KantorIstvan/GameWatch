@@ -214,11 +214,12 @@ public class GameReviewService {
     }
 
     /**
-     * Removes a reply, on behalf of whoever wrote it or whoever wrote the review above it.
+     * Removes a reply, on behalf of whoever wrote it.
      *
-     * Both, rather than only the author: the thread hangs off someone else's words, and an
-     * author with no way to clear something from under their own review is being asked to
-     * host whatever arrives there.
+     * The author and nobody else - not even the author of the review it sits under. Words
+     * belong to the person who wrote them, and letting a review author quietly delete
+     * disagreement from under their own review would turn every thread into whatever the
+     * reviewer is willing to leave standing.
      */
     @Transactional
     public GameReviewDto deleteReply(User user, Long replyId) {
@@ -226,7 +227,7 @@ public class GameReviewService {
             .orElseThrow(() -> new IllegalArgumentException("Reply not found"));
 
         GameReview review = reply.getReview();
-        if (!canDeleteReply(reply, review, user)) {
+        if (!canDeleteReply(reply, user)) {
             // Says the same thing it would say for a reply that does not exist, so this is
             // not a way to confirm which replies are out there.
             throw new IllegalArgumentException("Reply not found");
@@ -237,9 +238,8 @@ public class GameReviewService {
         return reloadReview(review, user);
     }
 
-    private boolean canDeleteReply(ReviewReply reply, GameReview review, User viewer) {
-        return reply.getUser().getId().equals(viewer.getId())
-            || review.getUser().getId().equals(viewer.getId());
+    private boolean canDeleteReply(ReviewReply reply, User viewer) {
+        return reply.getUser().getId().equals(viewer.getId());
     }
 
     /** The parent review as the caller should now see it, so a reply edit needs no refetch. */
@@ -297,15 +297,15 @@ public class GameReviewService {
             .language(review.getLanguage())
             .helpfulCount(review.getHelpfulCount())
             .viewerFoundHelpful(votedReviewIds.contains(review.getId()))
-            .isOwnReview(author.getId().equals(viewer.getId()))
+            .ownReview(author.getId().equals(viewer.getId()))
             .createdAt(review.getCreatedAt())
             .replies(repliesByReview.getOrDefault(review.getId(), List.of()).stream()
-                .map(reply -> toReplyDto(reply, review, viewer))
+                .map(reply -> toReplyDto(reply, viewer))
                 .collect(Collectors.toList()))
             .build();
     }
 
-    private ReviewReplyDto toReplyDto(ReviewReply reply, GameReview review, User viewer) {
+    private ReviewReplyDto toReplyDto(ReviewReply reply, User viewer) {
         User author = reply.getUser();
         return ReviewReplyDto.builder()
             .id(reply.getId())
@@ -314,8 +314,7 @@ public class GameReviewService {
                 ? author.getDisplayName() : author.getUsername())
             .authorPictureUrl(author.getProfilePictureUrl())
             .body(reply.getBody())
-            .isOwnReply(author.getId().equals(viewer.getId()))
-            .viewerCanDelete(canDeleteReply(reply, review, viewer))
+            .viewerCanDelete(canDeleteReply(reply, viewer))
             .createdAt(reply.getCreatedAt())
             .build();
     }

@@ -280,7 +280,8 @@ export interface GameReview {
   language: string | null
   helpfulCount: number
   viewerFoundHelpful: boolean
-  isOwnReview: boolean
+  /** The viewer's own review - the one they can edit and delete. */
+  ownReview: boolean
   createdAt: string
   /** The conversation under the review, oldest first. Flat - replies are never replied to. */
   replies: ReviewReply[]
@@ -292,8 +293,7 @@ export interface ReviewReply {
   authorDisplayName: string | null
   authorPictureUrl: string | null
   body: string
-  isOwnReply: boolean
-  /** True for the reply's author and for whoever wrote the review it sits under. */
+  /** True for the reply's author and nobody else - not even the author of the review. */
   viewerCanDelete: boolean
   createdAt: string
 }
@@ -330,7 +330,7 @@ export interface PublicProfile {
   followingCount: number
   viewerIsFollowing: boolean
   viewerRequestPending: boolean
-  isOwnProfile: boolean
+  ownProfile: boolean
   /** Null when the viewer may see the profile but not the library behind it. */
   library: ProfileLibrary | null
 }
@@ -356,7 +356,7 @@ export interface ProfileSummary {
   viewerIsFollowing: boolean
   viewerRequestPending: boolean
   /** The viewer's own row, which gets no follow button - you cannot follow yourself. */
-  isOwnProfile: boolean
+  ownProfile: boolean
 }
 
 export interface FollowState {
