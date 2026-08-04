@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -14,6 +14,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -53,6 +54,14 @@ function Layout() {
     { label: t('nav.myGames'), path: '/games', icon: <Gamepad2 /> },
     { label: t('nav.calendar'), path: '/timeline', icon: <GanttChart /> },
     { label: t('nav.health'), path: '/health', icon: <Heart /> },
+  ]
+
+  // Kept separate from navigationItems: these do not appear in the mobile bottom bar,
+  // which is reserved for the five core tracking tabs above.
+  const socialItems = [
+    { label: t('nav.people'), path: '/people', icon: <Search className="size-4.5" /> },
+    { label: t('feed.title'), path: '/feed', icon: <Rss className="size-4.5" /> },
+    { label: t('groups.title'), path: '/groups', icon: <UsersRound className="size-4.5" /> },
   ]
 
   if (!isAuthenticated) {
@@ -111,6 +120,28 @@ function Layout() {
                 {navigationItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton asChild isActive={currentTab === item.path} tooltip={item.label}>
+                      <Link to={item.path}>
+                        {item.icon}
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('nav.social')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {socialItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith(item.path)}
+                      tooltip={item.label}
+                    >
                       <Link to={item.path}>
                         {item.icon}
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
@@ -180,6 +211,18 @@ function Layout() {
           <Button
             variant="ghost"
             size="icon"
+            asChild
+            aria-label={t('nav.people')}
+            className="size-11 text-text-secondary hover:text-accent md:size-9"
+          >
+            <Link to="/people">
+              <Search className="size-4.5" />
+            </Link>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleTheme}
             aria-label={t('theme.toggle')}
             className="size-11 text-text-secondary transition-transform hover:rotate-20 hover:text-accent md:size-9"
@@ -233,6 +276,21 @@ function Layout() {
           </SheetHeader>
 
           <div className="flex flex-col gap-1 px-4 pb-2">
+            {socialItems.map((item) => (
+              <Button
+                key={item.path}
+                variant="ghost"
+                asChild
+                className="h-12 justify-start gap-3 text-body"
+                onClick={() => setAccountSheetOpen(false)}
+              >
+                <Link to={item.path}>
+                  {item.icon}
+                  {item.label}
+                </Link>
+              </Button>
+            ))}
+            <SidebarSeparator className="mx-0 my-1" />
             <Button
               variant="ghost"
               asChild
