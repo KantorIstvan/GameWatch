@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import UserLink from '../components/social/UserLink'
 import { groupsApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
 import { statColors } from '../lib/statColors'
@@ -134,15 +134,13 @@ function Groups() {
                             <span className="w-5 shrink-0 text-caption text-text-secondary">
                               {index + 1}
                             </span>
-                            <Avatar className="size-7 shrink-0">
-                              <AvatarImage src={standing.profilePictureUrl ?? undefined} alt="" />
-                              <AvatarFallback>
-                                {(standing.handle ?? '?').charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="min-w-0 flex-1 truncate text-body-sm">
-                              {standing.displayName ?? standing.handle}
-                            </span>
+                            <UserLink
+                              handle={standing.handle}
+                              displayName={standing.displayName}
+                              pictureUrl={standing.profilePictureUrl}
+                              size="sm"
+                              className="min-w-0 flex-1"
+                            />
                             {standing.reachedTarget && (
                               <Trophy className="size-4 shrink-0" style={{ color: statColors.yellow }} />
                             )}

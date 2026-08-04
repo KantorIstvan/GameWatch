@@ -300,7 +300,7 @@
   },
   "people": {
     "title": "Find People",
-    "subtitle": "Search by handle or display name, then follow them to see their activity and library.",
+    "subtitle": "Search by handle or name, then follow them to see their activity and library.",
     "searchPlaceholder": "Search by handle or name",
     "prompt": "Start typing to find someone.",
     "typeMore": "Keep typing - at least 2 characters.",

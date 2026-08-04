@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import UserLink from '../social/UserLink'
 import { reviewsApi } from '../../services/api'
 import { formatTime } from '../../utils/formatters'
 import type { GameReview } from '../../types'
@@ -169,39 +169,36 @@ function GameReviewsPanel({ gameId }: GameReviewsPanelProps) {
           return (
             <li key={review.id} className="border-t border-border pt-4">
               <div className="mb-2 flex items-start gap-3">
-                <Avatar className="size-8 shrink-0">
-                  <AvatarImage src={review.authorPictureUrl ?? undefined} alt="" />
-                  <AvatarFallback>
-                    {(review.authorHandle ?? '?').charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-body-sm font-medium">
-                    {review.authorDisplayName ?? review.authorHandle}
-                  </p>
-                  {/* The evidence behind the opinion, which is the thing a review site
-                      cannot show and this app can. */}
-                  <p className="flex flex-wrap items-center gap-x-3 text-caption text-text-secondary">
-                    {review.authorScore !== null && (
-                      <span className="font-semibold text-text-primary">
-                        {review.authorScore}/10
-                      </span>
-                    )}
-                    {review.authorPlaytimeSeconds > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="size-3" />
-                        {formatTime(review.authorPlaytimeSeconds)}
-                      </span>
-                    )}
-                    {review.authorFinished && (
-                      <span className="flex items-center gap-1">
-                        <Trophy className="size-3" />
-                        {t('reviews.finished')}
-                      </span>
-                    )}
-                  </p>
-                </div>
+                <UserLink
+                  handle={review.authorHandle}
+                  displayName={review.authorDisplayName}
+                  pictureUrl={review.authorPictureUrl}
+                  size="sm"
+                  className="min-w-0 flex-1 items-start"
+                  subtitle={
+                    /* The evidence behind the opinion, which is the thing a review site
+                       cannot show and this app can. */
+                    <span className="flex flex-wrap items-center gap-x-3">
+                      {review.authorScore !== null && (
+                        <span className="font-semibold text-text-primary">
+                          {review.authorScore}/10
+                        </span>
+                      )}
+                      {review.authorPlaytimeSeconds > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {formatTime(review.authorPlaytimeSeconds)}
+                        </span>
+                      )}
+                      {review.authorFinished && (
+                        <span className="flex items-center gap-1">
+                          <Trophy className="size-3" />
+                          {t('reviews.finished')}
+                        </span>
+                      )}
+                    </span>
+                  }
+                />
 
                 {!review.isOwnReview && (
                   <Button

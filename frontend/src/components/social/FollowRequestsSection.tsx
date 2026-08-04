@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Check, X, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import UserLink from './UserLink'
 import SettingsSection from '../settings/SettingsSection'
 import { followsApi } from '../../services/api'
 import type { FollowPerson } from '../../types'
@@ -62,19 +62,15 @@ function FollowRequestsSection() {
       <ul className="flex flex-col gap-3">
         {requests.map((request) => (
           <li key={request.followId} className="flex items-center gap-3">
-            <Avatar className="size-10 shrink-0">
-              <AvatarImage src={request.profilePictureUrl ?? undefined} alt="" />
-              <AvatarFallback>{(request.handle ?? '?').charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-body-sm font-medium text-text-primary">
-                {request.displayName ?? request.handle}
-              </span>
-              <span className="block truncate text-caption text-text-secondary">
-                @{request.handle}
-              </span>
-            </span>
+            {/* Linked, so the decision can be made after actually looking at who is
+                asking rather than from a name alone. */}
+            <UserLink
+              handle={request.handle}
+              displayName={request.displayName}
+              pictureUrl={request.profilePictureUrl}
+              subtitle={`@${request.handle}`}
+              className="min-w-0 flex-1"
+            />
 
             <Button
               size="sm"
