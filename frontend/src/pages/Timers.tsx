@@ -61,7 +61,8 @@ function Timers() {
   }
 
   const handleCreatePlaythrough = async () => {
-    if (!selectedGame || !playthroughType || !platform || !startDate) return
+    const title = playthroughTitle.trim()
+    if (!selectedGame || !title || !playthroughType || !platform || !startDate) return
 
     try {
       const response = await playthroughsApi.create({
@@ -69,7 +70,7 @@ function Timers() {
         playthroughType,
         startDate,
         platform,
-        title: playthroughTitle || undefined,
+        title,
       })
       setPlaythroughs([response.data, ...playthroughs])
       handleCloseDialog()

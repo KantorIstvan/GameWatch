@@ -1,5 +1,6 @@
 package com.gamewatch.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Data
@@ -7,5 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class UpdateTitleRequest {
+    @NotBlank(message = "Playthrough title is required")
     private String title;
 }

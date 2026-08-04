@@ -131,10 +131,11 @@ function PlaythroughDetail() {
   }, [playthrough])
 
   const handleUpdateTitle = useCallback(async () => {
-    if (isSubmitting) return
+    const title = editedTitle.trim()
+    if (isSubmitting || !title) return
     try {
       setIsSubmitting(true)
-      await handlers.updateTitle(editedTitle)
+      await handlers.updateTitle(title)
       setTitleDialogOpen(false)
       toast.success(t('common.success'))
     } catch (err: any) {
@@ -541,19 +542,26 @@ function PlaythroughDetail() {
           <DialogContent>
             <DialogTitle>{t('playthrough.editTitle')}</DialogTitle>
             <div className="flex flex-col gap-1.5">
-              <Label>{t('playthrough.playthroughTitle')}</Label>
+              <Label htmlFor="edit-playthrough-title">{t('playthrough.titleLabel')} *</Label>
               <Input
                 autoFocus
+                id="edit-playthrough-title"
+                required
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
-                placeholder={game ? `${game.name} playthrough` : ''}
+                placeholder={game ? t('playthrough.titlePlaceholder', { game: game.name }) : ''}
               />
+              <p className="text-caption text-text-secondary">{t('playthrough.titleRequired')}</p>
             </div>
             <div className="flex flex-col gap-3 pt-2">
               <Button onClick={() => setTitleDialogOpen(false)} variant="outline" className="h-12 w-full">
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleUpdateTitle} disabled={isSubmitting} className="h-12 w-full">
+              <Button
+                onClick={handleUpdateTitle}
+                disabled={isSubmitting || !editedTitle.trim()}
+                className="h-12 w-full"
+              >
                 {t('common.save')}
               </Button>
             </div>
