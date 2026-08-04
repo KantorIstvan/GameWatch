@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -32,7 +32,9 @@ import MobileBottomNav from './MobileBottomNav'
 // account entry point hide the same way opening an editor hides chrome in a
 // notes app, since these pages already carry their own back navigation.
 const isFocusRoute = (pathname: string) =>
-  /^\/playthrough\/\d+/.test(pathname) || /^\/games\/\d+\/statistics/.test(pathname)
+  /^\/playthrough\/\d+/.test(pathname) ||
+  /^\/games\/\d+\/statistics/.test(pathname) ||
+  /^\/catalog\/\d+/.test(pathname)
 
 function Layout() {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0()
@@ -40,7 +42,7 @@ function Layout() {
   const { t } = useTranslation()
   const location = useLocation()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
-  const currentTab = location.pathname === '/statistics' ? '/statistics' : location.pathname.startsWith('/games') ? '/games' : location.pathname === '/timeline' ? '/timeline' : location.pathname === '/health' ? '/health' : '/'
+  const currentTab = location.pathname === '/statistics' ? '/statistics' : location.pathname.startsWith('/games') ? '/games' : location.pathname.startsWith('/catalog') ? '/catalog' : location.pathname === '/timeline' ? '/timeline' : location.pathname === '/health' ? '/health' : '/'
   const focusMode = isFocusRoute(location.pathname)
 
   const handleLogout = () => {
@@ -51,6 +53,7 @@ function Layout() {
     { label: t('nav.timers'), path: '/', icon: <Timer /> },
     { label: t('nav.statistics'), path: '/statistics', icon: <BarChart /> },
     { label: t('nav.myGames'), path: '/games', icon: <Gamepad2 /> },
+    { label: t('nav.catalog'), path: '/catalog', icon: <Library /> },
     { label: t('nav.calendar'), path: '/timeline', icon: <GanttChart /> },
     { label: t('nav.health'), path: '/health', icon: <Heart /> },
   ]
@@ -207,7 +210,7 @@ function Layout() {
           className={cn(
             'mx-auto w-full flex-1 px-4 pt-4 sm:px-6 sm:pt-6 md:pt-8',
             focusMode ? 'pb-4 md:pb-8' : 'pb-24 md:pb-8',
-            currentTab === '/games' ? 'md:px-12' : 'max-w-7xl'
+            currentTab === '/games' || currentTab === '/catalog' ? 'md:px-12' : 'max-w-7xl'
           )}
         >
           <Outlet />

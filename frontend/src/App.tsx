@@ -8,6 +8,8 @@ import Timers from './pages/Timers'
 import Statistics from './pages/Statistics'
 import Games from './pages/Games'
 import GameStatistics from './pages/GameStatistics'
+import Catalog from './pages/Catalog'
+import CatalogGameDetail from './pages/CatalogGameDetail'
 import Timeline from './pages/Timeline'
 import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
@@ -50,6 +52,8 @@ function AppContent() {
           <Route path="statistics" element={<Statistics />} />
           <Route path="games" element={<Games />} />
           <Route path="games/:id/statistics" element={<GameStatistics />} />
+          <Route path="catalog" element={<Catalog />} />
+          <Route path="catalog/:id" element={<CatalogGameDetail />} />
           <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />

@@ -1,14 +1,16 @@
-import { Trash2, Clock, Play, Gamepad2 } from 'lucide-react'
+import { Trash2, Clock, Play, Gamepad2, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Game } from '../types'
 import { formatTimeHMS } from '../utils/formatters'
+import { statColors } from '../lib/statColors'
 
 interface GameCardProps {
   game: Game
-  onDelete: (id: number) => void
+  /** Omitted on the Catalog page - deleting only makes sense from your own library. */
+  onDelete?: (id: number) => void
   onClick?: (id: number) => void
 }
 
@@ -18,6 +20,11 @@ interface GameCardProps {
  * so a vertical tile shows them uncropped instead of squeezing them into a side strip.
  * Size is driven purely by the grid column count on the Games page, which is why there
  * is no scale prop here - the tile just fills its cell.
+ *
+ * Doubles as the Catalog page's tile: when `onDelete` is absent the personal
+ * playthrough stats below are absent too (the catalog DTO never populates them), so this
+ * component naturally renders as a plain community tile without a separate variant prop -
+ * only the community rating badge, present exclusively on catalog games, is added back.
  */
 function GameCard({ game, onDelete, onClick }: GameCardProps) {
   const { t } = useTranslation()
@@ -64,18 +71,30 @@ function GameCard({ game, onDelete, onClick }: GameCardProps) {
           </Badge>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t('common.delete')}
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(game.id)
-          }}
-          className="absolute right-2 top-2 bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-150 ease-standard hover:bg-destructive hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        {game.communityRatingScore != null && (
+          <Badge
+            className="absolute left-2 top-2 gap-1 border-0 font-semibold text-white"
+            style={{ backgroundColor: statColors.yellow }}
+          >
+            <Star className="size-3 fill-current" />
+            {game.communityRatingScore.toFixed(1)}
+          </Badge>
+        )}
+
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('common.delete')}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(game.id)
+            }}
+            className="absolute right-2 top-2 bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-150 ease-standard hover:bg-destructive hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div className="flex min-w-0 grow flex-col gap-1 p-3">
