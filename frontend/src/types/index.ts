@@ -293,6 +293,17 @@ export interface PublicProfile {
   library: ProfileLibrary | null
 }
 
+/** One row of a user search result - just enough to render the row and its follow button. */
+export interface ProfileSearchResult {
+  handle: string
+  displayName: string | null
+  profilePictureUrl: string | null
+  followerCount: number
+  followingCount: number
+  viewerIsFollowing: boolean
+  viewerRequestPending: boolean
+}
+
 export interface FollowState {
   handle: string
   following: boolean
