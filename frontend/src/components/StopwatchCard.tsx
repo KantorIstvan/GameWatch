@@ -70,36 +70,36 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
   return (
     <div
       onClick={handleCardClick}
-      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border/10 bg-surface transition-all duration-300 ease-standard hover:-translate-y-2 hover:shadow-3"
+      className="group relative flex h-full cursor-pointer flex-row overflow-hidden rounded-xl border border-border/10 bg-surface transition-all duration-300 ease-standard hover:-translate-y-2 hover:shadow-3"
     >
       <div
-        className="absolute inset-x-0 top-0 h-1"
+        className="absolute inset-x-0 top-0 z-10 h-1"
         style={{ background: `linear-gradient(90deg, ${playthroughColor} 0%, color-mix(in srgb, ${playthroughColor} 60%, transparent) 100%)` }}
       />
 
       {localPlaythrough.gameBannerImageUrl && (
-        <div className="relative h-35 overflow-hidden">
+        <div className="relative w-28 shrink-0 self-stretch overflow-hidden sm:w-36">
           <img
             src={localPlaythrough.gameBannerImageUrl}
             alt={localPlaythrough.gameName}
             className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-linear-to-b from-black/0 to-black/70" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
         </div>
       )}
 
-      <div className="flex grow flex-col p-6">
+      <div className="flex min-w-0 grow flex-col p-4 sm:p-5">
         <p className="mb-1 truncate text-h4 font-semibold text-text-primary">
           {localPlaythrough.gameName}
         </p>
 
         {localPlaythrough.title && (
-          <p className="mb-4 truncate text-body-sm italic text-text-secondary">
+          <p className="mb-3 truncate text-body-sm italic text-text-secondary">
             {localPlaythrough.title}
           </p>
         )}
 
-        <div className="mb-6 flex flex-row flex-wrap gap-2">
+        <div className="mb-4 flex flex-row flex-wrap gap-2">
           <Badge className="h-6 text-caption font-semibold text-white" style={{ backgroundColor: playthroughColor }}>
             {formattedType}
           </Badge>
@@ -132,7 +132,7 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
         </div>
 
         <div
-          className="relative mt-auto overflow-hidden rounded-md border p-5"
+          className="relative mt-auto overflow-hidden rounded-md border p-4"
           style={{
             background: `linear-gradient(135deg, color-mix(in srgb, ${playthroughColor} 5%, transparent) 0%, color-mix(in srgb, ${playthroughColor} 2%, transparent) 100%)`,
             borderColor: `color-mix(in srgb, ${playthroughColor} 10%, transparent)`,
@@ -145,7 +145,7 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
                   {t('playthrough.currentSession')}
                 </p>
                 <p
-                  className="text-center font-mono text-h2 font-bold tracking-wide"
+                  className="truncate text-center font-mono text-h3 font-bold tracking-wide"
                   style={{ color: playthroughColor }}
                 >
                   {formatTimeHMS(currentSessionTime)}
@@ -156,14 +156,14 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
                 <p className="mb-0.5 text-center text-caption uppercase tracking-wide">
                   {t('playthrough.total')}
                 </p>
-                <p className="text-center font-mono text-body-sm font-semibold tracking-wide">
+                <p className="truncate text-center font-mono text-body-sm font-semibold tracking-wide">
                   {formatTimeHMS(elapsedTime)}
                 </p>
               </div>
             </div>
           ) : (
             <p
-              className="text-center font-mono text-h2 font-bold tracking-wide"
+              className="truncate text-center font-mono text-h3 font-bold tracking-wide"
               style={{ color: playthroughColor }}
             >
               {formattedTime}
@@ -179,7 +179,7 @@ function StopwatchCard({ playthrough }: StopwatchCardProps) {
         </div>
 
         {(formattedDate || localPlaythrough.endDate) && (
-          <div className="mt-4 text-center">
+          <div className="mt-3 text-center">
             {formattedDate && (
               <p className="block text-caption text-text-secondary opacity-70">
                 {t('playthrough.started')}: {formattedDate}
