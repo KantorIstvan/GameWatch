@@ -10,6 +10,24 @@ interface GameRecommendationsProps {
   className?: string
 }
 
+/**
+ * Companies to credit under a recommendation, developers first. The backend already
+ * removes duplicates within each list and never repeats a studio as both developer and
+ * publisher, but a game can still legitimately have several of each - and four badges
+ * under a one-line title reads as noise, so the row is capped.
+ */
+const MAX_COMPANY_BADGES = 3
+
+function companyBadges(game: GameRecommendation) {
+  const developers = game.matchingDevelopers ?? []
+  const publishers = (game.matchingPublishers ?? []).filter(p => !developers.includes(p))
+
+  return [
+    ...developers.map(name => ({ name, isDeveloper: true })),
+    ...publishers.map(name => ({ name, isDeveloper: false })),
+  ].slice(0, MAX_COMPANY_BADGES)
+}
+
 function GameRecommendations({ recommendations, title, noDataMessage, className }: GameRecommendationsProps) {
   return (
     <div
@@ -33,20 +51,15 @@ function GameRecommendations({ recommendations, title, noDataMessage, className 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-body-sm font-semibold">{game.name}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {game.matchingDevelopers?.slice(0, 2).map((developer, idx) => (
+                  {companyBadges(game).map(({ name, isDeveloper }) => (
                     <Badge
-                      key={`dev-${idx}`}
-                      className="h-4.5 bg-success/20 px-1.5 text-caption text-success"
+                      key={name}
+                      className={cn(
+                        'h-4.5 px-1.5 text-caption',
+                        isDeveloper ? 'bg-success/20 text-success' : 'bg-accent/20 text-accent'
+                      )}
                     >
-                      {developer}
-                    </Badge>
-                  ))}
-                  {game.matchingPublishers?.slice(0, 2).map((publisher, idx) => (
-                    <Badge
-                      key={`pub-${idx}`}
-                      className="h-4.5 bg-accent/20 px-1.5 text-caption text-accent"
-                    >
-                      {publisher}
+                      {name}
                     </Badge>
                   ))}
                 </div>
