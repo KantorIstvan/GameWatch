@@ -26,10 +26,20 @@ public class GameController {
     private final UserService userService;
     private final IgdbApiService igdbApiService;
 
+    /**
+     * Searches all of IGDB, not this app's own rows - the catalog is a way to look any
+     * game up, whether or not anyone here has played it.
+     *
+     * {@code limit} lets the catalog's search page ask for a full page while the
+     * add-a-game autocomplete keeps its short list; it is clamped service-side.
+     */
     @GetMapping("/search")
     public ResponseEntity<List<GameSearchResultDto>> searchGames(
-            @RequestParam String query) {
-        List<GameSearchResultDto> results = igdbApiService.searchGames(query);
+            @RequestParam String query,
+            @RequestParam(required = false) Integer limit) {
+        List<GameSearchResultDto> results = limit == null
+            ? igdbApiService.searchGames(query)
+            : igdbApiService.searchGames(query, limit);
         return ResponseEntity.ok(results);
     }
 
@@ -57,18 +67,27 @@ public class GameController {
     }
 
     /**
-     * The universal, community-wide game catalog - every game anyone has added, not just
-     * the caller's own library. Any signed-in user can browse it, unlike {@link
-     * #getAllGames} and {@link #getGameById} which are scoped to what the caller owns.
+     * A game's catalog page, addressed by IGDB id - which is the only id a search result
+     * has, since most of them have never been added here by anyone.
+     *
+     * The response carries a null {@code id} for a game with no row yet. That is what the
+     * client uses to tell "nobody has rated this" from "not rated by you".
      */
-    @GetMapping("/catalog")
-    public ResponseEntity<List<GameDto>> getCatalogGames() {
-        return ResponseEntity.ok(gameService.getCatalogGames());
+    @GetMapping("/catalog/external/{externalId}")
+    public ResponseEntity<GameDto> getCatalogGameByExternalId(@PathVariable Integer externalId) {
+        return ResponseEntity.ok(gameService.getCatalogGameByExternalId(externalId));
     }
 
-    @GetMapping("/catalog/{id}")
-    public ResponseEntity<GameDto> getCatalogGameById(@PathVariable Long id) {
-        return ResponseEntity.ok(gameService.getCatalogGameById(id));
+    /**
+     * Claims the catalog row for a game, creating it from IGDB on first use.
+     *
+     * The client calls this immediately before a rating or a review, so a game gets a row
+     * when someone first has something to say about it rather than when someone merely
+     * opens its page.
+     */
+    @PostMapping("/catalog/external/{externalId}")
+    public ResponseEntity<GameDto> resolveCatalogGame(@PathVariable Integer externalId) {
+        return ResponseEntity.ok(gameService.resolveCatalogGame(externalId));
     }
 
     @GetMapping("/{id}")

@@ -43,6 +43,9 @@ class GameServiceTest {
     @Mock
     private PlaythroughService playthroughService;
 
+    @Mock
+    private IgdbApiService igdbApiService;
+
     @InjectMocks
     private GameService gameService;
 
