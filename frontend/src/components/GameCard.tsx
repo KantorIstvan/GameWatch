@@ -1,27 +1,26 @@
-import { Trash2, Clock, Play } from 'lucide-react'
+import { Trash2, Clock, Play, Gamepad2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Game } from '../types'
+import { formatTimeHMS } from '../utils/formatters'
 
 interface GameCardProps {
   game: Game
-  cardScale: number
   onDelete: (id: number) => void
   onClick?: (id: number) => void
 }
 
-function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
+/**
+ * Vertical library tile: IGDB cover art on top, title and tracked data underneath.
+ * Deliberately not the horizontal StopwatchCard shape - covers are portrait (3:4),
+ * so a vertical tile shows them uncropped instead of squeezing them into a side strip.
+ * Size is driven purely by the grid column count on the Games page, which is why there
+ * is no scale prop here - the tile just fills its cell.
+ */
+function GameCard({ game, onDelete, onClick }: GameCardProps) {
   const { t } = useTranslation()
-
-  const formatPlaytime = (seconds: number | undefined): string => {
-    if (!seconds) return '00:00:00'
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-  }
 
   const getStatusInfo = (status: string) => {
     const statusConfig: Record<string, { variant: 'default' | 'destructive' | 'secondary', label: string }> = {
@@ -34,112 +33,81 @@ function GameCard({ game, cardScale, onDelete, onClick }: GameCardProps) {
   }
 
   const statusInfo = game.status ? getStatusInfo(game.status) : null
+  const hasPlaytime = game.totalPlaytimeSeconds != null && game.totalPlaytimeSeconds > 0
+  const hasSessions = (game.sessionCount ?? 0) > 0
 
   return (
     <div
       onClick={() => onClick?.(game.id)}
       className={cn(
-        'group relative flex h-full flex-row overflow-hidden rounded-xl bg-surface shadow-2 transition-all duration-300 ease-standard hover:-translate-y-1 hover:shadow-3',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl bg-surface shadow-2 transition-all duration-300 ease-standard hover:-translate-y-1 hover:shadow-3',
         onClick ? 'cursor-pointer' : 'cursor-default'
       )}
-      style={{ minHeight: 132 * cardScale }}
     >
-      {game.bannerImageUrl && (
-        <div className="relative w-2/5 shrink-0 self-stretch overflow-hidden">
+      <div className="relative aspect-3/4 w-full shrink-0 overflow-hidden bg-surface-raised">
+        {game.bannerImageUrl ? (
           <img
             src={game.bannerImageUrl}
             alt={game.name}
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            className="size-full object-cover transition-transform duration-300 ease-standard group-hover:scale-105"
           />
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        ) : (
+          <div className="flex size-full items-center justify-center text-text-tertiary">
+            <Gamepad2 className="size-10" />
+          </div>
+        )}
 
-          {statusInfo && (
-            <Badge
-              variant={statusInfo.variant}
-              className="absolute font-semibold"
-              style={{ top: 6 * cardScale, left: 6 * cardScale, fontSize: `${0.7 * cardScale}rem` }}
-            >
-              {statusInfo.label}
-            </Badge>
-          )}
-        </div>
-      )}
+        {statusInfo && (
+          <Badge variant={statusInfo.variant} className="absolute left-2 top-2 font-semibold">
+            {statusInfo.label}
+          </Badge>
+        )}
 
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={t('common.delete', 'Delete')}
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete(game.id)
-        }}
-        className="absolute bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-200 hover:scale-110 hover:bg-destructive hover:text-white group-hover:opacity-100"
-        style={{ top: 8 * cardScale, right: 8 * cardScale }}
-      >
-        <Trash2 className="size-4" />
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('common.delete')}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(game.id)
+          }}
+          className="absolute right-2 top-2 bg-black/70 text-white opacity-0 backdrop-blur-xs transition-all duration-150 ease-standard hover:bg-destructive hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
 
-      <div
-        className="flex min-w-0 grow flex-col justify-between bg-linear-to-b from-white/5 to-transparent"
-        style={{ paddingTop: 12 * cardScale, paddingBottom: 12 * cardScale, paddingLeft: 16 * cardScale, paddingRight: 16 * cardScale }}
-      >
-        <div>
-          {!game.bannerImageUrl && statusInfo && (
-            <Badge
-              variant={statusInfo.variant}
-              className="mb-2 font-semibold"
-              style={{ fontSize: `${0.7 * cardScale}rem` }}
-            >
-              {statusInfo.label}
-            </Badge>
-          )}
+      <div className="flex min-w-0 grow flex-col gap-1 p-3">
+        <p className="line-clamp-2 text-body-sm font-semibold leading-tight text-text-primary">
+          {game.name}
+        </p>
 
-          <p
-            className="line-clamp-2 font-bold leading-tight tracking-wide"
-            style={{ fontSize: `${1 * cardScale}rem`, marginBottom: 6 * cardScale }}
-          >
-            {game.name}
-          </p>
-
-          <div className="mb-1 flex flex-col gap-1">
-            {game.totalPlaytimeSeconds != null && game.totalPlaytimeSeconds > 0 && (
+        {(hasPlaytime || hasSessions || game.lastPlayedDate) && (
+          <div className="mt-auto flex flex-col gap-0.5 pt-1">
+            {hasPlaytime && (
               <div className="flex items-center gap-1">
-                <Clock className="shrink-0 text-accent/70" style={{ width: `${0.9 * cardScale}rem`, height: `${0.9 * cardScale}rem` }} />
-                <span
-                  className="truncate font-semibold tracking-wide text-text-secondary"
-                  style={{ fontSize: `${0.75 * cardScale}rem` }}
-                >
-                  {formatPlaytime(game.totalPlaytimeSeconds)}
+                <Clock className="size-3 shrink-0 text-accent" />
+                <span className="truncate text-caption font-semibold text-text-secondary">
+                  {formatTimeHMS(game.totalPlaytimeSeconds ?? 0)}
                 </span>
               </div>
             )}
 
-            {(game.sessionCount ?? 0) > 0 && (
+            {hasSessions && (
               <div className="flex items-center gap-1">
-                <Play className="shrink-0 text-text-tertiary/70" style={{ width: `${0.9 * cardScale}rem`, height: `${0.9 * cardScale}rem` }} />
-                <span
-                  className="truncate font-semibold tracking-wide text-text-secondary"
-                  style={{ fontSize: `${0.75 * cardScale}rem` }}
-                >
+                <Play className="size-3 shrink-0 text-text-tertiary" />
+                <span className="truncate text-caption font-medium text-text-secondary">
                   {game.sessionCount} {game.sessionCount === 1 ? t('games.session') : t('games.sessions')}
                 </span>
               </div>
             )}
-          </div>
-        </div>
 
-        {game.lastPlayedDate && (
-          <div className="flex items-center gap-1">
-            <span
-              className="shrink-0 rounded-full bg-accent/70"
-              style={{ width: 4 * cardScale, height: 4 * cardScale }}
-            />
-            <span
-              className="truncate font-medium tracking-wide text-text-secondary"
-              style={{ fontSize: `${0.75 * cardScale}rem` }}
-            >
-              {t('games.lastPlayed')}: {game.lastPlayedDate}
-            </span>
+            {game.lastPlayedDate && (
+              <span className="truncate text-caption text-text-secondary">
+                {t('games.lastPlayed')}: {game.lastPlayedDate}
+              </span>
+            )}
           </div>
         )}
       </div>

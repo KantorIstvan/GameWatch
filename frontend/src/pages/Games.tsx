@@ -15,10 +15,12 @@ import type { Game } from '../types'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 
+// Column counts, not a scale factor: the cards are portrait cover tiles that simply
+// fill their cell, so the size control changes how many fit per row and nothing else.
 const gridClassBySize: Record<number, string> = {
-  1: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7',
-  2: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
-  3: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4',
+  1: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8',
+  2: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6',
+  3: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',
 }
 
 function Games() {
@@ -279,14 +281,6 @@ function Games() {
     [searchQuery, filterGenre, filterPlatform, filterYear, sortBy]
   )
 
-  const cardScale = useMemo(() => {
-    switch (cardSize) {
-      case 1: return 0.7
-      case 3: return 1.3
-      default: return 1
-    }
-  }, [cardSize])
-
   const dialogActions = useMemo(() => (
     <>
       <Button onClick={handleCloseDialog} variant="outline" size="lg" className="h-12 w-full">
@@ -387,7 +381,6 @@ function Games() {
             <GameCard
               key={game.id}
               game={game}
-              cardScale={cardScale}
               onDelete={(id) => {
                 const gameToDelete = games.find((g: Game) => g.id === id)
                 if (gameToDelete) handleDeleteGame(gameToDelete)
