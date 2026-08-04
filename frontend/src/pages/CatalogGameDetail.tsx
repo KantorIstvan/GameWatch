@@ -1,63 +1,39 @@
-import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { gamesApi } from '../services/api'
+import { ArrowLeft, Clock } from 'lucide-react'
 import Loading from '../components/Loading'
+import GameDetails from '../components/GameDetails'
 import GameRatingPanel from '../components/ratings/GameRatingPanel'
 import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
 import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
-import { useAuthContext } from '../contexts/AuthContext'
+import { useCatalogGame } from '../hooks/useCatalogGame'
 import { useTranslation } from 'react-i18next'
-import type { Game } from '../types'
+import { formatTime } from '../utils/formatters'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 /**
- * A game's own community page: what everyone who plays it, not just the caller, thinks
- * of it. This is what used to live at the bottom of GameStatistics (the personal
- * session/timer page for a library entry) - it moved here so it reads the same way
- * whether or not the viewer has the game in their own library, and so the library page
- * stays about the viewer's own play.
+ * A game's own page: everything known about it, plus what everyone here thinks of it.
+ *
+ * Addressed by IGDB id rather than a row id, because the catalog searches all of IGDB and
+ * most games reached from it have never been added by anyone. Those still get a full page
+ * - the metadata comes from IGDB either way - and only the community panels are empty,
+ * until the first person rates or reviews it and the row gets created.
  */
 function CatalogGameDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { externalId } = useParams<{ externalId: string }>()
   const navigate = useNavigate()
-  const { isAuthReady } = useAuthContext()
   const { t } = useTranslation()
-  const [game, setGame] = useState<Game | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (isAuthReady && id) {
-      fetchGame()
-    }
-  }, [isAuthReady, id])
-
-  const fetchGame = async () => {
-    try {
-      setLoading(true)
-      const response = await gamesApi.getCatalogById(Number(id))
-      setGame(response.data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.response?.data?.message || t('catalog.failedToLoadGame'))
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { game, loading, error, gameId, ensureGameId } = useCatalogGame(Number(externalId))
 
   if (loading) return <Loading />
 
-  if (error) {
+  if (error || !game) {
     return (
       <div className="p-6">
-        <p className="text-destructive">{error}</p>
+        <p className="text-destructive">{t('catalog.failedToLoadGame')}</p>
       </div>
     )
   }
-
-  if (!game) return null
 
   const tags = [
     ...(game.genres?.split(',').map((g) => g.trim()).filter(Boolean) ?? []),
@@ -76,31 +52,59 @@ function CatalogGameDetail() {
         </div>
       </div>
 
-      {(tags.length > 0 || game.releaseDate) && (
-        <div className="mb-6 flex flex-wrap items-center gap-2 md:mb-8">
-          {game.releaseDate && (
-            <Badge variant="outline" className="font-medium">
-              {game.releaseDate.split('-')[0]}
-            </Badge>
-          )}
-          {tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="font-medium">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+      {/* The cover leads, with the facts beside it - this is the one place in the app
+          showing a single game, so it can afford the artwork the search results cannot. */}
+      <div className="mb-6 flex flex-col gap-6 md:mb-8 md:flex-row">
+        {game.bannerImageUrl && (
+          <img
+            src={game.bannerImageUrl}
+            alt={game.name}
+            className="w-full shrink-0 rounded-xl border border-border object-cover shadow-2 md:w-64"
+          />
+        )}
 
-      {game.description && (
-        <p className="mb-6 max-w-3xl text-body text-text-secondary md:mb-8">{game.description}</p>
-      )}
+        <div className="min-w-0 flex-1">
+          {(tags.length > 0 || game.releaseDate) && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {game.releaseDate && (
+                <Badge variant="outline" className="font-medium">
+                  {game.releaseDate.split('-')[0]}
+                </Badge>
+              )}
+              {tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="font-medium">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {game.averageCompletionSeconds != null && (
+            <p className="mb-4 flex items-center gap-2 text-body-sm text-text-secondary">
+              <Clock className="size-4 shrink-0" />
+              {t('catalog.averageCompletion', {
+                time: formatTime(game.averageCompletionSeconds),
+              })}
+            </p>
+          )}
+
+          {game.description && (
+            <p className="max-w-3xl text-body text-text-secondary">{game.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6 md:mb-8">
+        <p className="mb-4 text-body-sm font-bold sm:text-body-lg">{t('game.aboutThisGame')}</p>
+        <GameDetails game={game} t={t} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-4 sm:gap-5">
-          <GameRatingPanel gameId={game.id} />
-          <GameCommunityPanel gameId={game.id} />
+          <GameRatingPanel gameId={gameId} ensureGameId={ensureGameId} />
+          <GameCommunityPanel gameId={gameId} />
         </div>
-        <GameReviewsPanel gameId={game.id} />
+        <GameReviewsPanel gameId={gameId} ensureGameId={ensureGameId} />
       </div>
     </div>
   )

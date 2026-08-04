@@ -54,7 +54,8 @@ function AppContent() {
           <Route path="games" element={<Games />} />
           <Route path="games/:id/statistics" element={<GameStatistics />} />
           <Route path="catalog" element={<Catalog />} />
-          <Route path="catalog/:id" element={<CatalogGameDetail />} />
+          {/* IGDB id, not a row id - the catalog reaches games this app has no row for. */}
+          <Route path="catalog/:externalId" element={<CatalogGameDetail />} />
           <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />

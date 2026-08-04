@@ -253,7 +253,9 @@ function Layout() {
           className={cn(
             'mx-auto w-full flex-1 px-4 pt-4 sm:px-6 sm:pt-6 md:pt-8',
             focusMode ? 'pb-4 md:pb-8' : 'pb-24 md:pb-8',
-            currentTab === '/games' || currentTab === '/catalog' ? 'md:px-12' : 'max-w-7xl'
+            // Only the library's cover grid earns the full width; everything else, the
+            // catalog's search results included, reads better measured.
+            currentTab === '/games' ? 'md:px-12' : 'max-w-7xl'
           )}
         >
           <Outlet />

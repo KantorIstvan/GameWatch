@@ -27,9 +27,20 @@ export interface Game {
   alternativeNames?: string
   description?: string
   slug?: string
+  /** IGDB's average time to beat, in seconds. */
+  averageCompletionSeconds?: number
   /** This app's own shrunk community score - only populated by the catalog endpoints. */
   communityRatingScore?: number | null
   communityRatingCount?: number
+}
+
+/**
+ * A game's catalog page. Addressed by `externalId`, because it may not exist here at all:
+ * `id` is null until someone rates or reviews it and the catalog row gets created.
+ */
+export interface CatalogGame extends Omit<Game, 'id' | 'externalId'> {
+  id: number | null
+  externalId: number
 }
 
 export interface Playthrough {
@@ -78,12 +89,29 @@ export interface Playthrough {
   releaseDate?: string
 }
 
+/**
+ * A hit from the catalog's search, which searches all of IGDB rather than this app's own
+ * rows. `id` is the IGDB id - the only id most of these have, since nobody here has
+ * necessarily added them.
+ */
 export interface GameSearchResult {
-  id: string
+  id: number
   name: string
   bannerImageUrl?: string
+  description?: string
+  releaseDate?: string
   rating?: number
-  genres?: string[]
+  ratingsCount?: number
+  genres?: string
+  platforms?: string
+  developers?: string
+  publishers?: string
+  tags?: string
+  slug?: string
+  website?: string
+  esrbRating?: string
+  alternativeNames?: string
+  averageCompletionSeconds?: number
 }
 
 export interface GameStatistics {

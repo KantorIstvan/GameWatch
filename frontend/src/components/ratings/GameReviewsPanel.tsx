@@ -13,7 +13,9 @@ import { formatTime } from '../../utils/formatters'
 import type { GameReview } from '../../types'
 
 interface GameReviewsPanelProps {
-  gameId: number
+  /** Null for a game nobody has rated or reviewed yet - see {@link useCatalogGame}. */
+  gameId: number | null
+  ensureGameId: () => Promise<number>
 }
 
 /**
@@ -21,8 +23,11 @@ interface GameReviewsPanelProps {
  *
  * Sorted by helpfulness by default rather than recency: the newest review is whoever wrote
  * last, which is not the same as the one worth reading first.
+ *
+ * A game with no catalog row yet has no reviews to load, so the panel renders its empty
+ * state and claims the row when the first review is submitted.
  */
-function GameReviewsPanel({ gameId }: GameReviewsPanelProps) {
+function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
   const { t, i18n } = useTranslation()
   const [reviews, setReviews] = useState<GameReview[]>([])
   const [sort, setSort] = useState<'helpful' | 'recent'>('helpful')
@@ -33,6 +38,10 @@ function GameReviewsPanel({ gameId }: GameReviewsPanelProps) {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
+    if (gameId === null) {
+      setReviews([])
+      return
+    }
     reviewsApi
       .getReviews(gameId, sort, onlyMyLanguage ? i18n.language : undefined)
       .then((response) => {
@@ -51,7 +60,8 @@ function GameReviewsPanel({ gameId }: GameReviewsPanelProps) {
   const submit = useCallback(async () => {
     setBusy(true)
     try {
-      await reviewsApi.submitReview(gameId, {
+      const id = await ensureGameId()
+      await reviewsApi.submitReview(id, {
         body,
         containsSpoilers: spoilers,
         language: i18n.language,
@@ -63,9 +73,13 @@ function GameReviewsPanel({ gameId }: GameReviewsPanelProps) {
     } finally {
       setBusy(false)
     }
-  }, [gameId, body, spoilers, i18n.language, load, t])
+  }, [ensureGameId, body, spoilers, i18n.language, load, t])
 
   const remove = useCallback(async () => {
+    // Only reachable with an existing review, which means a row already exists.
+    if (gameId === null) {
+      return
+    }
     setBusy(true)
     try {
       await reviewsApi.deleteReview(gameId)

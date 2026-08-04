@@ -8,10 +8,25 @@ import { statColors } from '../../lib/statColors'
 import type { GameRatingSummary } from '../../types'
 
 interface GameRatingPanelProps {
-  gameId: number
+  /** Null for a game nobody has rated or reviewed yet - see {@link useCatalogGame}. */
+  gameId: number | null
+  ensureGameId: () => Promise<number>
 }
 
 const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const EMPTY_SUMMARY: GameRatingSummary = {
+  gameId: 0,
+  bayesianScore: null,
+  averageScore: null,
+  ratingCount: 0,
+  distribution: {},
+  yourScore: null,
+  finisherCount: 0,
+  finisherAverageScore: null,
+  verifiedCount: 0,
+  verifiedAverageScore: null,
+}
 
 /**
  * A game's score, and this user's contribution to it.
@@ -20,14 +35,22 @@ const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
  * score is shrunk towards the global mean so a single enthusiastic rating cannot top the
  * list, which makes it defensible but not self-explanatory - the count and the histogram
  * next to it are what turn it from a magic number into something a reader can check.
+ *
+ * A game with no catalog row yet has nothing to fetch, so the panel starts from an empty
+ * summary and claims the row on the first rating. Rating a game is exactly the moment it
+ * becomes worth having a row for.
  */
-function GameRatingPanel({ gameId }: GameRatingPanelProps) {
+function GameRatingPanel({ gameId, ensureGameId }: GameRatingPanelProps) {
   const { t } = useTranslation()
   const [summary, setSummary] = useState<GameRatingSummary | null>(null)
   const [hovered, setHovered] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    if (gameId === null) {
+      setSummary(EMPTY_SUMMARY)
+      return
+    }
     ratingsApi
       .getSummary(gameId)
       .then((response) => setSummary(response.data))
@@ -38,10 +61,11 @@ function GameRatingPanel({ gameId }: GameRatingPanelProps) {
     async (score: number) => {
       setBusy(true)
       try {
+        const id = await ensureGameId()
         const response =
           summary?.yourScore === score
-            ? await ratingsApi.removeRating(gameId)
-            : await ratingsApi.rate(gameId, score)
+            ? await ratingsApi.removeRating(id)
+            : await ratingsApi.rate(id, score)
         setSummary(response.data)
       } catch (err: any) {
         toast.error(err.response?.data?.message || t('ratings.failed'))
@@ -49,7 +73,7 @@ function GameRatingPanel({ gameId }: GameRatingPanelProps) {
         setBusy(false)
       }
     },
-    [gameId, summary?.yourScore, t]
+    [ensureGameId, summary?.yourScore, t]
   )
 
   if (!summary) {

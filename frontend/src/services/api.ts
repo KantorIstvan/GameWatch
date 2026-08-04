@@ -50,12 +50,20 @@ export const gamesApi = {
   getById: (id: number) => apiClient.get(`/games/${id}`),
   create: (data: any) => apiClient.post('/games', data),
   delete: (id: number) => apiClient.delete(`/games/${id}`),
-  search: (query: string) => apiClient.get('/games/search', { params: { query } }),
+  // Searches all of IGDB, not this app's rows. `limit` is for the catalog's search page,
+  // which shows a full page of results; the add-a-game autocomplete omits it and gets the
+  // shorter default that fits under an input.
+  search: (query: string, limit?: number) =>
+    apiClient.get('/games/search', { params: { query, limit } }),
   getDetails: (externalId: string) => apiClient.get(`/games/details/${externalId}`),
   getStatistics: (id: number) => apiClient.get(`/games/${id}/statistics`),
-  // The universal catalog: every game anyone has added, not just the caller's library.
-  getCatalog: () => apiClient.get('/games/catalog'),
-  getCatalogById: (id: number) => apiClient.get(`/games/catalog/${id}`),
+  // Catalog pages are addressed by IGDB id, since most games opened from search have no
+  // row here. The GET returns a null `id` for those; the POST is what creates the row,
+  // and is only called on the way into a rating or a review.
+  getCatalogByExternalId: (externalId: number) =>
+    apiClient.get(`/games/catalog/external/${externalId}`),
+  resolveCatalogGame: (externalId: number) =>
+    apiClient.post(`/games/catalog/external/${externalId}`),
 }
 
 export const playthroughsApi = {
