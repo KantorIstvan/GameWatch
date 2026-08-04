@@ -69,7 +69,7 @@ Access your profile from the user menu to:
 
 1. Click the **Add Game** button
 2. Type the game name in the search box
-3. Results appear from the RAWG database with cover art and details
+3. Results appear from the IGDB database with cover art and details
 4. Click on a game to add it
 
 **Search tips:**
@@ -407,7 +407,7 @@ Customize your experience:
 
 If search results don't appear:
 - Check your internet connection
-- The RAWG API may be temporarily down
+- The IGDB API may be temporarily down
 - Try a different search term
 - Refresh the page
 

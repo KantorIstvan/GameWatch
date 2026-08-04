@@ -41,7 +41,7 @@ class UserStatisticsServiceTest {
     private UserGameRepository userGameRepository;
 
     @Mock
-    private RawgApiService rawgApiService;
+    private IgdbApiService igdbApiService;
 
     @InjectMocks
     private UserStatisticsService userStatisticsService;

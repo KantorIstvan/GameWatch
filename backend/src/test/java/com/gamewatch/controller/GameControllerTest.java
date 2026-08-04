@@ -4,7 +4,7 @@ import com.gamewatch.dto.CreateGameRequest;
 import com.gamewatch.dto.GameDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.service.GameService;
-import com.gamewatch.service.RawgApiService;
+import com.gamewatch.service.IgdbApiService;
 import com.gamewatch.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -41,7 +41,7 @@ class GameControllerTest {
     private UserService userService;
 
     @MockBean
-    private RawgApiService rawgApiService;
+    private IgdbApiService igdbApiService;
 
     private ObjectMapper objectMapper;
     private User testUser;

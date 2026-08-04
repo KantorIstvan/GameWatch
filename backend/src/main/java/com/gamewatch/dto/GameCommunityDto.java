@@ -28,7 +28,7 @@ public class GameCommunityDto {
     private Long fastestCompletionSeconds;
     private Long slowestCompletionSeconds;
 
-    /** RAWG's own average, for comparison against what was actually measured here. */
+    /** IGDB's own average time-to-beat, for comparison against what was actually measured here. */
     private Long typicalCompletionSeconds;
 
     private Double dropRatePercentage;

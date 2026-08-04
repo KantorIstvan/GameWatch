@@ -6,7 +6,7 @@ import com.gamewatch.dto.GameSearchResultDto;
 import com.gamewatch.dto.GameStatisticsDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.service.GameService;
-import com.gamewatch.service.RawgApiService;
+import com.gamewatch.service.IgdbApiService;
 import com.gamewatch.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +24,19 @@ public class GameController {
 
     private final GameService gameService;
     private final UserService userService;
-    private final RawgApiService rawgApiService;
+    private final IgdbApiService igdbApiService;
 
     @GetMapping("/search")
     public ResponseEntity<List<GameSearchResultDto>> searchGames(
             @RequestParam String query) {
-        List<GameSearchResultDto> results = rawgApiService.searchGames(query);
+        List<GameSearchResultDto> results = igdbApiService.searchGames(query);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/details/{externalId}")
     public ResponseEntity<GameSearchResultDto> getGameDetails(
             @PathVariable Integer externalId) {
-        GameSearchResultDto details = rawgApiService.getGameDetails(externalId);
+        GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
         return ResponseEntity.ok(details);
     }
 

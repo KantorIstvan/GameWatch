@@ -50,8 +50,7 @@ public class BackupDto {
         private String released;
         private Double rating;
         private Integer ratingsCount;
-        private Integer metacritic;
-        private Integer playtime;
+        private Integer averageCompletionSeconds;
         private String esrbRating;
         private String platforms;
         private String genres;

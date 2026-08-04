@@ -37,7 +37,7 @@ class GameCommunityServiceTest {
 
     @BeforeEach
     void setUp() {
-        game = Game.builder().id(1L).name("Test Game").playtime(40).build();
+        game = Game.builder().id(1L).name("Test Game").averageCompletionSeconds(144_000).build();
         viewer = User.builder().id(99L).auth0UserId("auth0|99").build();
     }
 
@@ -101,7 +101,7 @@ class GameCommunityServiceTest {
         assertThat(stats.getMedianCompletionSeconds()).isEqualTo(140_000L);
         assertThat(stats.getFastestCompletionSeconds()).isEqualTo(100_000L);
         assertThat(stats.getSlowestCompletionSeconds()).isEqualTo(180_000L);
-        // RAWG's 40 hours, alongside rather than instead of the measured figure.
+        // IGDB's own time-to-beat average, alongside rather than instead of the measured figure.
         assertThat(stats.getTypicalCompletionSeconds()).isEqualTo(144_000L);
     }
 

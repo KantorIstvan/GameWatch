@@ -15,6 +15,6 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
 
-rawg:
-  api:
-    key: ${RAWG_API_KEY:}
+igdb:
+  client-id: ${TWITCH_CLIENT_ID:}
+  client-secret: ${TWITCH_CLIENT_SECRET:}

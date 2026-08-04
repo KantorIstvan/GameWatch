@@ -4,7 +4,7 @@ Track your video game playthroughs and visualize your gaming habits.
 
 ## Summary
 
-GameWatch helps gamers log their playthroughs, track time spent on each session, and see statistics about their gaming history. Built for personal use or small communities, it integrates with the RAWG database to pull game metadata and offers a clean calendar-based interface.
+GameWatch helps gamers log their playthroughs, track time spent on each session, and see statistics about their gaming history. Built for personal use or small communities, it integrates with the IGDB database to pull game metadata and offers a clean calendar-based interface.
 
 ## Documentation
 
@@ -27,12 +27,12 @@ GameWatch helps gamers log their playthroughs, track time spent on each session,
 
 ## About
 
-GameWatch is a full-stack web app for tracking video game playthroughs. Users authenticate via Auth0, search for games using the RAWG API, create playthrough entries with session times, and view their gaming activity on a calendar or in charts. It's ideal for gamers who want to see patterns in their play habits or simply maintain a personal gaming log.
+GameWatch is a full-stack web app for tracking video game playthroughs. Users authenticate via Auth0, search for games using the IGDB API, create playthrough entries with session times, and view their gaming activity on a calendar or in charts. It's ideal for gamers who want to see patterns in their play habits or simply maintain a personal gaming log.
 
 ## Features
 
 - **Real-time timer** tracks gaming sessions automatically with dynamic background colors
-- **Search & add games** from the RAWG database with cover art and metadata
+- **Search & add games** from the IGDB database with cover art and metadata
 - **Log playthrough sessions** with start/end dates and total hours played
 - **Manual session logging** for retroactive time tracking
 - **Drop & pickup games** - mark games as dropped and resume them later
@@ -61,7 +61,7 @@ GameWatch is a full-stack web app for tracking video game playthroughs. Users au
 - **PostgreSQL:** 14+
 - **Docker & Docker Compose** (for containerized setup)
 - **Auth0 account** (free tier works)
-- **RAWG API key** ([sign up here](https://rawg.io/apidocs))
+- **IGDB API credentials** - a Twitch Client ID and Client Secret ([register an app here](https://dev.twitch.tv/console/apps), see the [IGDB API docs](https://api-docs.igdb.com/#getting-started))
 
 ## Installation
 
@@ -82,8 +82,9 @@ GameWatch is a full-stack web app for tracking video game playthroughs. Users au
    VITE_AUTH0_CLIENT_ID={{YOUR_CLIENT_ID}}
    VITE_AUTH0_AUDIENCE=https://api.gamewatch.com
 
-   # RAWG API
-   RAWG_API_KEY={{YOUR_RAWG_KEY}}
+   # IGDB API (via Twitch)
+   TWITCH_CLIENT_ID={{YOUR_TWITCH_CLIENT_ID}}
+   TWITCH_CLIENT_SECRET={{YOUR_TWITCH_CLIENT_SECRET}}
 
    # CORS (local dev)
    CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
@@ -166,8 +167,8 @@ http://localhost:3000
 
 | Method | Path                              | Purpose                          | Auth Required |
 |--------|-----------------------------------|----------------------------------|---------------|
-| GET    | `/games/search?query={name}`      | Search games via RAWG            | No            |
-| GET    | `/games/details/{externalId}`     | Get game details by RAWG ID      | No            |
+| GET    | `/games/search?query={name}`      | Search games via IGDB            | No            |
+| GET    | `/games/details/{externalId}`     | Get game details by IGDB ID      | No            |
 | POST   | `/games`                          | Create a game entry              | Yes           |
 | GET    | `/games`                          | List user's games                | Yes           |
 | GET    | `/games/{id}`                     | Get game by ID                   | Yes           |
@@ -266,7 +267,7 @@ curl -H "Authorization: Bearer {token}" \
 **Key environment variables:**
 
 - `AUTH0_ISSUER_URI`, `AUTH0_AUDIENCE`: Auth0 API settings
-- `RAWG_API_KEY`: Your RAWG API key
+- `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`: Your IGDB (Twitch) API credentials
 - `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`: PostgreSQL connection
 - `CORS_ALLOWED_ORIGINS`: Comma-separated list of frontend origins
 

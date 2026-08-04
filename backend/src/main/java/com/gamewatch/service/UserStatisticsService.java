@@ -31,7 +31,7 @@ public class UserStatisticsService {
     private final PlaythroughRepository playthroughRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final UserGameRepository userGameRepository;
-    private final RawgApiService rawgApiService;
+    private final IgdbApiService igdbApiService;
 
     @Transactional(readOnly = true)
     public UserStatisticsDto getUserStatistics(User user, String interval, String date) {
@@ -1266,20 +1266,20 @@ public class UserStatisticsService {
                 .collect(Collectors.toList());
         
         if (externalIds.isEmpty()) {
-            log.warn("No external RAWG IDs found for top games");
+            log.warn("No external IGDB IDs found for top games");
+            return new ArrayList<>();
+        }
+
+        log.info("Fetching IGDB details for {} games", externalIds.size());
+        List<com.fasterxml.jackson.databind.JsonNode> topGamesIgdbData =
+                igdbApiService.getMultipleGameDetailsRaw(externalIds);
+
+        if (topGamesIgdbData.isEmpty()) {
+            log.warn("No IGDB data found for top games");
             return new ArrayList<>();
         }
         
-        log.info("Fetching RAWG details for {} games in parallel", externalIds.size());
-        List<com.fasterxml.jackson.databind.JsonNode> topGamesRawgData = 
-                rawgApiService.getMultipleGameDetailsRaw(externalIds);
-        
-        if (topGamesRawgData.isEmpty()) {
-            log.warn("No RAWG data found for top games");
-            return new ArrayList<>();
-        }
-        
-        log.info("Fetched {} game details in {}ms", topGamesRawgData.size(), 
+        log.info("Fetched {} game details in {}ms", topGamesIgdbData.size(), 
                 System.currentTimeMillis() - startTime);
         
         Map<Integer, Integer> genreIdWeights = new HashMap<>();
@@ -1290,48 +1290,54 @@ public class UserStatisticsService {
         Map<String, Integer> publisherNameWeights = new HashMap<>();
         Map<String, Integer> platformWeights = new HashMap<>();
         
-        for (com.fasterxml.jackson.databind.JsonNode gameData : topGamesRawgData) {
+        for (com.fasterxml.jackson.databind.JsonNode gameData : topGamesIgdbData) {
             String gameName = gameData.has("name") ? gameData.get("name").asText() : "Unknown";
             log.info("Extracting features from: {}", gameName);
-            
-            List<Integer> genreIds = rawgApiService.extractGenreIdsFromDetails(gameData);
+
+            List<Integer> genreIds = igdbApiService.extractGenreIdsFromDetails(gameData);
             for (Integer genreId : genreIds) {
                 genreIdWeights.put(genreId, genreIdWeights.getOrDefault(genreId, 0) + 1);
             }
-            
-            List<Integer> tagIds = rawgApiService.extractTagIdsFromDetails(gameData, 15);
+
+            List<Integer> tagIds = igdbApiService.extractTagIdsFromDetails(gameData, 15);
             for (Integer tagId : tagIds) {
                 tagIdWeights.put(tagId, tagIdWeights.getOrDefault(tagId, 0) + 1);
             }
-            
-            List<Integer> devIds = rawgApiService.extractDeveloperIdsFromDetails(gameData);
+
+            List<Integer> devIds = igdbApiService.extractDeveloperIdsFromDetails(gameData);
             for (Integer devId : devIds) {
                 developerIdWeights.put(devId, developerIdWeights.getOrDefault(devId, 0) + 1);
             }
-            
-            if (gameData.has("developers")) {
-                for (com.fasterxml.jackson.databind.JsonNode dev : gameData.get("developers")) {
-                    String devName = dev.get("name").asText();
-                    developerNameWeights.put(devName, developerNameWeights.getOrDefault(devName, 0) + 1);
+
+            if (gameData.has("involved_companies")) {
+                for (com.fasterxml.jackson.databind.JsonNode involved : gameData.get("involved_companies")) {
+                    if (involved.has("developer") && involved.get("developer").asBoolean()
+                            && involved.has("company") && involved.get("company").has("name")) {
+                        String devName = involved.get("company").get("name").asText();
+                        developerNameWeights.put(devName, developerNameWeights.getOrDefault(devName, 0) + 1);
+                    }
                 }
             }
-            
-            List<Integer> pubIds = rawgApiService.extractPublisherIdsFromDetails(gameData);
+
+            List<Integer> pubIds = igdbApiService.extractPublisherIdsFromDetails(gameData);
             for (Integer pubId : pubIds) {
                 publisherIdWeights.put(pubId, publisherIdWeights.getOrDefault(pubId, 0) + 1);
             }
-            
-            if (gameData.has("publishers")) {
-                for (com.fasterxml.jackson.databind.JsonNode pub : gameData.get("publishers")) {
-                    String pubName = pub.get("name").asText();
-                    publisherNameWeights.put(pubName, publisherNameWeights.getOrDefault(pubName, 0) + 1);
+
+            if (gameData.has("involved_companies")) {
+                for (com.fasterxml.jackson.databind.JsonNode involved : gameData.get("involved_companies")) {
+                    if (involved.has("publisher") && involved.get("publisher").asBoolean()
+                            && involved.has("company") && involved.get("company").has("name")) {
+                        String pubName = involved.get("company").get("name").asText();
+                        publisherNameWeights.put(pubName, publisherNameWeights.getOrDefault(pubName, 0) + 1);
+                    }
                 }
             }
-            
+
             if (gameData.has("platforms")) {
                 for (com.fasterxml.jackson.databind.JsonNode platformNode : gameData.get("platforms")) {
-                    if (platformNode.has("platform") && platformNode.get("platform").has("name")) {
-                        String platform = platformNode.get("platform").get("name").asText();
+                    if (platformNode.has("name")) {
+                        String platform = platformNode.get("name").asText();
                         platformWeights.put(platform, platformWeights.getOrDefault(platform, 0) + 1);
                     }
                 }
@@ -1361,7 +1367,7 @@ public class UserStatisticsService {
             log.info("Searching for games by top developer IDs: {}", topDeveloperIds);
             
             for (Integer developerId : topDeveloperIds) {
-                List<GameSearchResultDto> devGames = rawgApiService.searchGamesByDeveloperId(developerId, 20);
+                List<GameSearchResultDto> devGames = igdbApiService.searchGamesByDeveloperId(developerId, 20);
                 log.info("Found {} games from developer ID {}", devGames.size(), developerId);
                 for (GameSearchResultDto game : devGames) {
                     if (!excludedExternalIds.contains(game.getId())) {
@@ -1374,7 +1380,7 @@ public class UserStatisticsService {
             log.info("Searching for games by top publisher IDs: {}", topPublisherIds);
             
             for (Integer publisherId : topPublisherIds) {
-                List<GameSearchResultDto> pubGames = rawgApiService.searchGamesByPublisherId(publisherId, 20);
+                List<GameSearchResultDto> pubGames = igdbApiService.searchGamesByPublisherId(publisherId, 20);
                 log.info("Found {} games from publisher ID {}", pubGames.size(), publisherId);
                 for (GameSearchResultDto game : pubGames) {
                     if (!excludedExternalIds.contains(game.getId())) {
@@ -1394,11 +1400,11 @@ public class UserStatisticsService {
                 
                 List<GameSearchResultDto> genreGames = topGenreIds.isEmpty() ? 
                         new ArrayList<>() : 
-                        rawgApiService.searchGamesByMultipleGenres(topGenreIds, 10);
+                        igdbApiService.searchGamesByMultipleGenres(topGenreIds, 10);
                 
                 List<GameSearchResultDto> tagGames = topTagIds.isEmpty() ? 
                         new ArrayList<>() : 
-                        rawgApiService.searchGamesByMultipleTags(topTagIds, 10);
+                        igdbApiService.searchGamesByMultipleTags(topTagIds, 10);
                 
                 for (GameSearchResultDto game : genreGames) {
                     if (!excludedExternalIds.contains(game.getId())) {
@@ -1417,14 +1423,14 @@ public class UserStatisticsService {
                     System.currentTimeMillis() - candidateStartTime);
             
         } catch (Exception e) {
-            log.error("Failed to fetch candidate games from RAWG API", e);
+            log.error("Failed to fetch candidate games from IGDB API", e);
             return new ArrayList<>();
         }
         
         Map<String, Integer> genreNameWeights = new HashMap<>();
         Map<String, Integer> tagNameWeights = new HashMap<>();
         
-        for (com.fasterxml.jackson.databind.JsonNode gameData : topGamesRawgData) {
+        for (com.fasterxml.jackson.databind.JsonNode gameData : topGamesIgdbData) {
             if (gameData.has("genres")) {
                 for (com.fasterxml.jackson.databind.JsonNode genre : gameData.get("genres")) {
                     Integer id = genre.get("id").asInt();
@@ -1434,8 +1440,8 @@ public class UserStatisticsService {
                     }
                 }
             }
-            if (gameData.has("tags")) {
-                for (com.fasterxml.jackson.databind.JsonNode tag : gameData.get("tags")) {
+            if (gameData.has("keywords")) {
+                for (com.fasterxml.jackson.databind.JsonNode tag : gameData.get("keywords")) {
                     Integer id = tag.get("id").asInt();
                     String name = tag.get("name").asText();
                     if (tagIdWeights.containsKey(id)) {

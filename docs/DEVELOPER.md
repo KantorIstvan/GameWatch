@@ -34,7 +34,7 @@ GameWatch uses a modern three-tier architecture:
 - **Frontend**: SPA built with Vite, handles routing, state, and UI
 - **Backend**: RESTful API with OAuth2 resource server, JPA repositories
 - **Database**: PostgreSQL with Flyway migrations for schema versioning
-- **External APIs**: RAWG for game metadata
+- **External APIs**: IGDB for game metadata
 - **Auth**: Auth0 for user authentication (JWT tokens)
 
 ### Technology Choices
@@ -92,7 +92,8 @@ createdb gamewatch
 # Set environment variables
 export AUTH0_ISSUER_URI=https://your-tenant.auth0.com/
 export AUTH0_AUDIENCE=https://api.gamewatch.com
-export RAWG_API_KEY=your-key
+export TWITCH_CLIENT_ID=your-client-id
+export TWITCH_CLIENT_SECRET=your-client-secret
 export DATABASE_URL=jdbc:postgresql://localhost:5432/gamewatch
 export DATABASE_USERNAME=postgres
 export DATABASE_PASSWORD=postgres
@@ -118,11 +119,11 @@ Handle HTTP requests, validate input, return DTOs:
 
 Business logic, validation, external API calls:
 
-- `GameService`: Game management and RAWG integration
+- `GameService`: Game management and IGDB integration
 - `PlaythroughService`: Playthrough CRUD with validation and timer management
 - `UserService`: User creation and profile updates
 - `UserStatisticsService`: Statistics calculation and game recommendations
-- `RawgApiService`: RAWG API client with caching
+- `IgdbApiService`: IGDB API client (Twitch OAuth2 client-credentials auth)
 - `ColorExtractionService`: Extracts dominant colors from game images
 - `HealthService`: Health metrics calculation, mood tracking, and reminder management
 
@@ -149,7 +150,7 @@ JPA data access:
 JPA entities representing database tables:
 
 - `User`: User accounts and profiles
-- `Game`: Game metadata from RAWG
+- `Game`: Game metadata from IGDB
 - `Playthrough`: Individual game playthroughs
 - `UserGame`: User-game relationship with aggregated stats
 - `SessionHistory`: Individual gaming sessions
@@ -198,7 +199,7 @@ To create a new migration:
 Ehcache provides second-level Hibernate cache:
 - Game entities cached (rarely change)
 - User entities cached
-- RAWG API responses cached (1 hour TTL)
+- IGDB API responses cached (1 hour TTL)
 
 Configure in `ehcache.xml`. Clear cache on deployment or via JMX.
 
@@ -315,7 +316,7 @@ function MyComponent() {
 
 **games**
 - `id` (bigserial PK)
-- `external_id` (integer) - RAWG API ID
+- `external_id` (integer) - IGDB API ID
 - `name` (text)
 - `banner_image_url` (text)
 - `description` (text)
@@ -325,7 +326,6 @@ function MyComponent() {
 - `developers` (text array)
 - `publishers` (text array)
 - `esrb_rating` (text)
-- `metacritic_score` (integer)
 - `dominant_color_light` (text) - Hex color
 - `dominant_color_dark` (text) - Hex color
 - `created_at` (timestamp)
@@ -459,11 +459,11 @@ Obtain token via Auth0 authentication flow in frontend.
 #### Games
 
 **GET /games/search?query={name}**
-- Search RAWG database for games
+- Search IGDB database for games
 - Returns: `List<GameSearchResultDto>`
 
 **GET /games/details/{externalId}**
-- Get full game details from RAWG
+- Get full game details from IGDB
 - Returns: `GameSearchResultDto`
 
 **POST /games**
@@ -672,7 +672,8 @@ void setUp() {
 Required in production:
 - `AUTH0_ISSUER_URI`
 - `AUTH0_AUDIENCE`
-- `RAWG_API_KEY`
+- `TWITCH_CLIENT_ID`
+- `TWITCH_CLIENT_SECRET`
 - `DATABASE_URL`
 - `DATABASE_USERNAME`
 - `DATABASE_PASSWORD`

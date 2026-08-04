@@ -73,8 +73,8 @@ public class GameCommunityService {
                 ? completionTimes.get(0) : null)
             .slowestCompletionSeconds(enoughData && !completionTimes.isEmpty()
                 ? completionTimes.get(completionTimes.size() - 1) : null)
-            .typicalCompletionSeconds(game.getPlaytime() != null && game.getPlaytime() > 0
-                ? game.getPlaytime() * 3600L : null)
+            .typicalCompletionSeconds(game.getAverageCompletionSeconds() != null && game.getAverageCompletionSeconds() > 0
+                ? game.getAverageCompletionSeconds().longValue() : null)
             .dropRatePercentage(enoughData && endedEitherWay > 0
                 ? (double) droppedTimes.size() / endedEitherWay * 100.0 : null)
             .medianSecondsBeforeDropping(enoughData ? percentile(droppedTimes, 0.50) : null)

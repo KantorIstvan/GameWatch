@@ -145,8 +145,8 @@ class GameRatingServiceTest {
 
     @Test
     void summaryReportsFinishersSeparatelyFromEveryone() {
-        // The differentiator over Metacritic and RAWG: this app knows who actually played
-        // and finished, so it can say what they thought without guessing.
+        // The differentiator over a generic aggregate score: this app knows who actually
+        // played and finished, so it can say what they thought without guessing.
         game.setRatingCount(4);
         game.setRatingSum(24L); // overall mean 6.0
         when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
