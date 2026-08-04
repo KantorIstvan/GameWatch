@@ -151,6 +151,17 @@ function Timers() {
     return filtered
   }, [playthroughs, games, sortBy, filterStatus, filterType, filterGame, filterPlatform, searchQuery])
 
+  // A playthrough with an open session renders two stacked readouts and is therefore
+  // taller than the rest. Left in the grid it stretched its whole row and distorted the
+  // covers of every card beside it, so those are lifted into their own full-width
+  // section above and every card left in the grid is the same compact height.
+  const [openSessionPlaythroughs, gridPlaythroughs] = useMemo(() => {
+    const open: Playthrough[] = []
+    const rest: Playthrough[] = []
+    filteredAndSortedPlaythroughs.forEach(p => (p.isActive || p.isPaused ? open : rest).push(p))
+    return [open, rest]
+  }, [filteredAndSortedPlaythroughs])
+
   const hasActiveFilters = Boolean(
     searchQuery || filterStatus || filterType || filterGame || filterPlatform || sortBy !== 'date-desc'
   )
@@ -380,11 +391,35 @@ function Timers() {
           </div>
         )
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-          {filteredAndSortedPlaythroughs.map((playthrough) => (
-            <StopwatchCard key={playthrough.id} playthrough={playthrough} />
-          ))}
-        </div>
+        <>
+          {openSessionPlaythroughs.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-secondary">
+                {t('timers.openSessionSection', { count: openSessionPlaythroughs.length })}
+              </h2>
+              <div className="flex flex-col gap-5 sm:gap-6">
+                {openSessionPlaythroughs.map((playthrough) => (
+                  <StopwatchCard key={playthrough.id} playthrough={playthrough} featured />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {gridPlaythroughs.length > 0 && (
+            <section>
+              {openSessionPlaythroughs.length > 0 && (
+                <h2 className="mb-3 text-caption font-semibold uppercase tracking-wide text-text-secondary">
+                  {t('timers.otherTimersSection')}
+                </h2>
+              )}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+                {gridPlaythroughs.map((playthrough) => (
+                  <StopwatchCard key={playthrough.id} playthrough={playthrough} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       <CreatePlaythroughDialog

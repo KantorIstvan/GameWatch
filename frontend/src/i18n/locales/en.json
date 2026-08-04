@@ -338,7 +338,10 @@
     "clearFilters": "Clear Filters",
     "filters": "Filters",
     "noMatchingTimers": "No timers match your search",
-    "noMatchingTimersDescription": "Try adjusting your search or filters."
+    "noMatchingTimersDescription": "Try adjusting your search or filters.",
+    "openSessionSection_one": "Session in progress",
+    "openSessionSection_other": "{{count}} sessions in progress",
+    "otherTimersSection": "Other timers"
   },
   "statistics": {
     "title": "Statistics",
