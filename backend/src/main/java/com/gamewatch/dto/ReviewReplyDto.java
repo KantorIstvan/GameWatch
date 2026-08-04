@@ -15,14 +15,17 @@ public class ReviewReplyDto {
     private String authorDisplayName;
     private String authorPictureUrl;
     private String body;
-    private boolean isOwnReply;
 
     /**
-     * True for the reply's author and for the author of the review it sits under.
+     * True for the reply's author, and for nobody else.
      *
-     * Whoever wrote the review gets to clear what is said beneath it - that thread is
-     * attached to their words whether they want it or not, so leaving them no way to remove
-     * something from it would make writing a review the riskier choice.
+     * Deliberately not extended to the author of the review above it: words belong to
+     * whoever wrote them, and a reviewer who could delete replies would leave every thread
+     * showing only the responses that reviewer was willing to tolerate.
+     *
+     * Named for the permission rather than for the relationship ("ownReply") so that the
+     * field the UI gates on stays the field the server enforces, even if the rule widens
+     * later.
      */
     private boolean viewerCanDelete;
 
