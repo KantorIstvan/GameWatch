@@ -59,7 +59,7 @@ function ProfileListRow({ person, onFollowChange }: ProfileListRowProps) {
       )}
 
       {/* Nothing to offer on your own row either: following yourself is rejected anyway. */}
-      {person.handle && !person.isOwnProfile && (
+      {person.handle && !person.ownProfile && (
         <FollowButton
           state={{
             handle: person.handle,
