@@ -95,10 +95,18 @@
       "addPicture": "Add picture",
       "changePicture": "Change picture",
       "removePicture": "Remove",
-      "pictureHint": "JPEG, PNG or WebP. Cropped to a square.",
+      "pictureHint": "JPEG, PNG or WebP. Crop it however you like.",
       "pictureSaved": "Picture updated",
       "pictureRemoved": "Picture removed",
-      "pictureFailed": "Could not update your picture"
+      "pictureFailed": "Could not update your picture",
+      "crop": {
+        "title": "Crop your picture",
+        "description": "Drag to reposition, and use the slider to zoom.",
+        "dragHint": "Drag to reposition the picture",
+        "zoomLabel": "Zoom",
+        "confirm": "Save picture",
+        "saving": "Saving..."
+      }
     },
     "timeFormat": "Time Format",
     "timeFormatDescription": "Choose how times are displayed",
