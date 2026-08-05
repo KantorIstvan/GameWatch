@@ -268,7 +268,7 @@ function GameStatisticsPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => navigate(`/catalog/${statistics.gameId}`)}>
+          <Button variant="outline" onClick={() => navigate(`/catalog/${statistics.externalId}`)}>
             <Users className="size-4" />
             {t('statistics.gameStats.viewCommunityPage')}
           </Button>

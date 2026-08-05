@@ -116,6 +116,7 @@ export interface GameSearchResult {
 
 export interface GameStatistics {
   gameId: number
+  externalId: number
   gameName: string
   gameBannerImageUrl?: string
   gameAddedDate?: string
