@@ -242,25 +242,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Diagonal cover dissolve — like .glass above, a one-off composite effect rather
-   than a reusable token, so it lives here as a plain utility instead of in @theme.
-   Two mask layers are intersected: the first is the diagonal the design calls for
-   (solid at the top-right corner, gone toward the bottom-left), the second clears
-   the bottom edge outright so the artwork has already reached zero alpha before it
-   can reach the body text further down the page. The mask only subtracts alpha —
-   it never paints a color — so the artwork melts into whatever --color-bg is
-   currently underneath it and the effect is identical in both themes. */
-.cover-dissolve-bl {
-  -webkit-mask-image:
-    linear-gradient(to bottom left, #000 0%, rgba(0, 0, 0, 0.35) 45%, transparent 72%),
-    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.4) 55%, transparent 88%);
-  mask-image:
-    linear-gradient(to bottom left, #000 0%, rgba(0, 0, 0, 0.35) 45%, transparent 72%),
-    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.4) 55%, transparent 88%);
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
