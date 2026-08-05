@@ -87,8 +87,16 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
   useEffect(() => {
     if (!containerRef.current) return
 
+    // Only non-null here if an earlier effect run returned before reaching its own
+    // cleanup registration below (containerRef not ready yet) - the normal case already
+    // has this destroyed and cleared by that run's cleanup, so this is a safety net, not
+    // the common path. Guarding on it (rather than destroying unconditionally on every
+    // run) avoids double-destroying the same instance the cleanup below already tore
+    // down, which otherwise races the new instance's own paint and can leave its <svg>
+    // clobbered mid-transition.
     if (calInstanceRef.current) {
       calInstanceRef.current.destroy()
+      calInstanceRef.current = null
     }
 
     // cal-heatmap's paint() only appends its <svg> after an internal await, so under
@@ -167,7 +175,15 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
         cal.destroy()
         return
       }
-      const svg = containerRef.current?.querySelector('svg')
+      // Scoped to cal-heatmap's own root-svg class (rather than the first <svg> in the
+      // container) and to the last match: under StrictMode's mount->cleanup->mount, a
+      // cancelled instance's paint() can still be mid-flight and append its own <svg>
+      // into this same container after this one already has - picking the first match
+      // would grab that stale instance's element instead of this (surviving) one's, and
+      // this callback would then set the viewBox on an element that's about to be
+      // destroyed, leaving the real one permanently unscaled.
+      const svgs = containerRef.current?.querySelectorAll<SVGSVGElement>('svg.ch-container')
+      const svg = svgs && svgs.length > 0 ? svgs[svgs.length - 1] : null
       const width = svg?.getAttribute('width')
       const height = svg?.getAttribute('height')
       if (svg && width && height) {
@@ -180,6 +196,7 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     return () => {
       cancelled = true
       calInstanceRef.current?.destroy()
+      calInstanceRef.current = null
     }
     // `data`/`colorScale` are compared by JSON below since callers rebuild them each
     // render; `mode` re-runs the paint when the theme (and thus colorScale colors) flips.
