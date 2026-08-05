@@ -9,7 +9,6 @@ import { gamesApi, playthroughsApi } from '../services/api'
 import Loading from '../components/Loading'
 import ConfirmModal from '../components/ConfirmModal'
 import StatCard from '../components/StatCard'
-import GameCoverBackdrop from '../components/statistics/GameCoverBackdrop'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
 import { useWeekStart } from '../contexts/WeekStartContext'
@@ -257,11 +256,7 @@ function GameStatisticsPage() {
   ]
 
   return (
-    // isolate keeps the backdrop's negative z-index scoped to this page, so it
-    // stays behind the page's own content instead of falling behind the app shell.
-    <div className="relative isolate mx-auto max-w-8xl">
-      <GameCoverBackdrop imageUrl={statistics.gameBannerImageUrl} />
-
+    <div className="mx-auto max-w-8xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 md:mb-8">
         <div className="flex items-center">
           <Button variant="ghost" size="icon" onClick={() => navigate('/games')} className="mr-3">
