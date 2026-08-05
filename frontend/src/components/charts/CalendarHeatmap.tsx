@@ -1,9 +1,8 @@
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import CalHeatmap from 'cal-heatmap'
 import 'cal-heatmap/cal-heatmap.css'
 import Tooltip from 'cal-heatmap/plugins/Tooltip'
-import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useWeekStart } from '../../contexts/WeekStartContext'
 import { cn } from '@/lib/utils'
@@ -77,120 +76,100 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     })
   }, [domain, startDate, getFirstDayNumber])
   const containerRef = useRef<HTMLDivElement>(null)
-  const legendRef = useRef<HTMLDivElement>(null)
   const calInstanceRef = useRef<CalHeatmap | null>(null)
-  // cal-heatmap's legend plugin takes a CSS selector string rather than a node, so the
-  // legend container needs an id - sanitized because useId()'s colons aren't valid
-  // unescaped in a CSS id selector.
-  const legendId = useId().replace(/:/g, '')
 
   useEffect(() => {
     if (!containerRef.current) return
-
-    // Only non-null here if an earlier effect run returned before reaching its own
-    // cleanup registration below (containerRef not ready yet) - the normal case already
-    // has this destroyed and cleared by that run's cleanup, so this is a safety net, not
-    // the common path. Guarding on it (rather than destroying unconditionally on every
-    // run) avoids double-destroying the same instance the cleanup below already tore
-    // down, which otherwise races the new instance's own paint and can leave its <svg>
-    // clobbered mid-transition.
-    if (calInstanceRef.current) {
-      calInstanceRef.current.destroy()
-      calInstanceRef.current = null
-    }
-
-    // cal-heatmap's paint() only appends its <svg> after an internal await, so under
-    // StrictMode's synchronous mount->cleanup->mount, the cleanup below can fire before
-    // that <svg> exists - destroy() then has nothing to remove yet, and the stale
-    // instance still appends its <svg> once its paint() promise resolves, producing two
-    // stacked grids. `cancelled` lets the resolved callback destroy itself instead.
     let cancelled = false
 
-    const points = Object.entries(data).map(([dateStr, value]) => {
-      const [y, m, d] = dateStr.split('-').map(Number)
-      return { date: Date.UTC(y, m - 1, d, 12, 0, 0), value }
-    })
+    // cal-heatmap's paint() isn't cancellable once called, so under StrictMode's
+    // synchronous mount->cleanup->mount, a "cancelled" instance's async pipeline used to
+    // still run to completion and mutate shared DOM (its own <svg>, its tooltip's
+    // singleton element) after the surviving instance had already painted - clobbering
+    // whichever one lost the race. Deferring the actual paint() call past the current
+    // synchronous batch means the first invocation's cleanup (which sets `cancelled`) has
+    // already run by the time either callback below checks it, so only the surviving
+    // instance ever calls paint() at all - there's never a second instance to race against.
+    queueMicrotask(() => {
+      if (cancelled || !containerRef.current) return
 
-    const cal = new CalHeatmap()
-    calInstanceRef.current = cal
+      const points = Object.entries(data).map(([dateStr, value]) => {
+        const [y, m, d] = dateStr.split('-').map(Number)
+        return { date: Date.UTC(y, m - 1, d, 12, 0, 0), value }
+      })
 
-    // A week domain needs its exact start day; a month domain always starts on the 1st
-    // regardless of which day of that month `startDate` happens to point at.
-    const paintStartDate = domain === 'week'
-      ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 12, 0, 0)
-      : new Date(startDate.getFullYear(), startDate.getMonth(), 1, 12, 0, 0)
+      const cal = new CalHeatmap()
+      calInstanceRef.current = cal
 
-    cal.paint({
-      itemSelector: containerRef.current,
-      data: {
-        source: points,
-        x: 'date',
-        y: (d: { value: number }) => d.value,
-      },
-      date: {
-        start: paintStartDate,
-        locale: { weekStart: getFirstDayNumber() },
-      },
-      range,
-      // Disabled for the same reason as the width/height-to-viewBox swap below: without
-      // it the container has no viewBox until paint() resolves, so the browser recomputes
-      // CSS h-auto height every animation frame, producing a visible pop to full size.
-      animationDuration: 0,
-      scale: {
-        color: {
-          type: 'threshold',
-          range: colorScale.range,
-          domain: colorScale.domain,
+      // A week domain needs its exact start day; a month domain always starts on the 1st
+      // regardless of which day of that month `startDate` happens to point at.
+      const paintStartDate = domain === 'week'
+        ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 12, 0, 0)
+        : new Date(startDate.getFullYear(), startDate.getMonth(), 1, 12, 0, 0)
+
+      cal.paint({
+        itemSelector: containerRef.current,
+        data: {
+          source: points,
+          x: 'date',
+          y: (d: { value: number }) => d.value,
         },
-      },
-      domain: {
-        type: domain,
-        gutter: 6,
-        label: {
-          // Compact views already carry the period in the page's own picker and in the
-          // weekday header below, so the in-SVG label is dropped - it only ate vertical
-          // space and pushed the grid out of alignment with that header.
-          text: isCompact ? null : 'MMM',
-          textAlign: 'start',
-          position: 'top',
+        date: {
+          start: paintStartDate,
+          locale: { weekStart: getFirstDayNumber() },
         },
-      },
-      // These are intrinsic SVG pixels, not rendered ones - the viewBox swap below scales
-      // the whole grid uniformly to the container width, so what these really set is the
-      // grid's aspect ratio. A week or month is only 7 columns wide, and square cells at
-      // full card width would tower over 1000px tall, so compact cells are deliberately
-      // wide rectangles: the row fills the card edge to edge and the height stays sane.
-      subDomain: {
-        type: subDomainType,
-        radius: isCompact ? 10 : 3,
-        width: isCompact ? 100 : 11,
-        height: isCompact ? (domain === 'week' ? 74 : 40) : 11,
-        gutter: isCompact ? 5 : 3,
-      },
-    }, [
-      [Tooltip, { text: tooltipText }],
-      [LegendLite, { itemSelector: `#${legendId}`, label: legendLabel }],
-    ]).then(() => {
-      if (cancelled) {
-        cal.destroy()
-        return
-      }
-      // Scoped to cal-heatmap's own root-svg class (rather than the first <svg> in the
-      // container) and to the last match: under StrictMode's mount->cleanup->mount, a
-      // cancelled instance's paint() can still be mid-flight and append its own <svg>
-      // into this same container after this one already has - picking the first match
-      // would grab that stale instance's element instead of this (surviving) one's, and
-      // this callback would then set the viewBox on an element that's about to be
-      // destroyed, leaving the real one permanently unscaled.
-      const svgs = containerRef.current?.querySelectorAll<SVGSVGElement>('svg.ch-container')
-      const svg = svgs && svgs.length > 0 ? svgs[svgs.length - 1] : null
-      const width = svg?.getAttribute('width')
-      const height = svg?.getAttribute('height')
-      if (svg && width && height) {
-        svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-        svg.removeAttribute('width')
-        svg.removeAttribute('height')
-      }
+        range,
+        // Disabled for the same reason as the width/height-to-viewBox swap below: without
+        // it the container has no viewBox until paint() resolves, so the browser recomputes
+        // CSS h-auto height every animation frame, producing a visible pop to full size.
+        animationDuration: 0,
+        scale: {
+          color: {
+            type: 'threshold',
+            range: colorScale.range,
+            domain: colorScale.domain,
+          },
+        },
+        domain: {
+          type: domain,
+          gutter: 6,
+          label: {
+            // Compact views already carry the period in the page's own picker and in the
+            // weekday header below, so the in-SVG label is dropped - it only ate vertical
+            // space and pushed the grid out of alignment with that header.
+            text: isCompact ? null : 'MMM',
+            textAlign: 'start',
+            position: 'top',
+          },
+        },
+        // These are intrinsic SVG pixels, not rendered ones - the viewBox swap below scales
+        // the whole grid uniformly to the container width, so what these really set is the
+        // grid's aspect ratio. A week or month is only 7 columns wide, and square cells at
+        // full card width would tower over 1000px tall, so compact cells are deliberately
+        // wide rectangles: the row fills the card edge to edge and the height stays sane.
+        subDomain: {
+          type: subDomainType,
+          radius: isCompact ? 10 : 3,
+          width: isCompact ? 100 : 11,
+          height: isCompact ? (domain === 'week' ? 74 : 40) : 11,
+          gutter: isCompact ? 5 : 3,
+        },
+      }, [
+        [Tooltip, { text: tooltipText }],
+      ]).then(() => {
+        if (cancelled) {
+          cal.destroy()
+          return
+        }
+        const svg = containerRef.current?.querySelector<SVGSVGElement>('svg.ch-container')
+        const width = svg?.getAttribute('width')
+        const height = svg?.getAttribute('height')
+        if (svg && width && height) {
+          svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+          svg.removeAttribute('width')
+          svg.removeAttribute('height')
+        }
+      })
     })
 
     return () => {
@@ -201,7 +180,7 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     // `data`/`colorScale` are compared by JSON below since callers rebuild them each
     // render; `mode` re-runs the paint when the theme (and thus colorScale colors) flips.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), mode, range, domain, subDomainType, isCompact, JSON.stringify(colorScale), legendId, tooltipText, legendLabel, getFirstDayNumber])
+  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), mode, range, domain, subDomainType, isCompact, JSON.stringify(colorScale), tooltipText, getFirstDayNumber])
 
   // A full year is far wider than a phone, so it keeps a fixed width and scrolls there,
   // stretching to fill the card from md up. A single week or month has few enough columns
@@ -209,7 +188,7 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
   return (
     <div
       className={cn(
-        '[&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-plugin-legend-lite]:fill-text-secondary [&_.ch-subdomain-bg]:fill-surface',
+        '[&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-subdomain-bg]:fill-surface',
         className
       )}
     >
@@ -242,7 +221,23 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
           />
         </div>
       )}
-      <div id={legendId} ref={legendRef} className="mt-2 flex flex-wrap gap-2" />
+      {/* Built directly from `colorScale.range` rather than cal-heatmap's own LegendLite
+          plugin: that plugin only recognizes literal hex strings, so it can't render the
+          CSS custom-property/color-mix() values this app's tokens require, and it has no
+          label support at all - every swatch silently fell back to the same "no data"
+          color and `legendLabel` was dropped on the floor. */}
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-caption text-text-secondary">
+        <span>{legendLabel}</span>
+        <div className="flex items-center gap-1">
+          {colorScale.range.map((color, i) => (
+            <span
+              key={i}
+              className="size-3 rounded-sm"
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
