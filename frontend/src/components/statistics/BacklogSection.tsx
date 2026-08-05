@@ -1,6 +1,7 @@
 import { Library, PackageOpen, Hourglass, CircleCheck, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StatCard from '../StatCard'
+import SectionHeader from './SectionHeader'
 import { formatTime } from '../../utils/formatters'
 import { statColors, statForegrounds } from '../../lib/statColors'
 import type { BacklogStats } from '../../types'
@@ -39,7 +40,7 @@ function BacklogSection({ stats }: BacklogSectionProps) {
 
   return (
     <section className="mb-6 md:mb-8">
-      <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('statistics.backlog.title')}</p>
+      <SectionHeader icon={<Library className="size-4.5" />} title={t('statistics.backlog.title')} />
 
       <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
         <div className="h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6">

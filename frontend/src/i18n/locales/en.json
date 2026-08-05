@@ -395,6 +395,12 @@
     "failedToLoad": "Failed to load statistics",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
+    "sections": {
+      "overview": "Overview",
+      "charts": "Charts & Breakdown",
+      "recommendations": "Recommendations",
+      "records": "Records"
+    },
     "trends": {
       "title": "Trends",
       "sevenDayAverage": "7-day average",

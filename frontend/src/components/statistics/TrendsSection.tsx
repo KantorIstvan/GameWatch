@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { TrendingUp, TrendingDown, Minus, Shuffle, CalendarRange, CircleSlash } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import StatCard from '../StatCard'
+import SectionHeader from './SectionHeader'
 import { formatTime } from '../../utils/formatters'
 import { bentoLastTile } from '../../lib/bento'
 import { statColors, statForegrounds } from '../../lib/statColors'
@@ -105,7 +106,7 @@ function TrendsSection({ stats }: TrendsSectionProps) {
 
   return (
     <section className="mb-6 md:mb-8">
-      <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('statistics.trends.title')}</p>
+      <SectionHeader icon={<TrendingUp className="size-4.5" />} title={t('statistics.trends.title')} />
 
       <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
         {tiles.map((tile, index) => (

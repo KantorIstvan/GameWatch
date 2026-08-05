@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download, Hourglass, TrendingUp } from 'lucide-react'
+import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download, Hourglass, TrendingUp, LayoutGrid, BarChart3, Sparkles, Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthContext } from '../contexts/AuthContext'
 import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/formatters'
@@ -9,6 +9,7 @@ import StatCard from '../components/StatCard'
 import ConsistencySection from '../components/statistics/ConsistencySection'
 import BacklogSection from '../components/statistics/BacklogSection'
 import TrendsSection from '../components/statistics/TrendsSection'
+import SectionHeader from '../components/statistics/SectionHeader'
 import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
@@ -179,6 +180,8 @@ function Statistics() {
         </Alert>
       )}
 
+      <SectionHeader icon={<LayoutGrid className="size-4.5" />} title={t('statistics.sections.overview')} />
+
       <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-4">
         <StatCard
           hero
@@ -205,11 +208,15 @@ function Statistics() {
           title={t('statistics.userStats.completed')}
           value={statistics.gamesCompleted}
           icon={<CircleCheck className="size-5" />}
+          color={statColors.green}
+          foreground={statForegrounds.green}
         />
         <StatCard
           title={t('statistics.userStats.inProgress')}
           value={statistics.gamesInProgress}
           icon={<CirclePlay className="size-5" />}
+          color={statColors.aqua}
+          foreground={statForegrounds.aqua}
         />
         <StatCard
           title={t('statistics.userStats.totalSessions')}
@@ -267,6 +274,8 @@ function Statistics() {
               <InfoCard
                 className={`${favoriteSpan} p-5`}
                 icon={<Code className="size-5" />}
+                iconColor={statColors.violet}
+                iconForeground={statForegrounds.violet}
                 title={t('statistics.userStats.favoriteDeveloper')}
                 value={statistics.favoriteDeveloper}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -277,6 +286,8 @@ function Statistics() {
               <InfoCard
                 className={`${favoriteSpan} p-5`}
                 icon={<Building2 className="size-5" />}
+                iconColor={statColors.magenta}
+                iconForeground={statForegrounds.magenta}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -296,6 +307,8 @@ function Statistics() {
 
       {hasData && (
         <>
+          <SectionHeader icon={<BarChart3 className="size-4.5" />} title={t('statistics.sections.charts')} />
+
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
             {dailyHeatmapSpan && (
               <div className={`${cardClass} lg:col-span-2`}>
@@ -372,6 +385,8 @@ function Statistics() {
             </div>
           </div>
 
+          <SectionHeader icon={<Sparkles className="size-4.5" />} title={t('statistics.sections.recommendations')} />
+
           {/* Half-width tiles only while they have a partner: a single card floating in one
               column with the other half blank reads as a failed load, not as a layout. */}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2">
@@ -393,6 +408,10 @@ function Statistics() {
               />
             )}
           </div>
+
+          {(statistics.longestToCompleteGame || statistics.fastestToCompleteGame || statistics.topMostPlayedGames.length > 0) && (
+            <SectionHeader icon={<Trophy className="size-4.5" />} title={t('statistics.sections.records')} />
+          )}
 
           {(statistics.longestToCompleteGame || statistics.fastestToCompleteGame) && (
             <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
