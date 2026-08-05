@@ -114,15 +114,6 @@ function Feed() {
                   <span>{new Date(event.occurredAt).toLocaleDateString()}</span>
                 </p>
               </div>
-
-              {event.bannerImageUrl && (
-                <img
-                  src={event.bannerImageUrl}
-                  alt=""
-                  className="h-12 w-20 shrink-0 rounded-md object-cover"
-                  loading="lazy"
-                />
-              )}
             </li>
           ))}
         </ul>
