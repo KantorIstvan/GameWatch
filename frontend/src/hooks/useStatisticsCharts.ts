@@ -51,7 +51,12 @@ export function useStatisticsCharts(
     // independently-selectable calendar year (like the Health page's heatmap), "year"
     // always renders the full Jan-Dec grid even mid-year (future days just show empty),
     // and "week"/"month" narrow the grid down to exactly that single period.
-    let dailyHeatmapSpan: { startDate: Date; range: number; domain: 'month' | 'week' } | null = null
+    let dailyHeatmapSpan: {
+      startDate: Date
+      range: number
+      domain: 'month' | 'week'
+      subDomainType: 'day' | 'xDay'
+    } | null = null
     if (statistics.dailyPlaytime.length > 0) {
       const parseLocalDate = (iso: string) => {
         const [y, m, d] = iso.split('-').map(Number)
@@ -60,17 +65,23 @@ export function useStatisticsCharts(
 
       switch (interval) {
         case 'week':
+          // One week reads best as a single horizontal strip of seven days, which is what
+          // the default orientation already produces for a week domain.
           dailyHeatmapSpan = {
             startDate: parseLocalDate(statistics.dailyPlaytime[0].date),
             range: 1,
             domain: 'week',
+            subDomainType: 'day',
           }
           break
         case 'month':
+          // Transposed into weekday-columns so a lone month renders as the calendar shape
+          // people already read months in, rather than a sideways slice of the year ribbon.
           dailyHeatmapSpan = {
             startDate: new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1),
             range: 1,
             domain: 'month',
+            subDomainType: 'xDay',
           }
           break
         case 'year':
@@ -78,6 +89,7 @@ export function useStatisticsCharts(
             startDate: new Date(referenceDate.getFullYear(), 0, 1),
             range: 12,
             domain: 'month',
+            subDomainType: 'day',
           }
           break
         case 'all':
@@ -85,6 +97,7 @@ export function useStatisticsCharts(
             startDate: new Date(heatmapYear, 0, 1),
             range: 12,
             domain: 'month',
+            subDomainType: 'day',
           }
           break
       }

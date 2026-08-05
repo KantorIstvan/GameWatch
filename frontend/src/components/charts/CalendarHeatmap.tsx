@@ -28,6 +28,10 @@ interface CalendarHeatmapProps {
   range?: number
   /** Grouping of subdomain days: a row of months (year-style) or a single week. */
   domain?: 'month' | 'week'
+  /** Cell orientation. "day" runs weeks down the columns (the GitHub ribbon, and a
+   *  single horizontal strip for a week domain); "xDay" transposes it into a conventional
+   *  calendar with weekdays across and weeks stacked down. */
+  subDomainType?: 'day' | 'xDay'
   className?: string
 }
 
@@ -37,9 +41,12 @@ interface CalendarHeatmapProps {
  * stops the initial paint from visibly "popping" to full size) lives in one place
  * instead of being duplicated per page.
  */
-function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel, range = 12, domain = 'month', className }: CalendarHeatmapProps) {
+function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel, range = 12, domain = 'month', subDomainType = 'day', className }: CalendarHeatmapProps) {
   const { mode } = useTheme()
   const { getFirstDayNumber } = useWeekStart()
+  // A single week or month is only ~7 columns wide, so it stretches to fill its card
+  // rather than scrolling like the year-long ribbon does.
+  const isCompact = domain === 'week' || range <= 1
   const containerRef = useRef<HTMLDivElement>(null)
   const legendRef = useRef<HTMLDivElement>(null)
   const calInstanceRef = useRef<CalHeatmap | null>(null)
@@ -108,11 +115,15 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
           position: 'top',
         },
       },
+      // These are intrinsic SVG pixels, not rendered ones - the viewBox swap below scales
+      // the whole grid to the container. What they really fix is the gutter-to-cell ratio,
+      // so a compact grid's few columns don't inherit gaps a quarter of a cell wide once
+      // blown up to full card width.
       subDomain: {
-        type: 'day',
-        radius: 3,
-        width: 11,
-        height: 11,
+        type: subDomainType,
+        radius: isCompact ? 5 : 3,
+        width: isCompact ? 20 : 11,
+        height: isCompact ? 20 : 11,
         gutter: 3,
       },
     }, [
@@ -140,19 +151,11 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     // `data`/`colorScale` are compared by JSON below since callers rebuild them each
     // render; `mode` re-runs the paint when the theme (and thus colorScale colors) flips.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), mode, range, domain, JSON.stringify(colorScale), legendId, tooltipText, legendLabel, getFirstDayNumber])
+  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), mode, range, domain, subDomainType, isCompact, JSON.stringify(colorScale), legendId, tooltipText, legendLabel, getFirstDayNumber])
 
-  // A full year (or more) scrolls at a fixed width on mobile and stretches to fill the
-  // card from md up. A single week or month is narrow either way - stretching it to fill
-  // a wide card would blow the day cells up to an ugly size, so it keeps a compact,
-  // left-aligned width at every breakpoint instead.
-  const containerWidthClasses =
-    domain === 'week'
-      ? 'w-40 [&_svg]:h-auto [&_svg]:w-40'
-      : range <= 1
-        ? 'w-50 [&_svg]:h-auto [&_svg]:w-50'
-        : 'w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full'
-
+  // A full year is far wider than a phone, so it keeps a fixed width and scrolls there,
+  // stretching to fill the card from md up. A single week or month has few enough columns
+  // to fill the card at every breakpoint, with no scroll container needed.
   return (
     <div
       className={cn(
@@ -160,9 +163,19 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
         className
       )}
     >
-      <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
-        <div ref={containerRef} className={containerWidthClasses} />
-      </div>
+      {isCompact ? (
+        <div
+          ref={containerRef}
+          className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
+        />
+      ) : (
+        <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
+          <div
+            ref={containerRef}
+            className="w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full"
+          />
+        </div>
+      )}
       <div id={legendId} ref={legendRef} className="mt-2 flex flex-wrap gap-2" />
     </div>
   )
