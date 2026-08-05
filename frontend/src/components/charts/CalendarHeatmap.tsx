@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import CalHeatmap from 'cal-heatmap'
 import 'cal-heatmap/cal-heatmap.css'
 import Tooltip from 'cal-heatmap/plugins/Tooltip'
@@ -43,10 +44,38 @@ interface CalendarHeatmapProps {
  */
 function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel, range = 12, domain = 'month', subDomainType = 'day', className }: CalendarHeatmapProps) {
   const { mode } = useTheme()
+  const { i18n } = useTranslation()
   const { getFirstDayNumber } = useWeekStart()
   // A single week or month is only ~7 columns wide, so it stretches to fill its card
   // rather than scrolling like the year-long ribbon does.
   const isCompact = domain === 'week' || range <= 1
+
+  // Both compact layouts put weekdays on the columns, which are unreadable without a
+  // header. Derived from the locale rather than translated strings so the names follow
+  // whatever language i18n is already on, starting at the user's configured first day.
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })
+    const knownSunday = new Date(2024, 0, 7)
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(knownSunday)
+      day.setDate(knownSunday.getDate() + ((getFirstDayNumber() + i) % 7))
+      return formatter.format(day)
+    })
+  }, [i18n.language, getFirstDayNumber])
+
+  // A single week resolves to seven specific dates, so the header can name them outright.
+  // A month can't - its columns each cover four or five different dates - so it stops at
+  // the weekday names above and leaves the exact day to the tooltip.
+  const weekDayNumbers = useMemo(() => {
+    if (domain !== 'week') return null
+    const weekOpening = new Date(startDate)
+    weekOpening.setDate(startDate.getDate() - ((startDate.getDay() - getFirstDayNumber() + 7) % 7))
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(weekOpening)
+      day.setDate(weekOpening.getDate() + i)
+      return day.getDate()
+    })
+  }, [domain, startDate, getFirstDayNumber])
   const containerRef = useRef<HTMLDivElement>(null)
   const legendRef = useRef<HTMLDivElement>(null)
   const calInstanceRef = useRef<CalHeatmap | null>(null)
@@ -110,21 +139,25 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
         type: domain,
         gutter: 6,
         label: {
-          text: domain === 'week' ? 'MMM D' : 'MMM',
+          // Compact views already carry the period in the page's own picker and in the
+          // weekday header below, so the in-SVG label is dropped - it only ate vertical
+          // space and pushed the grid out of alignment with that header.
+          text: isCompact ? null : 'MMM',
           textAlign: 'start',
           position: 'top',
         },
       },
       // These are intrinsic SVG pixels, not rendered ones - the viewBox swap below scales
-      // the whole grid to the container. What they really fix is the gutter-to-cell ratio,
-      // so a compact grid's few columns don't inherit gaps a quarter of a cell wide once
-      // blown up to full card width.
+      // the whole grid uniformly to the container width, so what these really set is the
+      // grid's aspect ratio. A week or month is only 7 columns wide, and square cells at
+      // full card width would tower over 1000px tall, so compact cells are deliberately
+      // wide rectangles: the row fills the card edge to edge and the height stays sane.
       subDomain: {
         type: subDomainType,
-        radius: isCompact ? 5 : 3,
-        width: isCompact ? 20 : 11,
-        height: isCompact ? 20 : 11,
-        gutter: 3,
+        radius: isCompact ? 10 : 3,
+        width: isCompact ? 100 : 11,
+        height: isCompact ? (domain === 'week' ? 74 : 40) : 11,
+        gutter: isCompact ? 5 : 3,
       },
     }, [
       [Tooltip, { text: tooltipText }],
@@ -164,10 +197,26 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
       )}
     >
       {isCompact ? (
-        <div
-          ref={containerRef}
-          className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
-        />
+        <div>
+          {/* Cell gutters are symmetric, so seven evenly divided columns land within a
+              couple of pixels of the seven cell centers underneath them. */}
+          <div className="grid grid-cols-7 pb-2 text-center text-caption text-text-secondary">
+            {weekdayLabels.map((label, i) => (
+              <span key={label} className="flex flex-col gap-0.5">
+                <span>{label}</span>
+                {weekDayNumbers && (
+                  <span className="text-body-sm font-semibold text-text-primary">
+                    {weekDayNumbers[i]}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
+          <div
+            ref={containerRef}
+            className="w-full [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-full"
+          />
+        </div>
       ) : (
         <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
           <div
