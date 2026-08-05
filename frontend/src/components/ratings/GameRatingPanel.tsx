@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trophy, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { ratingsApi } from '../../services/api'
-import { statColors } from '../../lib/statColors'
 import type { GameRatingSummary } from '../../types'
 
 interface GameRatingPanelProps {
@@ -134,19 +134,27 @@ function GameRatingPanel({ gameId, ensureGameId }: GameRatingPanelProps) {
       )}
 
       {summary.ratingCount > 0 && (
-        <div className="mb-6 flex h-16 items-end gap-1" role="img" aria-label={t('ratings.distributionLabel')}>
+        <div className="mb-6 flex h-24 gap-1" role="img" aria-label={t('ratings.distributionLabel')}>
           {SCORES.map((score) => {
             const count = summary.distribution[score] ?? 0
             return (
               <div key={score} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-sm transition-all duration-150 ease-standard"
-                  style={{
-                    height: `${Math.max(2, (count / peak) * 100)}%`,
-                    backgroundColor: count > 0 ? statColors.aqua : 'var(--color-border)',
-                  }}
-                  title={t('ratings.scoreCount', { score, count })}
-                />
+                {/* The track carries the definite height the bar's percentage resolves
+                    against - a content-sized parent would collapse the bar to nothing. */}
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className={cn(
+                      'w-full transition-all duration-150 ease-standard',
+                      // Two neutral steps rather than an accent hue: the distribution is
+                      // context for the score above it, not a mark competing with it. An
+                      // unrated score keeps a baseline tick so the axis still reads as a
+                      // chart when only one or two scores have votes.
+                      count > 0 ? 'bg-text-secondary' : 'h-0.5 bg-border'
+                    )}
+                    style={count > 0 ? { height: `${Math.max(8, (count / peak) * 100)}%` } : undefined}
+                    title={t('ratings.scoreCount', { score, count })}
+                  />
+                </div>
                 <span className="text-caption text-text-secondary">{score}</span>
               </div>
             )
