@@ -30,7 +30,16 @@ public class GameReviewDto {
     private String language;
     private int helpfulCount;
     private boolean viewerFoundHelpful;
-    private boolean isOwnReview;
+
+    /**
+     * The viewer's own review, which is the one they can edit and delete.
+     *
+     * Not named {@code isOwnReview}: Lombok would generate {@code isOwnReview()} for that
+     * field, which Jackson serialises as {@code ownReview} anyway - so the field name would
+     * claim a wire name the API never actually sends.
+     */
+    private boolean ownReview;
+
     private Instant createdAt;
 
     /**

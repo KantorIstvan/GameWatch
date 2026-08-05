@@ -27,7 +27,13 @@ public class PublicProfileDto {
     private long followingCount;
     private boolean viewerIsFollowing;
     private boolean viewerRequestPending;
-    private boolean isOwnProfile;
+
+    /**
+     * Not named {@code isOwnProfile}: Lombok generates {@code isOwnProfile()} for that
+     * field, which Jackson serialises as {@code ownProfile} - so the field name would claim
+     * a wire name the API never actually sends.
+     */
+    private boolean ownProfile;
 
     /** Null when the viewer may see the profile but not the library behind it. */
     private ProfileLibraryDto library;

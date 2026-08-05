@@ -76,7 +76,7 @@ function Profile() {
     <ProfileView
       profile={profile}
       actions={
-        profile.isOwnProfile ? (
+        profile.ownProfile ? (
           // Reachable by searching yourself up or following a link back to your own handle.
           // Sending it to the real profile page is better than offering nothing at all.
           <Button asChild variant="outline">
