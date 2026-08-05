@@ -20,6 +20,15 @@ public interface GameRatingRepository extends JpaRepository<GameRating, Long> {
     @Query("SELECT r.score, COUNT(r) FROM GameRating r WHERE r.game.id = :gameId GROUP BY r.score")
     List<Object[]> findScoreDistribution(@Param("gameId") Long gameId);
 
+    /**
+     * [score, count] pairs for the ratings one user has personally given, for the
+     * IMDb/Letterboxd-style histogram on their own profile. The per-game distribution above
+     * is what everyone thinks of a game; this is what this one person thinks across every
+     * game they have rated.
+     */
+    @Query("SELECT r.score, COUNT(r) FROM GameRating r WHERE r.user.id = :userId GROUP BY r.score")
+    List<Object[]> findScoreDistributionByUser(@Param("userId") Long userId);
+
     @Query("SELECT COUNT(r), COALESCE(SUM(r.score), 0) FROM GameRating r WHERE r.game.id = :gameId")
     List<Object[]> findCountAndSum(@Param("gameId") Long gameId);
 

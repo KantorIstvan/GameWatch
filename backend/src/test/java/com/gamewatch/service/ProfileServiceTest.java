@@ -5,6 +5,7 @@ import com.gamewatch.entity.Follow;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
+import com.gamewatch.repository.GameRatingRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
@@ -42,6 +43,9 @@ class ProfileServiceTest {
 
     @Mock
     private FollowService followService;
+
+    @Mock
+    private GameRatingRepository gameRatingRepository;
 
     @InjectMocks
     private ProfileService profileService;
@@ -111,6 +115,27 @@ class ProfileServiceTest {
 
         assertThat(profile.isOwnProfile()).isTrue();
         assertThat(profile.getLibrary()).isNotNull();
+    }
+
+    @Test
+    void libraryReportsHowManyRatingsThisUserHasGivenAndTheirOwnDistribution() {
+        // A personal histogram of the scores this user has handed out - distinct from the
+        // per-game distribution, which is what everyone thinks of one game.
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(owner, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(2L)).thenReturn(List.of());
+        when(userGameRepository.findGamesByUser(owner)).thenReturn(List.of());
+        when(gameRatingRepository.findScoreDistributionByUser(2L))
+            .thenReturn(List.of(new Object[]{7, 3L}, new Object[]{9, 2L}));
+
+        PublicProfileDto profile = profileService.getProfile(owner, "owner");
+
+        assertThat(profile.getLibrary().getRatingsGiven()).isEqualTo(5L);
+        // Every bucket present, so the histogram has no gaps to special-case.
+        assertThat(profile.getLibrary().getRatingDistribution()).hasSize(10);
+        assertThat(profile.getLibrary().getRatingDistribution().get(7)).isEqualTo(3L);
+        assertThat(profile.getLibrary().getRatingDistribution().get(9)).isEqualTo(2L);
+        assertThat(profile.getLibrary().getRatingDistribution().get(1)).isZero();
     }
 
     @Test

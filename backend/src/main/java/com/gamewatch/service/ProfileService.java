@@ -7,6 +7,7 @@ import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
+import com.gamewatch.repository.GameRatingRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +35,7 @@ public class ProfileService {
     private final UserGameRepository userGameRepository;
     private final FollowRepository followRepository;
     private final FollowService followService;
+    private final GameRatingRepository gameRatingRepository;
 
     /**
      * A profile as far as the viewer is allowed to see it.
@@ -184,6 +187,19 @@ public class ProfileService {
             })
             .collect(Collectors.toList());
 
+        // Every bucket present, so the histogram has no gaps to special-case, and the total
+        // falls out of summing the buckets rather than a second query.
+        Map<Integer, Long> ratingDistribution = new LinkedHashMap<>();
+        for (int score = 1; score <= 10; score++) {
+            ratingDistribution.put(score, 0L);
+        }
+        long ratingsGiven = 0;
+        for (Object[] row : gameRatingRepository.findScoreDistributionByUser(owner.getId())) {
+            long count = ((Number) row[1]).longValue();
+            ratingDistribution.put((Integer) row[0], count);
+            ratingsGiven += count;
+        }
+
         return PublicProfileDto.ProfileLibraryDto.builder()
             .totalPlaytimeSeconds(playthroughs.stream()
                 .mapToLong(Playthrough::effectivePlaytimeSeconds).sum())
@@ -196,6 +212,8 @@ public class ProfileService {
             .totalSessions(playthroughs.stream()
                 .mapToInt(p -> p.getSessionCount() != null ? p.getSessionCount() : 0).sum())
             .topGames(topGames)
+            .ratingsGiven(ratingsGiven)
+            .ratingDistribution(ratingDistribution)
             .build();
     }
 
