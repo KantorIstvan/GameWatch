@@ -18,13 +18,16 @@ export interface CalendarHeatmapColorScale {
 interface CalendarHeatmapProps {
   /** ISO date string ("yyyy-MM-dd") to plotted value, e.g. from a daily aggregate. */
   data: Record<string, number>
-  /** First day of the first rendered month (only the year/month are used). */
+  /** First rendered day (month domain: only year/month are used; week domain: the exact
+   *  first day of that week is used). */
   startDate: Date
   colorScale: CalendarHeatmapColorScale
   tooltipText: (timestamp: number, value: number | null) => string
   legendLabel: string
-  /** Months rendered left to right, defaults to a full year. */
+  /** Number of domains (months, or weeks when `domain="week"`) rendered left to right. */
   range?: number
+  /** Grouping of subdomain days: a row of months (year-style) or a single week. */
+  domain?: 'month' | 'week'
   className?: string
 }
 
@@ -34,7 +37,7 @@ interface CalendarHeatmapProps {
  * stops the initial paint from visibly "popping" to full size) lives in one place
  * instead of being duplicated per page.
  */
-function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel, range = 12, className }: CalendarHeatmapProps) {
+function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel, range = 12, domain = 'month', className }: CalendarHeatmapProps) {
   const { mode } = useTheme()
   const { getFirstDayNumber } = useWeekStart()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -52,6 +55,13 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
       calInstanceRef.current.destroy()
     }
 
+    // cal-heatmap's paint() only appends its <svg> after an internal await, so under
+    // StrictMode's synchronous mount->cleanup->mount, the cleanup below can fire before
+    // that <svg> exists - destroy() then has nothing to remove yet, and the stale
+    // instance still appends its <svg> once its paint() promise resolves, producing two
+    // stacked grids. `cancelled` lets the resolved callback destroy itself instead.
+    let cancelled = false
+
     const points = Object.entries(data).map(([dateStr, value]) => {
       const [y, m, d] = dateStr.split('-').map(Number)
       return { date: Date.UTC(y, m - 1, d, 12, 0, 0), value }
@@ -60,7 +70,11 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     const cal = new CalHeatmap()
     calInstanceRef.current = cal
 
-    const paintStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1, 12, 0, 0)
+    // A week domain needs its exact start day; a month domain always starts on the 1st
+    // regardless of which day of that month `startDate` happens to point at.
+    const paintStartDate = domain === 'week'
+      ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 12, 0, 0)
+      : new Date(startDate.getFullYear(), startDate.getMonth(), 1, 12, 0, 0)
 
     cal.paint({
       itemSelector: containerRef.current,
@@ -86,10 +100,10 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
         },
       },
       domain: {
-        type: 'month',
+        type: domain,
         gutter: 6,
         label: {
-          text: 'MMM',
+          text: domain === 'week' ? 'MMM D' : 'MMM',
           textAlign: 'start',
           position: 'top',
         },
@@ -105,6 +119,10 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
       [Tooltip, { text: tooltipText }],
       [LegendLite, { itemSelector: `#${legendId}`, label: legendLabel }],
     ]).then(() => {
+      if (cancelled) {
+        cal.destroy()
+        return
+      }
       const svg = containerRef.current?.querySelector('svg')
       const width = svg?.getAttribute('width')
       const height = svg?.getAttribute('height')
@@ -116,12 +134,24 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
     })
 
     return () => {
+      cancelled = true
       calInstanceRef.current?.destroy()
     }
     // `data`/`colorScale` are compared by JSON below since callers rebuild them each
     // render; `mode` re-runs the paint when the theme (and thus colorScale colors) flips.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), mode, range, JSON.stringify(colorScale), legendId, tooltipText, legendLabel, getFirstDayNumber])
+  }, [JSON.stringify(data), startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), mode, range, domain, JSON.stringify(colorScale), legendId, tooltipText, legendLabel, getFirstDayNumber])
+
+  // A full year (or more) scrolls at a fixed width on mobile and stretches to fill the
+  // card from md up. A single week or month is narrow either way - stretching it to fill
+  // a wide card would blow the day cells up to an ugly size, so it keeps a compact,
+  // left-aligned width at every breakpoint instead.
+  const containerWidthClasses =
+    domain === 'week'
+      ? 'w-40 [&_svg]:h-auto [&_svg]:w-40'
+      : range <= 1
+        ? 'w-50 [&_svg]:h-auto [&_svg]:w-50'
+        : 'w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full'
 
   return (
     <div
@@ -131,10 +161,7 @@ function CalendarHeatmap({ data, startDate, colorScale, tooltipText, legendLabel
       )}
     >
       <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
-        <div
-          ref={containerRef}
-          className="w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full"
-        />
+        <div ref={containerRef} className={containerWidthClasses} />
       </div>
       <div id={legendId} ref={legendRef} className="mt-2 flex flex-wrap gap-2" />
     </div>

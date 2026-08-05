@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Smile, PersonStanding, MoonStar, TrendingUp, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import healthApi, { HealthDashboard } from '../services/healthApi'
@@ -85,7 +85,9 @@ export default function Health() {
     }
   }
 
-  const heatmapTooltipText = (timestamp: number, value: number | null) => {
+  // Memoized so a fresh function identity on every render doesn't retrigger
+  // CalendarHeatmap's paint effect (it re-runs whenever `tooltipText` changes by reference).
+  const heatmapTooltipText = useCallback((timestamp: number, value: number | null) => {
     const date = new Date(timestamp)
     const formattedDate = date.toLocaleDateString('en-US', {
       month: 'short',
@@ -93,7 +95,7 @@ export default function Health() {
       year: 'numeric'
     })
     return `${formattedDate}: ${value !== null && value !== undefined ? `${t('health.scoreLabel')} ${value}` : t('health.noDataShort')}`
-  }
+  }, [t])
 
   const loadDashboard = async () => {
     try {
