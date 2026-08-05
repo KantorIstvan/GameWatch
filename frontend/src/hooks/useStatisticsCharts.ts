@@ -16,10 +16,15 @@ const CHART_COLORS = [
   '#36a2eb',
 ]
 
-export function useStatisticsCharts(statistics: UserStatistics | null) {
+export function useStatisticsCharts(
+  statistics: UserStatistics | null,
+  interval: 'week' | 'month' | 'year' | 'all',
+  referenceDate: Date,
+  heatmapYear: number
+) {
   const { t } = useTranslation()
   const { weekStart } = useWeekStart()
-  
+
   return useMemo(() => {
     if (!statistics) return null
 
@@ -27,28 +32,62 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
     // string (cal-heatmap parses that itself) instead of a display label, and carrying the
     // rolling average alongside it so the heatmap's tooltip can still surface the trend
     // line the old area chart used to show, without cal-heatmap needing a second series.
+    //
+    // "all time" fetches the user's entire daily history in one response (potentially
+    // years of entries), but the heatmap only ever shows one calendar year at a time - so
+    // only that year's entries are kept here rather than handing cal-heatmap thousands of
+    // points it will never draw.
     const dailyHeatmapData: Record<string, number> = {}
     const dailyHeatmapRollingSecondsByDate: Record<string, number | null | undefined> = {}
     statistics.dailyPlaytime.forEach((dp) => {
-      dailyHeatmapData[dp.date] = dp.playtimeSeconds / 3600
+      if (interval !== 'all' || dp.date.startsWith(`${heatmapYear}-`)) {
+        dailyHeatmapData[dp.date] = dp.playtimeSeconds / 3600
+      }
       dailyHeatmapRollingSecondsByDate[dp.date] = dp.rollingAverageSeconds
     })
 
-    // GitHub-style heatmaps read best over a bounded window, so a long "all time" history
-    // is clipped to its most recent 12 months rather than rendering years of tiny columns.
-    let dailyHeatmapSpan: { startDate: Date; range: number } | null = null
+    // The heatmap's window mirrors whichever period filter is active on the page, rather
+    // than being inferred from how much data happens to exist: "all time" gets its own
+    // independently-selectable calendar year (like the Health page's heatmap), "year"
+    // always renders the full Jan-Dec grid even mid-year (future days just show empty),
+    // and "week"/"month" narrow the grid down to exactly that single period.
+    let dailyHeatmapSpan: { startDate: Date; range: number; domain: 'month' | 'week' } | null = null
     if (statistics.dailyPlaytime.length > 0) {
       const parseLocalDate = (iso: string) => {
         const [y, m, d] = iso.split('-').map(Number)
         return new Date(y, m - 1, d)
       }
-      const firstDate = parseLocalDate(statistics.dailyPlaytime[0].date)
-      const lastDate = parseLocalDate(statistics.dailyPlaytime[statistics.dailyPlaytime.length - 1].date)
-      const monthsSpan = (lastDate.getFullYear() - firstDate.getFullYear()) * 12
-        + (lastDate.getMonth() - firstDate.getMonth()) + 1
-      const range = Math.min(Math.max(monthsSpan, 1), 12)
-      const startMonthIndex = lastDate.getMonth() - (range - 1)
-      dailyHeatmapSpan = { startDate: new Date(lastDate.getFullYear(), startMonthIndex, 1), range }
+
+      switch (interval) {
+        case 'week':
+          dailyHeatmapSpan = {
+            startDate: parseLocalDate(statistics.dailyPlaytime[0].date),
+            range: 1,
+            domain: 'week',
+          }
+          break
+        case 'month':
+          dailyHeatmapSpan = {
+            startDate: new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1),
+            range: 1,
+            domain: 'month',
+          }
+          break
+        case 'year':
+          dailyHeatmapSpan = {
+            startDate: new Date(referenceDate.getFullYear(), 0, 1),
+            range: 12,
+            domain: 'month',
+          }
+          break
+        case 'all':
+          dailyHeatmapSpan = {
+            startDate: new Date(heatmapYear, 0, 1),
+            range: 12,
+            domain: 'month',
+          }
+          break
+      }
     }
 
     const timeOfDayData = [
@@ -118,5 +157,5 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       hourlyData,
       dayOfWeekData
     }
-  }, [statistics, t, weekStart])
+  }, [statistics, t, weekStart, interval, referenceDate, heatmapYear])
 }

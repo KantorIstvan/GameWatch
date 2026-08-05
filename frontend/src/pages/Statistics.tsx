@@ -24,10 +24,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const palette = {
   secondary: 'var(--color-text-secondary)',
 }
+
+// How many past years the "all time" heatmap's year picker offers, matching the Health
+// page's own year-overview heatmap.
+const HEATMAP_YEAR_OPTIONS = 5
 
 // Sequential intensity ramp for the daily-playtime heatmap, built from opacity steps of
 // the single UI accent (never a standalone hardcoded ramp) so it reads as part of the
@@ -48,9 +53,10 @@ function Statistics() {
   const { isAuthReady } = useAuthContext()
   const [interval, setInterval] = useState<'week' | 'month' | 'year' | 'all'>('all')
   const [referenceDate, setReferenceDate] = useState<Date>(() => new Date())
+  const [heatmapYear, setHeatmapYear] = useState(() => new Date().getFullYear())
 
   const { statistics, recommendations, loading, error } = useStatistics(interval, referenceDate, isAuthReady)
-  const chartData = useStatisticsCharts(statistics)
+  const chartData = useStatisticsCharts(statistics, interval, referenceDate, heatmapYear)
 
   const handleIntervalChange = useCallback((newInterval: string) => {
     if (newInterval) {
@@ -65,6 +71,31 @@ function Statistics() {
       exportStatisticsToXlsx(statistics, interval, t)
     }
   }, [statistics, interval, t])
+
+  // Memoized (and hoisted above the early returns below, per rules of hooks) so a fresh
+  // function identity on every render doesn't retrigger CalendarHeatmap's paint effect,
+  // which re-runs whenever `tooltipText` changes by reference.
+  //
+  // cal-heatmap hands the tooltip a UTC noon timestamp for the day (see CalendarHeatmap);
+  // rebuilding the same "yyyy-MM-dd" key from its UTC fields (not local ones) is what lets
+  // this look back up the day's rolling average regardless of the viewer's timezone.
+  const dailyHeatmapTooltipText = useCallback((timestamp: number, value: number | null) => {
+    const date = new Date(timestamp)
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const isoDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
+
+    if (!value || value <= 0) {
+      return `${formattedDate}: ${t('statistics.userStats.noPlaytimeDay')}`
+    }
+
+    const playtimeLabel = formatDurationWords(Math.round(value * 3600), t)
+    const rollingSeconds = chartData?.dailyHeatmapRollingSecondsByDate[isoDate]
+    const rollingLabel = rollingSeconds !== null && rollingSeconds !== undefined
+      ? ` · ${t('statistics.trends.sevenDayAverage')}: ${formatDurationWords(Math.round(rollingSeconds), t)}`
+      : ''
+
+    return `${formattedDate}: ${playtimeLabel}${rollingLabel}`
+  }, [chartData, t])
 
   const hasData = statistics ? statistics.totalPlaytimeSeconds > 0 : false
 
@@ -101,7 +132,6 @@ function Statistics() {
 
   const {
     dailyHeatmapData,
-    dailyHeatmapRollingSecondsByDate,
     dailyHeatmapSpan,
     timeOfDayData,
     genreData,
@@ -111,27 +141,6 @@ function Statistics() {
   } = chartData
 
   const cardClass = 'h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6'
-
-  // cal-heatmap hands the tooltip a UTC noon timestamp for the day (see CalendarHeatmap);
-  // rebuilding the same "yyyy-MM-dd" key from its UTC fields (not local ones) is what lets
-  // this look back up the day's rolling average regardless of the viewer's timezone.
-  const dailyHeatmapTooltipText = (timestamp: number, value: number | null) => {
-    const date = new Date(timestamp)
-    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const isoDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
-
-    if (!value || value <= 0) {
-      return `${formattedDate}: ${t('statistics.userStats.noPlaytimeDay')}`
-    }
-
-    const playtimeLabel = formatDurationWords(Math.round(value * 3600), t)
-    const rollingSeconds = dailyHeatmapRollingSecondsByDate[isoDate]
-    const rollingLabel = rollingSeconds !== null && rollingSeconds !== undefined
-      ? ` · ${t('statistics.trends.sevenDayAverage')}: ${formatDurationWords(Math.round(rollingSeconds), t)}`
-      : ''
-
-    return `${formattedDate}: ${playtimeLabel}${rollingLabel}`
-  }
 
   // No bento row may end with a gap. Above md the hero covers two columns across two rows
   // and the six stat tiles fill the remainder of those rows, which leaves the last row two
@@ -312,13 +321,28 @@ function Statistics() {
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
             {dailyHeatmapSpan && (
               <div className={`${cardClass} lg:col-span-2`}>
-                <p className="mb-2 text-body-sm font-bold sm:text-body-lg">
-                  {t('statistics.userStats.dailyPlaytime')}
-                </p>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
+                  <p className="text-body-sm font-bold sm:text-body-lg">
+                    {t('statistics.userStats.dailyPlaytime')}
+                  </p>
+                  {interval === 'all' && (
+                    <Select value={String(heatmapYear)} onValueChange={(v) => setHeatmapYear(Number(v))}>
+                      <SelectTrigger className="w-30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: HEATMAP_YEAR_OPTIONS }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                          <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
                 <CalendarHeatmap
                   data={dailyHeatmapData}
                   startDate={dailyHeatmapSpan.startDate}
                   range={dailyHeatmapSpan.range}
+                  domain={dailyHeatmapSpan.domain}
                   colorScale={dailyHeatmapColorScale}
                   tooltipText={dailyHeatmapTooltipText}
                   legendLabel={t('statistics.userStats.hoursPlayed')}
