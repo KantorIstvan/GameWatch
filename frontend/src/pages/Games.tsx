@@ -397,6 +397,7 @@ function Games() {
         icon={<Gamepad2 className="size-12" />}
         iconColor="var(--color-success)"
         actions={dialogActions}
+        maxWidth="2xl"
       >
         <div className="mt-1">
           <GameSearchAutocomplete onGameSelect={handleGameSelect} disabled={false} />
