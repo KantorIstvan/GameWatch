@@ -51,7 +51,7 @@ class ActivityFeedServiceTest {
     void anEmptyFollowingListProducesNoFeedAndNoQueries() {
         when(followRepository.findAcceptedFollowing(1L)).thenReturn(List.of());
 
-        assertThat(activityFeedService.getFeed(viewer, null)).isEmpty();
+        assertThat(activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.FOLLOWING)).isEmpty();
         verify(playthroughRepository, never()).findByUserIdOrderByCreatedAtDesc(any());
     }
 
@@ -63,7 +63,7 @@ class ActivityFeedServiceTest {
         when(followRepository.findAcceptedFollowing(1L)).thenReturn(List.of(following(actor)));
         when(followService.canView(viewer, actor, Visibility.PRIVATE)).thenReturn(false);
 
-        assertThat(activityFeedService.getFeed(viewer, null)).isEmpty();
+        assertThat(activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.FOLLOWING)).isEmpty();
         verify(playthroughRepository, never()).findByUserIdOrderByCreatedAtDesc(any());
     }
 
@@ -83,7 +83,7 @@ class ActivityFeedServiceTest {
         when(followService.canView(viewer, actor, Visibility.PUBLIC)).thenReturn(true);
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(2L)).thenReturn(List.of(playthrough));
 
-        List<ActivityEventDto> feed = activityFeedService.getFeed(viewer, null);
+        List<ActivityEventDto> feed = activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.FOLLOWING);
 
         assertThat(feed).extracting(ActivityEventDto::getType)
             .containsExactly("FINISHED", "PICKED_UP");
@@ -105,9 +105,28 @@ class ActivityFeedServiceTest {
         when(followService.canView(viewer, actor, Visibility.PUBLIC)).thenReturn(true);
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(2L)).thenReturn(List.of(finished));
 
-        assertThat(activityFeedService.getFeed(viewer, null))
+        assertThat(activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.FOLLOWING))
             .extracting(ActivityEventDto::getType)
             .containsExactly("FINISHED");
+    }
+
+    @Test
+    void selfScopeReturnsTheViewersOwnActivityWithoutConsultingFollows() {
+        Playthrough playthrough = Playthrough.builder()
+            .id(12L).user(viewer).game(game).playthroughType("story")
+            .durationSeconds(36_000L).importedDurationSeconds(0L)
+            .isCompleted(true).isDropped(false).isActive(false).isPaused(false)
+            .stoppedAt(Instant.parse("2026-05-01T00:00:00Z"))
+            .createdAt(Instant.parse("2026-01-01T00:00:00Z"))
+            .build();
+
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of(playthrough));
+
+        List<ActivityEventDto> feed =
+            activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.SELF);
+
+        assertThat(feed).extracting(ActivityEventDto::getType).containsExactly("FINISHED");
+        verify(followRepository, never()).findAcceptedFollowing(any());
     }
 
     @Test
@@ -124,6 +143,6 @@ class ActivityFeedServiceTest {
         when(followService.canView(viewer, actor, Visibility.PUBLIC)).thenReturn(true);
         when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(2L)).thenReturn(List.of(untouched));
 
-        assertThat(activityFeedService.getFeed(viewer, null)).isEmpty();
+        assertThat(activityFeedService.getFeed(viewer, null, ActivityFeedService.FeedScope.FOLLOWING)).isEmpty();
     }
 }

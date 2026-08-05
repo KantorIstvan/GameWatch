@@ -196,6 +196,11 @@
     "title": "Activity",
     "emptyTitle": "Nothing here yet",
     "emptyBody": "Follow someone to see what they are playing. Their activity appears here once they share their library.",
+    "emptySelfBody": "Start or update a playthrough to see your own activity appear here.",
+    "filter": {
+      "following": "Following",
+      "self": "My Activity"
+    },
     "action": {
       "FINISHED": "finished",
       "DROPPED": "dropped",
