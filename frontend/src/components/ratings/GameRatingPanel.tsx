@@ -144,7 +144,7 @@ function GameRatingPanel({ gameId, ensureGameId }: GameRatingPanelProps) {
                 <div className="flex w-full flex-1 items-end">
                   <div
                     className={cn(
-                      'w-full rounded-sm transition-all duration-150 ease-standard',
+                      'w-full transition-all duration-150 ease-standard',
                       // Two neutral steps rather than an accent hue: the distribution is
                       // context for the score above it, not a mark competing with it. An
                       // unrated score keeps a baseline tick so the axis still reads as a
