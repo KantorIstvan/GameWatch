@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, SearchX } from 'lucide-react'
+import { Gamepad2, Search, SearchX } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import RecentCatalogGames from '../components/catalog/RecentCatalogGames'
@@ -18,10 +19,11 @@ const RESULT_LIMIT = 30
  * whether or not anyone here has ever played it.
  *
  * This is a search engine over IGDB, not a browsable view of this app's own rows, which is
- * what separates it from Games.tsx (the caller's library). Results are deliberately
- * text-forward rather than a grid of covers: this page answers "which game do you mean",
- * and a name with its year and developer answers that faster than artwork does. The cover
- * belongs on the game's own page, where there is one game to look at.
+ * what separates it from Games.tsx (the caller's library). Results stay text-forward rather
+ * than becoming a grid of covers: this page answers "which game do you mean", and a name
+ * with its year and developer answers that faster than artwork does. Each row does carry a
+ * small, fixed-size cover thumbnail next to the title - just enough to recognise a game by
+ * sight, not a big enough cover to turn the list into a browsable gallery.
  */
 function Catalog() {
   const { t } = useTranslation()
@@ -114,24 +116,36 @@ function Catalog() {
             <li key={result.id}>
               <Link
                 to={`/catalog/${result.id}`}
-                className="block rounded-xl border border-border bg-surface/60 p-4 outline-none backdrop-blur-xl transition-colors duration-150 ease-standard hover:border-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-4 outline-none backdrop-blur-xl transition-colors duration-150 ease-standard hover:border-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <p className="flex flex-wrap items-baseline gap-x-2 text-body font-medium text-text-primary">
-                  {result.name}
-                  {result.releaseDate && (
-                    <span className="text-body-sm font-normal text-text-secondary">
-                      {result.releaseDate.split('-')[0]}
-                    </span>
-                  )}
-                </p>
-                {/* One line of the things that tell two similarly named games apart. */}
-                {(result.developers || result.genres || result.platforms) && (
-                  <p className="mt-1 truncate text-caption text-text-secondary">
-                    {[result.developers, result.genres, result.platforms]
-                      .filter(Boolean)
-                      .join(' · ')}
+                <Avatar className="size-12 shrink-0 rounded-sm">
+                  <AvatarImage
+                    src={result.bannerImageUrl}
+                    alt=""
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="rounded-sm bg-surface-raised text-text-tertiary">
+                    <Gamepad2 className="size-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-baseline gap-x-2 text-body font-medium text-text-primary">
+                    {result.name}
+                    {result.releaseDate && (
+                      <span className="text-body-sm font-normal text-text-secondary">
+                        {result.releaseDate.split('-')[0]}
+                      </span>
+                    )}
                   </p>
-                )}
+                  {/* One line of the things that tell two similarly named games apart. */}
+                  {(result.developers || result.genres || result.platforms) && (
+                    <p className="mt-1 truncate text-caption text-text-secondary">
+                      {[result.developers, result.genres, result.platforms]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )}
+                </div>
               </Link>
             </li>
           ))}
