@@ -19,7 +19,6 @@ import MyProfile from './pages/MyProfile'
 import People from './pages/People'
 import Feed from './pages/Feed'
 import Compare from './pages/Compare'
-import Groups from './pages/Groups'
 import Help from './pages/Help'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -62,7 +61,6 @@ function AppContent() {
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
           <Route path="people" element={<People />} />
           <Route path="feed" element={<Feed />} />
-          <Route path="groups" element={<Groups />} />
           {/* Your own profile has its own route rather than /u/<your handle>: it has to
               render before a handle is claimed, since claiming one happens here. */}
           <Route path="profile" element={<MyProfile />} />
