@@ -170,7 +170,8 @@ export const groupsApi = {
 }
 
 export const feedApi = {
-  getFeed: (limit?: number) => apiClient.get('/feed', { params: { limit } }),
+  getFeed: (limit?: number, scope?: 'following' | 'self') =>
+    apiClient.get('/feed', { params: { limit, scope } }),
 }
 
 export const notificationsApi = {
