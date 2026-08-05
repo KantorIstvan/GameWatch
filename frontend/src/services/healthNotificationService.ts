@@ -1,5 +1,7 @@
 import { toast } from 'sonner'
 import i18n from '../i18n/i18n'
+import { recordLocalNotification } from '../hooks/useLocalNotifications'
+import type { LocalNotificationTone } from '../hooks/useLocalNotifications'
 import { HealthSettings } from './healthApi'
 
 class HealthNotificationService {
@@ -91,40 +93,46 @@ class HealthNotificationService {
     this.timers.set(key, timer)
   }
 
-  private showBreakReminder() {
-    const playSound = this.settings?.soundsEnabled
+  /**
+   * Shows a reminder, and files it in the bell.
+   *
+   * Both, not either: the toast is the interruption, and the bell entry is what is left
+   * once it fades. A reminder that fired while nobody was at the screen is precisely the
+   * one worth being able to find afterwards.
+   *
+   * The key and its values are stored rather than the finished sentence, so an entry from
+   * this morning still reads correctly after the language is changed this afternoon.
+   */
+  private announce(
+    messageKey: string,
+    tone: LocalNotificationTone,
+    show: (message: string) => void,
+    values?: Record<string, string | number>
+  ) {
+    show(i18n.t(messageKey, values ?? {}))
+    recordLocalNotification({ messageKey, values, tone })
 
-    toast.info(i18n.t('notifications.breakReminder'), {
-      duration: 10000,
-    })
-
-    if (playSound) {
+    if (this.settings?.soundsEnabled) {
       this.playNotificationSound()
     }
+  }
+
+  private showBreakReminder() {
+    this.announce('notifications.breakReminder', 'reminder', (message) =>
+      toast.info(message, { duration: 10000 })
+    )
   }
 
   private showHydrationReminder() {
-    const playSound = this.settings?.soundsEnabled
-
-    toast.info(i18n.t('notifications.hydrationReminder'), {
-      duration: 8000,
-    })
-
-    if (playSound) {
-      this.playNotificationSound()
-    }
+    this.announce('notifications.hydrationReminder', 'reminder', (message) =>
+      toast.info(message, { duration: 8000 })
+    )
   }
 
   private showStandReminder() {
-    const playSound = this.settings?.soundsEnabled
-
-    toast.info(i18n.t('notifications.standReminder'), {
-      duration: 8000,
-    })
-
-    if (playSound) {
-      this.playNotificationSound()
-    }
+    this.announce('notifications.standReminder', 'reminder', (message) =>
+      toast.info(message, { duration: 8000 })
+    )
   }
 
   showGoalReached(type: 'hours' | 'sessions', current: number, max: number) {
@@ -132,18 +140,12 @@ class HealthNotificationService {
       return
     }
 
-    const message =
-      type === 'hours'
-        ? i18n.t('notifications.goalReachedHours', { current: current.toFixed(1), max })
-        : i18n.t('notifications.goalReachedSessions', { current, max })
-
-    toast.warning(message, {
-      duration: 15000,
-    })
-
-    if (this.settings?.soundsEnabled) {
-      this.playNotificationSound()
-    }
+    this.announce(
+      type === 'hours' ? 'notifications.goalReachedHours' : 'notifications.goalReachedSessions',
+      'goal',
+      (message) => toast.warning(message, { duration: 15000 }),
+      { current: type === 'hours' ? current.toFixed(1) : current, max }
+    )
   }
 
   showGoalExceeded(type: 'hours' | 'sessions', current: number, max: number) {
@@ -151,18 +153,13 @@ class HealthNotificationService {
       return
     }
 
-    const message =
-      type === 'hours'
-        ? i18n.t('notifications.goalExceededHours', { current: current.toFixed(1), max })
-        : i18n.t('notifications.goalExceededSessions', { current, max })
-
-    toast.error(message, {
-      duration: Infinity, // Don't auto-close for exceeded goals
-    })
-
-    if (this.settings?.soundsEnabled) {
-      this.playNotificationSound()
-    }
+    this.announce(
+      type === 'hours' ? 'notifications.goalExceededHours' : 'notifications.goalExceededSessions',
+      'warning',
+      // Deliberately not auto-closing: a limit already passed is not news that expires.
+      (message) => toast.error(message, { duration: Infinity }),
+      { current: type === 'hours' ? current.toFixed(1) : current, max }
+    )
   }
 
   showLateNightWarning() {
@@ -170,13 +167,9 @@ class HealthNotificationService {
       return
     }
 
-    toast.warning(i18n.t('notifications.lateNightWarning'), {
-      duration: 12000,
-    })
-
-    if (this.settings?.soundsEnabled) {
-      this.playNotificationSound()
-    }
+    this.announce('notifications.lateNightWarning', 'warning', (message) =>
+      toast.warning(message, { duration: 12000 })
+    )
   }
 
   private playNotificationSound() {

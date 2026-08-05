@@ -28,6 +28,7 @@ import {
 import { cn } from '@/lib/utils'
 import Footer from './Footer'
 import MobileBottomNav from './MobileBottomNav'
+import NotificationBell from './notifications/NotificationBell'
 
 // Deep, single-purpose screens: full-focus mode on mobile — bottom nav and
 // account entry point hide the same way opening an editor hides chrome in a
@@ -228,6 +229,8 @@ function Layout() {
               <Search className="size-4.5" />
             </Link>
           </Button>
+
+          <NotificationBell />
 
           <Button
             variant="ghost"

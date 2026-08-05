@@ -173,6 +173,16 @@ export const feedApi = {
   getFeed: (limit?: number) => apiClient.get('/feed', { params: { limit } }),
 }
 
+export const notificationsApi = {
+  // Every route is implicitly the caller's own - there is no parameter that could name
+  // somebody else's notifications. All three writes return the list as it now stands, so
+  // the header never has to ask again for what it just changed.
+  getNotifications: (limit?: number) => apiClient.get('/notifications', { params: { limit } }),
+  markAllRead: () => apiClient.post('/notifications/read'),
+  markRead: (id: number) => apiClient.post(`/notifications/${id}/read`),
+  clear: () => apiClient.delete('/notifications'),
+}
+
 export const followsApi = {
   getState: (handle: string) => apiClient.get(`/follows/${handle}`),
   follow: (handle: string) => apiClient.post(`/follows/${handle}`),

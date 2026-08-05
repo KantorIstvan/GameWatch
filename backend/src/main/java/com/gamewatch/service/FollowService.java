@@ -23,6 +23,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * Whether {@code viewer} may see something the owner has marked at {@code required}.
@@ -81,6 +82,14 @@ public class FollowService {
             .status(acceptedImmediately ? Follow.FollowStatus.ACCEPTED : Follow.FollowStatus.PENDING)
             .respondedAt(acceptedImmediately ? Instant.now() : null)
             .build());
+
+        // A request is something the owner has to act on; a follow of a public profile is
+        // only something they may like to know. Both belong in the bell, as different things.
+        if (acceptedImmediately) {
+            notificationService.notifyNewFollower(follower, followee, follow);
+        } else {
+            notificationService.notifyFollowRequest(follower, followee, follow);
+        }
 
         log.info("User {} follow of {} recorded as {}", follower.getId(), followee.getId(), follow.getStatus());
         return toState(followee, follow);
@@ -143,6 +152,10 @@ public class FollowService {
             follow.setStatus(Follow.FollowStatus.ACCEPTED);
             follow.setRespondedAt(Instant.now());
             followRepository.save(follow);
+            // Only acceptance is announced. Telling someone their request was turned down
+            // invites them to ask again, and the owner's answer was that they would rather
+            // not be asked.
+            notificationService.notifyFollowAccepted(owner, follow.getFollower(), follow);
         } else {
             followRepository.delete(follow);
         }
