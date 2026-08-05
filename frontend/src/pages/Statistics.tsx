@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download, Hourglass, TrendingUp } from 'lucide-react'
+import { Timer, Gamepad2, CircleCheck, CirclePlay, Clock, CalendarDays, Code, Building2, Download, Hourglass, TrendingUp, LayoutGrid, BarChart3, Sparkles, Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthContext } from '../contexts/AuthContext'
 import { formatTime, formatTimeDetailed, formatDurationWords } from '../utils/formatters'
@@ -9,10 +9,11 @@ import StatCard from '../components/StatCard'
 import ConsistencySection from '../components/statistics/ConsistencySection'
 import BacklogSection from '../components/statistics/BacklogSection'
 import TrendsSection from '../components/statistics/TrendsSection'
+import SectionHeader from '../components/statistics/SectionHeader'
 import InfoCard from '../components/InfoCard'
 import ReusablePieChart from '../components/charts/ReusablePieChart'
 import ReusableBarChart from '../components/charts/ReusableBarChart'
-import DailyPlaytimeChart from '../components/statistics/DailyPlaytimeChart'
+import CalendarHeatmap, { CalendarHeatmapColorScale } from '../components/charts/CalendarHeatmap'
 import DayOfWeekDualAxisChart from '../components/statistics/DayOfWeekDualAxisChart'
 import TopGamesSection from '../components/statistics/TopGamesSection'
 import GameRecommendations from '../components/statistics/GameRecommendations'
@@ -26,6 +27,20 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const palette = {
   secondary: 'var(--color-text-secondary)',
+}
+
+// Sequential intensity ramp for the daily-playtime heatmap, built from opacity steps of
+// the single UI accent (never a standalone hardcoded ramp) so it reads as part of the
+// same system as every other accent-colored tile on this page.
+const dailyHeatmapColorScale: CalendarHeatmapColorScale = {
+  domain: [0.05, 1, 2, 4],
+  range: [
+    'var(--color-border)',
+    'color-mix(in srgb, var(--color-accent) 25%, var(--color-surface))',
+    'color-mix(in srgb, var(--color-accent) 50%, var(--color-surface))',
+    'color-mix(in srgb, var(--color-accent) 75%, var(--color-surface))',
+    'var(--color-accent)',
+  ],
 }
 
 function Statistics() {
@@ -84,9 +99,39 @@ function Statistics() {
     return null
   }
 
-  const { dailyPlaytimeData, timeOfDayData, genreData, platformData, hourlyData, dayOfWeekData } = chartData
+  const {
+    dailyHeatmapData,
+    dailyHeatmapRollingSecondsByDate,
+    dailyHeatmapSpan,
+    timeOfDayData,
+    genreData,
+    platformData,
+    hourlyData,
+    dayOfWeekData
+  } = chartData
 
   const cardClass = 'h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6'
+
+  // cal-heatmap hands the tooltip a UTC noon timestamp for the day (see CalendarHeatmap);
+  // rebuilding the same "yyyy-MM-dd" key from its UTC fields (not local ones) is what lets
+  // this look back up the day's rolling average regardless of the viewer's timezone.
+  const dailyHeatmapTooltipText = (timestamp: number, value: number | null) => {
+    const date = new Date(timestamp)
+    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const isoDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`
+
+    if (!value || value <= 0) {
+      return `${formattedDate}: ${t('statistics.userStats.noPlaytimeDay')}`
+    }
+
+    const playtimeLabel = formatDurationWords(Math.round(value * 3600), t)
+    const rollingSeconds = dailyHeatmapRollingSecondsByDate[isoDate]
+    const rollingLabel = rollingSeconds !== null && rollingSeconds !== undefined
+      ? ` · ${t('statistics.trends.sevenDayAverage')}: ${formatDurationWords(Math.round(rollingSeconds), t)}`
+      : ''
+
+    return `${formattedDate}: ${playtimeLabel}${rollingLabel}`
+  }
 
   // No bento row may end with a gap. Above md the hero covers two columns across two rows
   // and the six stat tiles fill the remainder of those rows, which leaves the last row two
@@ -135,6 +180,8 @@ function Statistics() {
         </Alert>
       )}
 
+      <SectionHeader icon={<LayoutGrid className="size-4.5" />} title={t('statistics.sections.overview')} />
+
       <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-4">
         <StatCard
           hero
@@ -161,11 +208,15 @@ function Statistics() {
           title={t('statistics.userStats.completed')}
           value={statistics.gamesCompleted}
           icon={<CircleCheck className="size-5" />}
+          color={statColors.green}
+          foreground={statForegrounds.green}
         />
         <StatCard
           title={t('statistics.userStats.inProgress')}
           value={statistics.gamesInProgress}
           icon={<CirclePlay className="size-5" />}
+          color={statColors.aqua}
+          foreground={statForegrounds.aqua}
         />
         <StatCard
           title={t('statistics.userStats.totalSessions')}
@@ -223,6 +274,8 @@ function Statistics() {
               <InfoCard
                 className={`${favoriteSpan} p-5`}
                 icon={<Code className="size-5" />}
+                iconColor={statColors.violet}
+                iconForeground={statForegrounds.violet}
                 title={t('statistics.userStats.favoriteDeveloper')}
                 value={statistics.favoriteDeveloper}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -233,6 +286,8 @@ function Statistics() {
               <InfoCard
                 className={`${favoriteSpan} p-5`}
                 icon={<Building2 className="size-5" />}
+                iconColor={statColors.magenta}
+                iconForeground={statForegrounds.magenta}
                 title={t('statistics.userStats.favoritePublisher')}
                 value={statistics.favoritePublisher}
                 subtitle={t('statistics.userStats.mostGamesPlayed')}
@@ -252,16 +307,21 @@ function Statistics() {
 
       {hasData && (
         <>
+          <SectionHeader icon={<BarChart3 className="size-4.5" />} title={t('statistics.sections.charts')} />
+
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
-            {dailyPlaytimeData.length > 0 && (
-              <div className="lg:col-span-2">
-                <DailyPlaytimeChart
-                  data={dailyPlaytimeData}
-                  title={t('statistics.userStats.dailyPlaytime')}
-                  yAxisLabel={t('statistics.userStats.hours')}
-                  seriesName={t('statistics.userStats.hoursPlayed')}
-                  trendSeriesName={t('statistics.trends.sevenDayAverage')}
-                  valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
+            {dailyHeatmapSpan && (
+              <div className={`${cardClass} lg:col-span-2`}>
+                <p className="mb-2 text-body-sm font-bold sm:text-body-lg">
+                  {t('statistics.userStats.dailyPlaytime')}
+                </p>
+                <CalendarHeatmap
+                  data={dailyHeatmapData}
+                  startDate={dailyHeatmapSpan.startDate}
+                  range={dailyHeatmapSpan.range}
+                  colorScale={dailyHeatmapColorScale}
+                  tooltipText={dailyHeatmapTooltipText}
+                  legendLabel={t('statistics.userStats.hoursPlayed')}
                 />
               </div>
             )}
@@ -325,6 +385,8 @@ function Statistics() {
             </div>
           </div>
 
+          <SectionHeader icon={<Sparkles className="size-4.5" />} title={t('statistics.sections.recommendations')} />
+
           {/* Half-width tiles only while they have a partner: a single card floating in one
               column with the other half blank reads as a failed load, not as a layout. */}
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 md:grid-cols-2">
@@ -346,6 +408,10 @@ function Statistics() {
               />
             )}
           </div>
+
+          {(statistics.longestToCompleteGame || statistics.fastestToCompleteGame || statistics.topMostPlayedGames.length > 0) && (
+            <SectionHeader icon={<Trophy className="size-4.5" />} title={t('statistics.sections.records')} />
+          )}
 
           {(statistics.longestToCompleteGame || statistics.fastestToCompleteGame) && (
             <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">

@@ -144,7 +144,7 @@ function addDayOfWeekSheet(workbook: ExcelJS.Workbook, t: any, statistics: UserS
     t('statistics.export.totalDuration'),
     t('statistics.userStats.totalHours'),
     t('statistics.export.avgDuration'),
-    t('statistics.userStats.avgPerSession')
+    t('statistics.userStats.avgPerDay')
   ])
 
   dayOrder.forEach((day, index) => {

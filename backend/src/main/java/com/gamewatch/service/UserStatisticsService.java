@@ -84,7 +84,7 @@ public class UserStatisticsService {
             .longestToCompleteGame(findLongestToCompleteGame(playthroughs))
             .fastestToCompleteGame(findFastestToCompleteGame(playthroughs))
             .topMostPlayedGames(findTopMostPlayedGames(playthroughs, 5))
-            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, span, zone))
+            .dayOfWeekPlaytime(calculateDayOfWeekAveragePlaytime(sessions, dailyPlaytimeData, zone))
             .dayOfWeekTotalPlaytime(dayOfWeekTotals)
             .libraryCompletionPercentage(calculateLibraryCompletion(allPlaythroughs, totalGamesInLibrary))
             .favoriteDeveloper(findFavoriteDeveloper(playthroughs))
@@ -997,28 +997,33 @@ public class UserStatisticsService {
     }
 
     /**
-     * Average playtime per occurrence of each weekday in the period - "how long do I
-     * typically play on a Monday".
+     * Average playtime per day actually played, for each weekday - "how long do I
+     * typically play when I do play on a Tuesday".
      *
-     * This used to divide each weekday's total by the number of <em>sessions</em> that
-     * landed on it, which is average session length, a different statistic entirely. Shown
-     * beside "Total Hours" on the same chart it read as hours-per-Monday, and it moved in
-     * the opposite direction to the truth: playing more often on Mondays lowered the line.
+     * This used to divide each weekday's total by the number of calendar occurrences of
+     * that weekday within the selected range, whether or not anything was played that day.
+     * A user who plays every other Tuesday would have that total diluted by the Tuesdays
+     * they never touched the app, understating the average by roughly half. The denominator
+     * here is instead the count of distinct days (of that weekday) with recorded playtime,
+     * taken from the same daily aggregate the daily-playtime chart already uses, so a
+     * calendar day that saw no play doesn't drag the average down just for having existed.
      */
     private Map<String, Double> calculateDayOfWeekAveragePlaytime(
-            List<SessionHistory> sessions, DaySpan span, ZoneId zone) {
+            List<SessionHistory> sessions, List<UserStatisticsDto.DailyPlaytime> dailyPlaytimeData, ZoneId zone) {
         Map<String, Long> totalPlaytimeByDay = calculateDayOfWeekTotalPlaytime(sessions, zone);
 
-        Map<String, Integer> occurrencesByDay = new HashMap<>();
-        for (LocalDate date = span.start(); !date.isAfter(span.end()); date = date.plusDays(1)) {
-            occurrencesByDay.merge(date.getDayOfWeek().toString(), 1, Integer::sum);
+        Map<String, Integer> daysPlayedByWeekday = new HashMap<>();
+        for (UserStatisticsDto.DailyPlaytime day : dailyPlaytimeData) {
+            if (day.getPlaytimeSeconds() != null && day.getPlaytimeSeconds() > 0) {
+                daysPlayedByWeekday.merge(day.getDate().getDayOfWeek().toString(), 1, Integer::sum);
+            }
         }
 
         Map<String, Double> averagePlaytime = new HashMap<>();
         for (Map.Entry<String, Long> entry : totalPlaytimeByDay.entrySet()) {
-            int occurrences = occurrencesByDay.getOrDefault(entry.getKey(), 0);
+            int daysPlayed = daysPlayedByWeekday.getOrDefault(entry.getKey(), 0);
             averagePlaytime.put(entry.getKey(),
-                occurrences == 0 ? 0.0 : (double) entry.getValue() / occurrences);
+                daysPlayed == 0 ? 0.0 : (double) entry.getValue() / daysPlayed);
         }
 
         return averagePlaytime;

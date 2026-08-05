@@ -377,6 +377,12 @@
     "failedToLoad": "Failed to load statistics",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
+    "sections": {
+      "overview": "Overview",
+      "charts": "Charts & Breakdown",
+      "recommendations": "Recommendations",
+      "records": "Records"
+    },
     "trends": {
       "title": "Trends",
       "sevenDayAverage": "7-day average",
@@ -432,7 +438,7 @@
       "inProgress": "In Progress",
       "totalSessions": "Total Sessions",
       "avgSession": "Avg Session",
-      "avgPerDay": "Avg per Day",
+      "avgPerDay": "Avg per Day Played",
       "longestSession": "Longest Session",
       "averageSession": "Average Session",
       "dailyPlaytime": "Daily Playtime",
@@ -459,6 +465,7 @@
       "hoursPlayed": "Hours Played",
       "daysToComplete": "{{days}} days to complete",
       "noData": "No data available for this period",
+      "noPlaytimeDay": "No playtime",
       "libraryCompletion": "Library Completion",
       "gamesCompletedOf": "{{completed}} of {{total}} games completed",
       "recommendedGames": "Recommended Games",
