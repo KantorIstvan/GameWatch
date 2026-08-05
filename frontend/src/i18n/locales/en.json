@@ -572,7 +572,22 @@
       "topGames": "Top Games",
       "totalDuration": "Total Duration",
       "avgDuration": "Average Duration",
-      "daysToComplete": "Days to Complete"
+      "daysToComplete": "Days to Complete",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "badges": "Badges",
+      "timeOfDay": "Time of Day",
+      "hourRange": "Hour Range",
+      "rollingAverageHours": "7-Day Average (Hours)",
+      "daysInPeriod": "Days in Period",
+      "previousPeriodPlaytime": "Previous Period Playtime",
+      "weekdayPlaytime": "Weekday Playtime",
+      "weekendPlaytime": "Weekend Playtime",
+      "playthroughsCompleted": "Playthroughs Completed",
+      "playthroughsDropped": "Playthroughs Dropped",
+      "backlogWindow": "Backlog Window (Months)",
+      "stalePlaythroughs": "Stale Playthroughs",
+      "daysSinceLastPlayed": "Days Since Last Played"
     }
   },
   "dashboard": {
