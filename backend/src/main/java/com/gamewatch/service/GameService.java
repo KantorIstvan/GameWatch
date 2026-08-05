@@ -413,6 +413,7 @@ public class GameService {
         if (playthroughs.isEmpty()) {
             return GameStatisticsDto.builder()
                 .gameId(game.getId())
+                .externalId(game.getExternalId())
                 .gameName(game.getName())
                 .gameBannerImageUrl(game.getBannerImageUrl())
                 .gameAddedDate(addedToLibraryDate)
@@ -513,6 +514,7 @@ public class GameService {
         
         GameStatisticsDto result = GameStatisticsDto.builder()
             .gameId(game.getId())
+            .externalId(game.getExternalId())
             .gameName(game.getName())
             .gameBannerImageUrl(game.getBannerImageUrl())
             .gameAddedDate(addedToLibraryDate)
