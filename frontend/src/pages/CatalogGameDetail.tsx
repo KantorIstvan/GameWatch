@@ -113,13 +113,16 @@ function CatalogGameDetail() {
         <GameDetails game={game} t={t} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-        <div className="flex flex-col gap-4 sm:gap-5">
-          <GameRatingPanel gameId={gameId} ensureGameId={ensureGameId} />
-          <GameCommunityPanel gameId={gameId} />
-        </div>
-        <GameReviewsPanel gameId={gameId} ensureGameId={ensureGameId} />
+      {/* Rating and community stats are both short, fixed-height cards, so they pair up
+          side by side on wider screens instead of wasting the row's width. Reviews grow
+          without bound as a game accumulates them, so that panel gets its own full-width
+          row below rather than being forced into the same grid. */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
+        <GameRatingPanel gameId={gameId} ensureGameId={ensureGameId} />
+        <GameCommunityPanel gameId={gameId} />
       </div>
+
+      <GameReviewsPanel gameId={gameId} ensureGameId={ensureGameId} />
     </div>
   )
 }
