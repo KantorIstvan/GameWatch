@@ -477,6 +477,7 @@
       "hoursPlayed": "Hours Played",
       "daysToComplete": "{{days}} days to complete",
       "noData": "No data available for this period",
+      "noPlaytimeDay": "No playtime",
       "libraryCompletion": "Library Completion",
       "gamesCompletedOf": "{{completed}} of {{total}} games completed",
       "recommendedGames": "Recommended Games",

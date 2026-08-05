@@ -23,17 +23,33 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
   return useMemo(() => {
     if (!statistics) return null
 
-    // Days with no play are kept. Dropping them left the x-axis an index of played days
-    // rather than a time axis, so the area was drawn as a straight run between dates that
-    // could be weeks apart - a sparse month looked like continuous play. It also makes the
-    // trailing average meaningful, since consecutive points are now consecutive days.
-    const dailyPlaytimeData = statistics.dailyPlaytime.map((dp) => ({
-      date: new Date(dp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      hours: Math.round((dp.playtimeSeconds / 3600) * 10) / 10,
-      rollingHours: dp.rollingAverageSeconds === undefined || dp.rollingAverageSeconds === null
-        ? null
-        : Math.round((dp.rollingAverageSeconds / 3600) * 10) / 10,
-    }))
+    // Reshaped for the calendar heatmap: keyed by the raw "yyyy-MM-dd" date
+    // string (cal-heatmap parses that itself) instead of a display label, and carrying the
+    // rolling average alongside it so the heatmap's tooltip can still surface the trend
+    // line the old area chart used to show, without cal-heatmap needing a second series.
+    const dailyHeatmapData: Record<string, number> = {}
+    const dailyHeatmapRollingSecondsByDate: Record<string, number | null | undefined> = {}
+    statistics.dailyPlaytime.forEach((dp) => {
+      dailyHeatmapData[dp.date] = dp.playtimeSeconds / 3600
+      dailyHeatmapRollingSecondsByDate[dp.date] = dp.rollingAverageSeconds
+    })
+
+    // GitHub-style heatmaps read best over a bounded window, so a long "all time" history
+    // is clipped to its most recent 12 months rather than rendering years of tiny columns.
+    let dailyHeatmapSpan: { startDate: Date; range: number } | null = null
+    if (statistics.dailyPlaytime.length > 0) {
+      const parseLocalDate = (iso: string) => {
+        const [y, m, d] = iso.split('-').map(Number)
+        return new Date(y, m - 1, d)
+      }
+      const firstDate = parseLocalDate(statistics.dailyPlaytime[0].date)
+      const lastDate = parseLocalDate(statistics.dailyPlaytime[statistics.dailyPlaytime.length - 1].date)
+      const monthsSpan = (lastDate.getFullYear() - firstDate.getFullYear()) * 12
+        + (lastDate.getMonth() - firstDate.getMonth()) + 1
+      const range = Math.min(Math.max(monthsSpan, 1), 12)
+      const startMonthIndex = lastDate.getMonth() - (range - 1)
+      dailyHeatmapSpan = { startDate: new Date(lastDate.getFullYear(), startMonthIndex, 1), range }
+    }
 
     const timeOfDayData = [
       { name: t('statistics.userStats.dawn'), fullName: `${t('statistics.userStats.dawn')} (4-7)`, value: statistics.timeOfDayStats.dawnSeconds / 3600, fill: '#ffd93d' },
@@ -92,12 +108,14 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       avgHours: Math.round(((statistics.dayOfWeekPlaytime[day] || 0) / 3600) * 10) / 10,
     }))
 
-    return { 
-      dailyPlaytimeData, 
-      timeOfDayData, 
-      genreData, 
-      platformData, 
-      hourlyData, 
+    return {
+      dailyHeatmapData,
+      dailyHeatmapRollingSecondsByDate,
+      dailyHeatmapSpan,
+      timeOfDayData,
+      genreData,
+      platformData,
+      hourlyData,
       dayOfWeekData
     }
   }, [statistics, t, weekStart])
