@@ -142,6 +142,13 @@ function Statistics() {
 
   const cardClass = 'h-full rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6'
 
+  // A week or a single month is roughly as tall as it is wide, so stretching it across the
+  // full two-column tile the year ribbon needs would leave most of that tile empty. It
+  // drops to one column instead and the time-of-day pie moves up beside it, which keeps
+  // both charts at a natural size and every row of this grid full.
+  const isCompactHeatmap = !!dailyHeatmapSpan && (interval === 'week' || interval === 'month')
+  const chartWideSpan = 'lg:col-span-2'
+
   // No bento row may end with a gap. Above md the hero covers two columns across two rows
   // and the six stat tiles fill the remainder of those rows, which leaves the last row two
   // columns short whenever the number of full-width tiles below it is even. Whichever tile
@@ -320,7 +327,7 @@ function Statistics() {
 
           <div className="mb-6 grid grid-cols-1 gap-4 sm:gap-5 md:mb-8 lg:grid-cols-2">
             {dailyHeatmapSpan && (
-              <div className={`${cardClass} lg:col-span-2`}>
+              <div className={`${cardClass} flex flex-col ${isCompactHeatmap ? '' : chartWideSpan}`}>
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
                   <p className="text-body-sm font-bold sm:text-body-lg">
                     {t('statistics.userStats.dailyPlaytime')}
@@ -338,11 +345,15 @@ function Statistics() {
                     </Select>
                   )}
                 </div>
+                {/* Centered in the leftover height so a short week strip sits balanced
+                    against the taller pie chart beside it instead of hugging the title. */}
                 <CalendarHeatmap
+                  className={isCompactHeatmap ? 'my-auto' : undefined}
                   data={dailyHeatmapData}
                   startDate={dailyHeatmapSpan.startDate}
                   range={dailyHeatmapSpan.range}
                   domain={dailyHeatmapSpan.domain}
+                  subDomainType={dailyHeatmapSpan.subDomainType}
                   colorScale={dailyHeatmapColorScale}
                   tooltipText={dailyHeatmapTooltipText}
                   legendLabel={t('statistics.userStats.hoursPlayed')}
@@ -368,11 +379,11 @@ function Statistics() {
               />
             </div>
 
-            <div className={`${cardClass} lg:col-span-2`}>
+            <div className={`${cardClass} ${isCompactHeatmap ? '' : chartWideSpan}`}>
               <ReusablePieChart
                 data={timeOfDayData}
                 title={t('statistics.userStats.timeOfDayDistribution')}
-                wide
+                wide={!isCompactHeatmap}
                 noDataMessage={t('statistics.userStats.noData')}
                 valueFormatter={(hours) => formatDurationWords(Math.round(hours * 3600), t)}
               />
