@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UsersRound, UserRound } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UserRound } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -65,7 +65,6 @@ function Layout() {
   const socialItems = [
     { label: t('nav.people'), path: '/people', icon: <Search className="size-4.5" /> },
     { label: t('feed.title'), path: '/feed', icon: <Rss className="size-4.5" /> },
-    { label: t('groups.title'), path: '/groups', icon: <UsersRound className="size-4.5" /> },
   ]
 
   if (!isAuthenticated) {

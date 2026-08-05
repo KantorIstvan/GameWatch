@@ -196,44 +196,6 @@ export interface ProfileComparison {
   sharedGameCount: number
 }
 
-export type ChallengeMetric =
-  | 'GAMES_FINISHED'
-  | 'DISTINCT_GAMES_PLAYED'
-  | 'DAYS_PLAYED'
-  | 'BACKLOG_CLEARED'
-
-export interface ChallengeStanding {
-  handle: string | null
-  displayName: string | null
-  profilePictureUrl: string | null
-  score: number
-  reachedTarget: boolean
-}
-
-export interface GroupChallenge {
-  id: number
-  name: string
-  /** Never an hours-based metric; see the backend enum for why. */
-  metric: ChallengeMetric
-  target: number | null
-  startsOn: string
-  endsOn: string
-  active: boolean
-  standings: ChallengeStanding[]
-}
-
-export interface Group {
-  id: number
-  name: string
-  slug: string
-  description: string | null
-  ownerHandle: string | null
-  memberCount: number
-  viewerIsMember: boolean
-  viewerIsOwner: boolean
-  challenges: GroupChallenge[]
-}
-
 export interface ActivityEvent {
   id: string
   actorHandle: string | null

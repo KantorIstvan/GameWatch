@@ -158,17 +158,6 @@ export const profilesApi = {
   getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
 }
 
-export const groupsApi = {
-  getMyGroups: () => apiClient.get('/groups'),
-  createGroup: (name: string, description: string | null) =>
-    apiClient.post('/groups', { name, description }),
-  getGroup: (slug: string) => apiClient.get('/groups/' + slug),
-  join: (slug: string) => apiClient.post('/groups/' + slug + '/join'),
-  leave: (slug: string) => apiClient.delete('/groups/' + slug + '/leave'),
-  addChallenge: (slug: string, challenge: Record<string, string>) =>
-    apiClient.post('/groups/' + slug + '/challenges', challenge),
-}
-
 export const feedApi = {
   getFeed: (limit?: number) => apiClient.get('/feed', { params: { limit } }),
 }
