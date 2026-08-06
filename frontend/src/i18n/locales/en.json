@@ -78,6 +78,15 @@
       "displayName": "Display Name",
       "bio": "Bio",
       "bioCount": "{{count}}/300",
+      "links": {
+        "title": "Links",
+        "hint": "Up to {{max}} links to social profiles or a website. The platform is detected automatically.",
+        "placeholder": "https://...",
+        "urlLabel": "Link {{index}}",
+        "add": "Add link",
+        "remove": "Remove link",
+        "invalid": "One of your links doesn't look like a valid web address."
+      },
       "profileVisibility": "Profile Visibility",
       "libraryVisibility": "Library Visibility",
       "libraryClampHint": "Cannot be more visible than your profile.",
@@ -290,6 +299,22 @@
     "following_one": "{{count}} following",
     "following_other": "{{count}} following",
     "joined": "Joined {{date}}",
+    "links": {
+      "visit": "Visit {{platform}}",
+      "platforms": {
+        "x": "X",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "twitch": "Twitch",
+        "steam": "Steam",
+        "discord": "Discord",
+        "github": "GitHub",
+        "reddit": "Reddit",
+        "bluesky": "Bluesky",
+        "website": "Website"
+      }
+    },
     "totalPlaytime": "Total Playtime",
     "gamesInLibrary": "Games",
     "gamesCompleted": "Completed",
