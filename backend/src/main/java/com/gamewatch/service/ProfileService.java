@@ -190,6 +190,7 @@ public class ProfileService {
                 GameReview review = reviewsByGame.get(rating.getGame().getId());
                 return GameRatingEntryDto.builder()
                     .gameId(rating.getGame().getId())
+                    .externalId(rating.getGame().getExternalId())
                     .gameName(rating.getGame().getName())
                     .bannerImageUrl(rating.getGame().getBannerImageUrl())
                     .score(rating.getScore())
@@ -256,6 +257,7 @@ public class ProfileService {
                 Playthrough sample = anyPlaythroughForGame.get(entry.getKey());
                 return UserStatisticsDto.GameRankingDto.builder()
                     .gameId(sample.getGame().getId())
+                    .externalId(sample.getGame().getExternalId())
                     .gameName(sample.getGame().getName())
                     .bannerImageUrl(sample.getGame().getBannerImageUrl())
                     .playtimeSeconds(entry.getValue())
@@ -314,6 +316,7 @@ public class ProfileService {
         return reviews.stream()
             .map(review -> PublicProfileDto.ProfileReviewDto.builder()
                 .gameId(review.getGame().getId())
+                .gameExternalId(review.getGame().getExternalId())
                 .gameName(review.getGame().getName())
                 .gameBannerImageUrl(review.getGame().getBannerImageUrl())
                 .score(scoresByGame.get(review.getGame().getId()))
