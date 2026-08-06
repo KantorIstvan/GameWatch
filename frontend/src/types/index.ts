@@ -281,6 +281,10 @@ export interface ProfileLibrary {
   gamesCompleted: number
   totalSessions: number
   topGames: GameRanking[]
+  /** How many games this user has personally rated. */
+  ratingsGiven: number
+  /** Score (1-10) to how many times this user has given it, for their own histogram. */
+  ratingDistribution: Record<number, number>
 }
 
 export interface PublicProfile {

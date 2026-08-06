@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Timer, Gamepad2, CircleCheck, CalendarDays, Lock } from 'lucide-react'
+import { Timer, Gamepad2, CircleCheck, CalendarDays, Star, Lock } from 'lucide-react'
 import StatCard from '../StatCard'
 import { formatTime } from '../../utils/formatters'
 import { statColors, statForegrounds } from '../../lib/statColors'
+import { cn } from '@/lib/utils'
 import type { ProfileLibrary } from '../../types'
 
 interface ProfileLibrarySummaryProps {
@@ -11,6 +12,8 @@ interface ProfileLibrarySummaryProps {
   /** Says why the library is missing, which reads differently on your own profile. */
   hiddenMessage: string
 }
+
+const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 /**
  * What a profile has played, as far as the viewer is allowed to see it.
@@ -30,6 +33,8 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
       </div>
     )
   }
+
+  const ratingPeak = Math.max(1, ...Object.values(library.ratingDistribution))
 
   return (
     <>
@@ -56,7 +61,48 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
           value={library.totalSessions}
           icon={<CalendarDays className="size-5" />}
         />
+        <StatCard
+          title={t('profile.ratingsGiven')}
+          value={library.ratingsGiven}
+          icon={<Star className="size-5" />}
+        />
       </div>
+
+      {library.ratingsGiven > 0 && (
+        <section className="mb-6 md:mb-8">
+          <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.ratingDistributionTitle')}</p>
+          <div
+            className="flex h-24 gap-1 rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6"
+            role="img"
+            aria-label={t('profile.ratingDistributionLabel')}
+          >
+            {SCORES.map((score) => {
+              const count = library.ratingDistribution[score] ?? 0
+              return (
+                <div key={score} className="flex flex-1 flex-col items-center gap-1">
+                  {/* The track carries the definite height the bar's percentage resolves
+                      against - a content-sized parent would collapse the bar to nothing. */}
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className={cn(
+                        'w-full transition-all duration-150 ease-standard',
+                        // Two neutral steps rather than an accent hue: the distribution is
+                        // context, not a mark competing with the stat cards above it. An
+                        // unrated score keeps a baseline tick so the axis still reads as a
+                        // chart when only one or two scores have votes.
+                        count > 0 ? 'bg-text-secondary' : 'h-0.5 bg-border'
+                      )}
+                      style={count > 0 ? { height: `${Math.max(8, (count / ratingPeak) * 100)}%` } : undefined}
+                      title={t('profile.ratingDistributionCount', { score, count })}
+                    />
+                  </div>
+                  <span className="text-caption text-text-secondary">{score}</span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {library.topGames.length > 0 && (
         <section>
