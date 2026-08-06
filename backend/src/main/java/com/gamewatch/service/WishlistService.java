@@ -97,7 +97,6 @@ public class WishlistService {
             .developers(game.getDevelopers())
             .publishers(game.getPublishers())
             .genres(game.getGenres())
-            .description(game.getDescription())
             .averageCompletionSeconds(game.getAverageCompletionSeconds())
             .communityRatingScore(game.getBayesianScore())
             .communityRatingCount(game.getRatingCount())

@@ -28,7 +28,6 @@ public class WishlistEntryDto {
     private String developers;
     private String publishers;
     private String genres;
-    private String description;
     /** IGDB's average time to beat, in seconds - the games equivalent of a film's runtime. */
     private Integer averageCompletionSeconds;
     /** This app's own shrunk community score for the game, and how many ratings back it. */
