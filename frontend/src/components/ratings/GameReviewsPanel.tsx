@@ -122,7 +122,7 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
   const ownReview = reviews.find((review) => review.ownReview)
 
   return (
-    <div className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
       <p className="mb-4 text-body-sm font-bold sm:text-body-lg">{t('reviews.title')}</p>
 
       <div className="mb-6">
