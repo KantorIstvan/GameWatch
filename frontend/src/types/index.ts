@@ -202,6 +202,27 @@ export interface GameCommunity {
   rating: GameRatingSummary
 }
 
+/** One playthrough category's community-measured time to beat - see {@link GameTimeToBeat}. */
+export interface TimeToBeatCategory {
+  /** Null until enough distinct players have logged one for an average to describe a group. */
+  averageSeconds: number | null
+  sampleSize: number
+  playerCount: number
+  hasEnoughData: boolean
+  minimumPlayersRequired: number
+}
+
+/**
+ * The community's own measured time to beat for a game, broken out by playthrough type -
+ * this app's replacement for IGDB's single self-reported average.
+ */
+export interface GameTimeToBeat {
+  gameId: number
+  story: TimeToBeatCategory
+  hundredPercent: TimeToBeatCategory
+  speedrun: TimeToBeatCategory
+}
+
 export interface GameReview {
   id: number
   authorHandle: string | null
