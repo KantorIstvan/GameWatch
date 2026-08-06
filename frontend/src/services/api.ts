@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import type { ProfileSettings } from '../types'
+import type { OnboardingRequest, ProfileSettings } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -104,6 +104,9 @@ export const userApi = {
   updateTimezone: (timezone: string) => apiClient.put('/users/me/timezone', { timezone }),
   updateFirstDayOfWeek: (firstDayOfWeek: 'MONDAY' | 'SUNDAY') => 
     apiClient.put('/users/me/first-day-of-week', { firstDayOfWeek }),
+  getOnboardingStatus: () => apiClient.get('/users/me/onboarding'),
+  completeOnboarding: (request: OnboardingRequest) =>
+    apiClient.post('/users/me/onboarding', request),
   getProfileSettings: () => apiClient.get('/users/me/profile'),
   updateProfileSettings: (settings: ProfileSettings) =>
     apiClient.put('/users/me/profile', settings),

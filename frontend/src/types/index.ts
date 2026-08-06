@@ -404,6 +404,28 @@ export interface NotificationFeed {
 /** Who may see part of a profile. Health data is never shareable and has no setting. */
 export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
 
+/**
+ * Whether the account has the identity the rest of the app assumes it has.
+ *
+ * `completed` is derived server-side from the two mandatory fields rather than stored as a
+ * flag, so it can never claim an account is ready when the fields say otherwise.
+ */
+export interface OnboardingStatus {
+  completed: boolean
+  /** Null until claimed. */
+  handle: string | null
+  displayName: string | null
+  /** A free handle to prefill the form with. Null once a handle is claimed. */
+  suggestedHandle: string | null
+  /** The Auth0 nickname - a prefill, never an identity. */
+  suggestedDisplayName: string | null
+}
+
+export interface OnboardingRequest {
+  handle: string
+  displayName: string
+}
+
 export interface ProfileSettings {
   /** Null until the user claims one. */
   handle: string | null
