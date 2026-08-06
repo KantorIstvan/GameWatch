@@ -6,7 +6,7 @@ import type { PublicProfile } from '../../types'
 
 interface ProfileIdentityProps {
   profile: PublicProfile
-  /** Follow, compare, edit - whatever this particular profile page offers. */
+  /** Follow, edit - whatever this particular profile page offers. */
   actions?: ReactNode
   onShowFollowers?: () => void
   onShowFollowing?: () => void

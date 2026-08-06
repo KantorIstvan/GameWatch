@@ -153,7 +153,6 @@ export const profilesApi = {
   // handle still has a profile page, and that page is where the handle gets claimed.
   getMyProfile: () => apiClient.get('/profiles/me'),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
-  compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
   getFollowers: (handle: string) => apiClient.get(`/profiles/${handle}/followers`),
   getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
   getLibrary: (handle: string) => apiClient.get(`/profiles/${handle}/library`),

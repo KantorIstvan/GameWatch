@@ -18,7 +18,6 @@ import Profile from './pages/Profile'
 import MyProfile from './pages/MyProfile'
 import People from './pages/People'
 import Feed from './pages/Feed'
-import Compare from './pages/Compare'
 import Help from './pages/Help'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -65,7 +64,6 @@ function AppContent() {
               render before a handle is claimed, since claiming one happens here. */}
           <Route path="profile" element={<MyProfile />} />
           <Route path="u/:handle" element={<Profile />} />
-          <Route path="u/:handle/compare" element={<Compare />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
         </Route>

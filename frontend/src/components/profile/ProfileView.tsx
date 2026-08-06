@@ -13,7 +13,7 @@ type ProfileTab = 'overview' | 'wishlist' | 'library' | 'ratings' | 'followers' 
 
 interface ProfileViewProps {
   profile: PublicProfile
-  /** Follow and compare on someone else's profile, edit on your own. */
+  /** Follow on someone else's profile, edit on your own. */
   actions?: ReactNode
   /** Pending follow requests, which only ever appear on your own profile. */
   followersExtra?: ReactNode
