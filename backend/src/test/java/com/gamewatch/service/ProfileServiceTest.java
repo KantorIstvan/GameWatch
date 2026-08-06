@@ -258,4 +258,43 @@ class ProfileServiceTest {
         assertThat(profile.isOwnProfile()).isTrue();
         assertThat(profile.getLibrary()).isNotNull();
     }
+
+    @Test
+    void ratingsCarryTheMatchingReviewWhenOneWasWrittenAndNullWhenOneWasNot() {
+        com.gamewatch.entity.Game reviewed = com.gamewatch.entity.Game.builder()
+            .id(10L).name("Reviewed Game").build();
+        com.gamewatch.entity.Game ratedOnly = com.gamewatch.entity.Game.builder()
+            .id(11L).name("Rated-Only Game").build();
+
+        com.gamewatch.entity.GameRating ratingWithReview = com.gamewatch.entity.GameRating.builder()
+            .user(owner).game(reviewed).score(9)
+            .updatedAt(Instant.parse("2026-03-01T00:00:00Z")).build();
+        com.gamewatch.entity.GameRating ratingWithoutReview = com.gamewatch.entity.GameRating.builder()
+            .user(owner).game(ratedOnly).score(6)
+            .updatedAt(Instant.parse("2026-02-01T00:00:00Z")).build();
+        com.gamewatch.entity.GameReview review = com.gamewatch.entity.GameReview.builder()
+            .user(owner).game(reviewed).body("Loved every hour of it.")
+            .containsSpoilers(true).createdAt(Instant.parse("2026-03-01T12:00:00Z")).build();
+
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(owner, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(2L))
+            .thenReturn(List.of(ratingWithReview, ratingWithoutReview));
+        when(gameReviewRepository.findByUserId(2L)).thenReturn(List.of(review));
+
+        List<com.gamewatch.dto.GameRatingEntryDto> ratings = profileService.getRatings(owner, "owner");
+
+        assertThat(ratings).hasSize(2);
+        com.gamewatch.dto.GameRatingEntryDto withReview = ratings.stream()
+            .filter(r -> r.getGameId().equals(10L)).findFirst().orElseThrow();
+        assertThat(withReview.getScore()).isEqualTo(9);
+        assertThat(withReview.getReviewBody()).isEqualTo("Loved every hour of it.");
+        assertThat(withReview.isContainsSpoilers()).isTrue();
+
+        com.gamewatch.dto.GameRatingEntryDto withoutReview = ratings.stream()
+            .filter(r -> r.getGameId().equals(11L)).findFirst().orElseThrow();
+        assertThat(withoutReview.getScore()).isEqualTo(6);
+        assertThat(withoutReview.getReviewBody()).isNull();
+        assertThat(withoutReview.getReviewCreatedAt()).isNull();
+    }
 }

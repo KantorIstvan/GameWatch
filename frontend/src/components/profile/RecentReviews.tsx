@@ -41,7 +41,7 @@ function RecentReviews({ reviews }: RecentReviewsProps) {
                   <img
                     src={review.gameBannerImageUrl}
                     alt=""
-                    className="h-12 w-20 shrink-0 rounded-md object-cover"
+                    className="h-16 w-28 shrink-0 rounded-md bg-surface object-contain"
                     loading="lazy"
                   />
                 )}
