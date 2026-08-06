@@ -281,6 +281,29 @@ export interface ProfileLibrary {
   gamesCompleted: number
   totalSessions: number
   topGames: GameRanking[]
+  /** How many games this user has personally rated. */
+  ratingsGiven: number
+  /** Score (1-10) to how many times this user has given it, for their own histogram. */
+  ratingDistribution: Record<number, number>
+  /** This user's most recent written reviews, newest first. */
+  recentReviews: ProfileReview[]
+}
+
+/**
+ * One review, as it appears on its author's own profile.
+ *
+ * Leaner than {@link GameReview}: the author is implicitly whoever owns this profile, so
+ * the game being reviewed is the interesting subject here instead of author identity.
+ */
+export interface ProfileReview {
+  gameId: number
+  gameName: string
+  gameBannerImageUrl: string | null
+  /** The author's own score for this game, when they left one. */
+  score: number | null
+  body: string
+  containsSpoilers: boolean
+  createdAt: string
 }
 
 /**
@@ -463,6 +486,14 @@ export interface DailyPlaytime {
   playtimeSeconds: number
   /** Trailing seven-day mean, for the trend line on the daily chart. */
   rollingAverageSeconds?: number | null
+}
+
+/** One game a profile owner has rated, and the score they gave it - a "Ratings" tab row. */
+export interface GameRatingEntry {
+  gameId: number
+  gameName: string
+  bannerImageUrl?: string
+  score: number
 }
 
 export interface GameRanking {

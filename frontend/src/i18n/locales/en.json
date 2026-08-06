@@ -97,10 +97,18 @@
       "addPicture": "Add picture",
       "changePicture": "Change picture",
       "removePicture": "Remove",
-      "pictureHint": "JPEG, PNG or WebP. Cropped to a square.",
+      "pictureHint": "JPEG, PNG or WebP. Crop it however you like.",
       "pictureSaved": "Picture updated",
       "pictureRemoved": "Picture removed",
-      "pictureFailed": "Could not update your picture"
+      "pictureFailed": "Could not update your picture",
+      "crop": {
+        "title": "Crop your picture",
+        "description": "Drag to reposition, and use the slider to zoom.",
+        "dragHint": "Drag to reposition the picture",
+        "zoomLabel": "Zoom",
+        "confirm": "Save picture",
+        "saving": "Saving..."
+      }
     },
     "timeFormat": "Time Format",
     "timeFormatDescription": "Choose how times are displayed",
@@ -286,7 +294,12 @@
     "gamesInLibrary": "Games",
     "gamesCompleted": "Completed",
     "totalSessions": "Sessions",
+    "ratingsGiven": "Ratings Given",
+    "ratingDistributionTitle": "Rating Distribution",
+    "ratingDistributionLabel": "Distribution of the scores this user has given, from 1 to 10",
+    "ratingDistributionCount": "{{count}} ratings scored {{score}}",
     "topGames": "Most Played",
+    "recentReviews": "Recent Reviews",
     "libraryHidden": "This library is not shared with you.",
     "wishlistHidden": "This wishlist is not shared with you.",
     "wishlistEmpty": "Nothing on the wishlist yet.",
@@ -299,11 +312,16 @@
     "tabs": {
       "overview": "Overview",
       "wishlist": "Wishlist",
+      "library": "Library",
+      "ratings": "Ratings",
       "followers": "Followers",
       "following": "Following"
     },
+    "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "noRatings": "No games rated yet.",
+    "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",
     "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
     "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
@@ -328,11 +346,16 @@
   },
   "people": {
     "title": "Find People",
-    "subtitle": "Search by handle or display name, then follow them to see their activity and library.",
+    "subtitle": "Search by handle or name, then follow them to see their activity and library.",
     "searchPlaceholder": "Search by handle or name",
     "prompt": "Start typing to find someone.",
     "typeMore": "Keep typing - at least 2 characters.",
-    "noResults": "No one found for \"{{query}}\"."
+    "noResults": "No one found for \"{{query}}\".",
+    "recent": {
+      "title": "Recently searched",
+      "clearAll": "Clear all",
+      "remove": "Remove {{person}} from recently searched"
+    }
   },
   "theme": {
     "light": "Light Mode",

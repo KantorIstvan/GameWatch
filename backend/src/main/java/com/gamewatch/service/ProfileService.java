@@ -1,22 +1,30 @@
 package com.gamewatch.service;
 
+import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
 import com.gamewatch.entity.Follow;
+import com.gamewatch.entity.GameRating;
+import com.gamewatch.entity.GameReview;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
+import com.gamewatch.repository.GameRatingRepository;
+import com.gamewatch.repository.GameReviewRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
 import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +35,7 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private static final int TOP_GAMES_ON_PROFILE = 5;
+    private static final int RECENT_REVIEWS_ON_PROFILE = 5;
 
     private final UserRepository userRepository;
     private final PlaythroughRepository playthroughRepository;
@@ -34,6 +43,9 @@ public class ProfileService {
     private final FollowRepository followRepository;
     private final FollowService followService;
     private final WishlistService wishlistService;
+    private final GameRatingRepository gameRatingRepository;
+    private final GameService gameService;
+    private final GameReviewRepository gameReviewRepository;
 
     /**
      * A profile as far as the viewer is allowed to see it.
@@ -129,6 +141,55 @@ public class ProfileService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Every game in this profile's library, not just the top five {@link #buildLibrary}
+     * summarizes.
+     *
+     * Gated on library visibility specifically, not just profile visibility: a profile can
+     * be open while its library stays private, and this is the contents {@link #getProfile}
+     * withholds by returning a null library in that case. Reported as "not found" rather
+     * than "forbidden" for the same reason {@link #requireViewableProfile} does - it should
+     * not be possible to tell a hidden library apart from a profile that does not exist.
+     */
+    @Transactional(readOnly = true)
+    public List<GameDto> getLibraryGames(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        if (!followService.canView(viewer, owner, owner.getLibraryVisibility())) {
+            throw new IllegalArgumentException("Profile not found");
+        }
+        return gameService.getAllGames(owner);
+    }
+
+    /**
+     * Every game this profile's owner has rated, and the score they gave it - the list
+     * behind the "Ratings" tab.
+     *
+     * Gated on library visibility rather than profile visibility, matching {@link #buildLibrary}:
+     * ratings are part of what someone has played, not part of who they are, so the same
+     * setting that hides playtime and top games hides this too. Null, not an empty list, when
+     * hidden - an empty list would be indistinguishable from a profile that has never rated
+     * anything, which misleads the viewer and hints that a hidden list exists.
+     */
+    @Transactional(readOnly = true)
+    public List<GameRatingEntryDto> getRatings(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        if (!followService.canView(viewer, owner, owner.getLibraryVisibility())) {
+            return null;
+        }
+        return buildRatings(owner);
+    }
+
+    private List<GameRatingEntryDto> buildRatings(User owner) {
+        return gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
+            .map(rating -> GameRatingEntryDto.builder()
+                .gameId(rating.getGame().getId())
+                .gameName(rating.getGame().getName())
+                .bannerImageUrl(rating.getGame().getBannerImageUrl())
+                .score(rating.getScore())
+                .build())
+            .collect(Collectors.toList());
+    }
+
     private User requireViewableProfile(User viewer, String handle) {
         User owner = userRepository.findByHandleIgnoreCase(handle)
             .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
@@ -190,6 +251,19 @@ public class ProfileService {
             })
             .collect(Collectors.toList());
 
+        // Every bucket present, so the histogram has no gaps to special-case, and the total
+        // falls out of summing the buckets rather than a second query.
+        Map<Integer, Long> ratingDistribution = new LinkedHashMap<>();
+        for (int score = 1; score <= 10; score++) {
+            ratingDistribution.put(score, 0L);
+        }
+        long ratingsGiven = 0;
+        for (Object[] row : gameRatingRepository.findScoreDistributionByUser(owner.getId())) {
+            long count = ((Number) row[1]).longValue();
+            ratingDistribution.put((Integer) row[0], count);
+            ratingsGiven += count;
+        }
+
         return PublicProfileDto.ProfileLibraryDto.builder()
             .totalPlaytimeSeconds(playthroughs.stream()
                 .mapToLong(Playthrough::effectivePlaytimeSeconds).sum())
@@ -202,16 +276,51 @@ public class ProfileService {
             .totalSessions(playthroughs.stream()
                 .mapToInt(p -> p.getSessionCount() != null ? p.getSessionCount() : 0).sum())
             .topGames(topGames)
+            .ratingsGiven(ratingsGiven)
+            .ratingDistribution(ratingDistribution)
+            .recentReviews(recentReviews(owner))
             .build();
     }
 
     /**
-     * Handle search, restricted to profiles the viewer could actually open.
+     * What this user has recently written, for the profile's "Recent Reviews" tile.
      *
-     * Returning profiles the viewer cannot view would turn search into a way to enumerate
-     * accounts that have deliberately hidden themselves. The viewer's own account never
-     * appears here - there is nothing to search yourself up to do, and following yourself
-     * is rejected anyway.
+     * Gated by the same {@code libraryVisible} check as the rest of {@link #buildLibrary} -
+     * this method is only ever reached once that check has already passed - because a
+     * review is still something someone did with their library, not a separate disclosure.
+     */
+    private List<PublicProfileDto.ProfileReviewDto> recentReviews(User owner) {
+        List<GameReview> reviews = gameReviewRepository.findMostRecentByUser(
+            owner.getId(), PageRequest.of(0, RECENT_REVIEWS_ON_PROFILE));
+
+        return reviews.stream()
+            .map(review -> PublicProfileDto.ProfileReviewDto.builder()
+                .gameId(review.getGame().getId())
+                .gameName(review.getGame().getName())
+                .gameBannerImageUrl(review.getGame().getBannerImageUrl())
+                .score(gameRatingRepository.findByUserAndGame(owner, review.getGame())
+                    .map(GameRating::getScore)
+                    .orElse(null))
+                .body(review.getBody())
+                .containsSpoilers(Boolean.TRUE.equals(review.getContainsSpoilers()))
+                .createdAt(review.getCreatedAt())
+                .build())
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * People search: who exists and can be followed, not what they have.
+     *
+     * PRIVATE profiles are excluded, because returning them would turn search into a way
+     * to enumerate accounts that have deliberately hidden themselves. FOLLOWERS-only
+     * profiles are included, and deliberately so: they accept follow requests, and a
+     * request can only be sent to someone who can be found - filtering them out here left
+     * the consent step that makes FOLLOWERS mean anything unreachable. Only identity is
+     * returned either way; {@link #getProfile} still refuses the contents of a profile the
+     * viewer has not been let into.
+     *
+     * The viewer's own account never appears - there is nothing to search yourself up to
+     * do, and following yourself is rejected anyway.
      *
      * Each result carries the same follow-state fields {@link #getProfile} returns, so a
      * follow button in a result row starts in the right state instead of defaulting to
@@ -223,13 +332,38 @@ public class ProfileService {
             return List.of();
         }
 
-        return userRepository.searchByHandleOrDisplayName(query.trim().toLowerCase()).stream()
+        String normalized = query.trim().toLowerCase();
+
+        return userRepository.searchByHandleOrName(normalized).stream()
             .filter(candidate -> viewer == null || !candidate.getId().equals(viewer.getId()))
-            .filter(candidate -> candidate.getProfileVisibility() != Visibility.PRIVATE)
             .filter(candidate -> followService.canView(viewer, candidate, candidate.getProfileVisibility()))
-            .sorted(Comparator.comparing(User::getHandle))
+            .sorted(Comparator.comparingInt((User candidate) -> matchRank(candidate, normalized))
+                .thenComparing(User::getHandle))
             .limit(20)
             .map(candidate -> toSummary(candidate, viewer))
             .collect(Collectors.toList());
+    }
+
+    /**
+     * How closely a candidate answers what was typed - lower sorts first.
+     *
+     * Someone who types a full handle wants that person, not the twenty accounts whose
+     * display name happens to contain the same letters, and alphabetical order alone
+     * buried them. Ties fall back to the handle, so the order stays stable.
+     */
+    private int matchRank(User candidate, String query) {
+        String handle = candidate.getHandle().toLowerCase();
+        if (handle.equals(query)) {
+            return 0;
+        }
+        if (handle.startsWith(query)) {
+            return 1;
+        }
+        return startsWith(candidate.getDisplayName(), query)
+            || startsWith(candidate.getUsername(), query) ? 2 : 3;
+    }
+
+    private boolean startsWith(String value, String query) {
+        return value != null && value.toLowerCase().startsWith(query);
     }
 }

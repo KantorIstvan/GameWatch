@@ -200,10 +200,12 @@ class UserServiceTest {
     }
 
     @Test
-    void newAccountsStartFullyPrivate() {
+    void newAccountsStartPublicIdentityButPrivateLibrary() {
+        // Identity is public so a new account can be found and followed at all; what it has
+        // actually played stays private until opted in.
         User fresh = User.builder().auth0UserId("auth0|new").build();
 
-        assertThat(fresh.getProfileVisibility()).isEqualTo(Visibility.PRIVATE);
+        assertThat(fresh.getProfileVisibility()).isEqualTo(Visibility.PUBLIC);
         assertThat(fresh.getLibraryVisibility()).isEqualTo(Visibility.PRIVATE);
     }
 

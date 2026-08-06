@@ -37,7 +37,11 @@ public class User {
     @Column(length = 100)
     private String username;
 
-    /** Unique, case-insensitively, and chosen by the user. Null until they claim one. */
+    /**
+     * Unique, case-insensitively. Assigned at sign-up from the Auth0 nickname and editable
+     * afterwards - an account with no handle cannot be linked to, searched for or followed,
+     * so it is never left null for a live account.
+     */
     @Column(length = 30)
     private String handle;
 
@@ -47,10 +51,16 @@ public class User {
     @Column(length = 300)
     private String bio;
 
+    /**
+     * Public by default: a profile nobody can find is a profile nobody can follow, which
+     * left every social surface in the app permanently empty. Only identity - handle,
+     * display name, avatar - is exposed at this level; what the profile actually contains
+     * is governed by {@link #libraryVisibility}, which stays private until opted in.
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "profile_visibility", nullable = false, length = 20)
     @Builder.Default
-    private Visibility profileVisibility = Visibility.PRIVATE;
+    private Visibility profileVisibility = Visibility.PUBLIC;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "library_visibility", nullable = false, length = 20)

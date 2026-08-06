@@ -1,5 +1,7 @@
 package com.gamewatch.controller;
 
+import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.ProfileComparisonDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.entity.User;
@@ -54,6 +56,25 @@ public class ProfileController {
                                                                @PathVariable String handle) {
         User viewer = userService.getOrCreateUser(authentication);
         return ResponseEntity.ok(profileService.getFollowing(viewer, handle));
+    }
+
+    /**
+     * Every game in this profile's library, not just the "Most Played" five the profile
+     * response itself carries. Gated on library visibility inside the service, same as
+     * everything else the library exposes.
+     */
+    @GetMapping("/{handle}/library")
+    public ResponseEntity<List<GameDto>> getLibrary(Authentication authentication,
+                                                     @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getLibraryGames(viewer, handle));
+    }
+
+    @GetMapping("/{handle}/ratings")
+    public ResponseEntity<List<GameRatingEntryDto>> getRatings(Authentication authentication,
+                                                                @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getRatings(viewer, handle));
     }
 
     @GetMapping("/{handle}/compare")

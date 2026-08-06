@@ -133,8 +133,17 @@ public class GameReviewService {
         Set<Long> votedIds = reviewVoteRepository.findVotedReviewIds(viewer.getId(), reviewIds);
         Map<Long, List<ReviewReply>> replies = repliesFor(reviewIds);
 
+        // One query each for every author's score and playthroughs on this game, instead
+        // of the two-or-three round trips per review that used to happen inside toDto.
+        List<Long> authorIds = reviews.stream()
+            .map(review -> review.getUser().getId())
+            .distinct()
+            .collect(Collectors.toList());
+        Map<Long, Integer> authorScores = authorScoresFor(gameId, authorIds);
+        Map<Long, List<Playthrough>> authorPlaythroughs = authorPlaythroughsFor(gameId, authorIds);
+
         return reviews.stream()
-            .map(review -> toDto(review, viewer, votedIds, replies))
+            .map(review -> toDto(review, viewer, votedIds, replies, authorScores, authorPlaythroughs))
             .collect(Collectors.toList());
     }
 
@@ -262,25 +271,55 @@ public class GameReviewService {
             .collect(Collectors.groupingBy(reply -> reply.getReview().getId()));
     }
 
+    /** Single-review call sites (submit/vote/reply) - same lookups, just for one author. */
     private GameReviewDto toDto(GameReview review, User viewer, Set<Long> votedReviewIds,
                                 Map<Long, List<ReviewReply>> repliesByReview) {
+        Long gameId = review.getGame().getId();
+        List<Long> authorIds = List.of(review.getUser().getId());
+        return toDto(review, viewer, votedReviewIds, repliesByReview,
+            authorScoresFor(gameId, authorIds), authorPlaythroughsFor(gameId, authorIds));
+    }
+
+    /**
+     * A game's ratings from a set of authors, keyed by author id, so the caller does one
+     * query for every review on the page instead of one query per review.
+     */
+    private Map<Long, Integer> authorScoresFor(Long gameId, Collection<Long> authorIds) {
+        if (authorIds.isEmpty()) {
+            return Map.of();
+        }
+        return gameRatingRepository.findByGameIdAndUserIdIn(gameId, authorIds).stream()
+            .collect(Collectors.toMap(rating -> rating.getUser().getId(), GameRating::getScore));
+    }
+
+    /**
+     * A game's playthroughs from a set of authors, grouped by author id, so the caller
+     * does one query for every review on the page instead of one query per review.
+     */
+    private Map<Long, List<Playthrough>> authorPlaythroughsFor(Long gameId, Collection<Long> authorIds) {
+        if (authorIds.isEmpty()) {
+            return Map.of();
+        }
+        return playthroughRepository.findByGameIdAndUserIdIn(gameId, authorIds).stream()
+            .collect(Collectors.groupingBy(playthrough -> playthrough.getUser().getId()));
+    }
+
+    private GameReviewDto toDto(GameReview review, User viewer, Set<Long> votedReviewIds,
+                                Map<Long, List<ReviewReply>> repliesByReview,
+                                Map<Long, Integer> authorScores,
+                                Map<Long, List<Playthrough>> authorPlaythroughs) {
         User author = review.getUser();
 
-        Integer authorScore = gameRatingRepository.findByUserAndGame(author, review.getGame())
-            .map(GameRating::getScore)
-            .orElse(null);
+        Integer authorScore = authorScores.get(author.getId());
 
         // The hours behind an opinion are the thing this app can show that a review site
         // cannot, so they travel with the review rather than being a separate lookup.
-        long authorPlaytimeSeconds = playthroughRepository
-            .findByUserIdAndGameIdOrderByCreatedAtDesc(author.getId(), review.getGame().getId())
-            .stream()
+        List<Playthrough> playthroughs = authorPlaythroughs.getOrDefault(author.getId(), List.of());
+        long authorPlaytimeSeconds = playthroughs.stream()
             .mapToLong(Playthrough::effectivePlaytimeSeconds)
             .sum();
 
-        boolean authorFinished = playthroughRepository
-            .findByUserIdAndGameIdOrderByCreatedAtDesc(author.getId(), review.getGame().getId())
-            .stream()
+        boolean authorFinished = playthroughs.stream()
             .anyMatch(p -> Boolean.TRUE.equals(p.getIsCompleted()));
 
         return GameReviewDto.builder()

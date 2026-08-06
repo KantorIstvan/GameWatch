@@ -242,6 +242,14 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Circular "spotlight" mask for the avatar crop dialog — dims the square stage outside
+   the inscribed circle, since Avatar always displays the stored picture as a circle
+   (rounded-full) even though the file underneath stays square. One-off composite
+   effect, not a reusable token, same treatment as .glass above. */
+.avatar-crop-mask {
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
