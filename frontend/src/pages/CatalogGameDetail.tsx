@@ -57,8 +57,35 @@ function CatalogGameDetail() {
     ...(game.platforms?.split(',').map((p) => p.trim()).filter(Boolean) ?? []),
   ]
 
+  // Same two colors and the same colorthief-derived sourcing the timer page reads off a
+  // playthrough (see usePlaythrough.ts / TimelineEventPanel.tsx) - just faded vertically
+  // here instead of on their 135deg diagonal, since this is a page background behind
+  // ordinary body text rather than a hero band behind a scrim or bold display type.
+  //
+  // Each stop is color-mixed against the page's own --color-bg token at a low, fixed
+  // percentage (the same "tint over a token surface" approach StatCard/InfoCard already
+  // use for arbitrary stat colors) rather than the raw cover color. That bounds the
+  // worst case structurally: whatever the source hue is - a bright yellow cover in light
+  // mode, a near-black one in dark mode - the visible background can only drift a small,
+  // fixed distance from --color-bg's own lightness, so text-text-primary sitting directly
+  // on it keeps effectively the same contrast ratio the plain background already had.
+  const backdropGradient = game.dominantColor1 && game.dominantColor2
+    ? `linear-gradient(to bottom, ` +
+      `color-mix(in srgb, ${game.dominantColor1} 20%, var(--color-bg)) 0%, ` +
+      `color-mix(in srgb, ${game.dominantColor2} 10%, var(--color-bg)) 55%, ` +
+      `var(--color-bg) 100%)`
+    : null
+
   return (
-    <div className="mx-auto max-w-8xl">
+    <div className="relative z-0 mx-auto max-w-8xl">
+      {backdropGradient && (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96"
+          style={{ background: backdropGradient }}
+          aria-hidden="true"
+        />
+      )}
+
       <div className="mb-6 flex flex-wrap items-center gap-4 md:mb-8">
         <Button variant="ghost" size="icon" onClick={() => navigate('/catalog')} className="mr-1">
           <ArrowLeft className="size-5" />
