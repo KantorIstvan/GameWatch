@@ -283,6 +283,20 @@ export interface ProfileLibrary {
   topGames: GameRanking[]
 }
 
+/**
+ * One game on a wishlist. Addressed by `externalId` as well as `gameId` - a wishlist
+ * button on a catalog search result only ever has the IGDB id on hand, the same as
+ * {@link CatalogGame}.
+ */
+export interface WishlistEntry {
+  gameId: number
+  externalId: number
+  gameName: string
+  bannerImageUrl?: string
+  releaseDate?: string
+  addedAt: string
+}
+
 export interface PublicProfile {
   handle: string
   displayName: string | null
@@ -296,6 +310,8 @@ export interface PublicProfile {
   ownProfile: boolean
   /** Null when the viewer may see the profile but not the library behind it. */
   library: ProfileLibrary | null
+  /** Null when the viewer may see the profile but not the wishlist behind it. */
+  wishlist: WishlistEntry[] | null
 }
 
 /**
@@ -384,6 +400,7 @@ export interface ProfileSettings {
   bio: string | null
   profileVisibility: Visibility
   libraryVisibility: Visibility
+  wishlistVisibility: Visibility
   /** Read-only here: the picture is changed through the avatar upload endpoint. */
   profilePictureUrl: string | null
 }

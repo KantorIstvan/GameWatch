@@ -6,8 +6,10 @@ import GameDetails from '../components/GameDetails'
 import GameRatingPanel from '../components/ratings/GameRatingPanel'
 import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
 import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
+import WishlistButton from '../components/wishlist/WishlistButton'
 import { useCatalogGame } from '../hooks/useCatalogGame'
 import { rememberCatalogGame } from '../hooks/useRecentCatalogGames'
+import { useWishlist } from '../hooks/useWishlist'
 import { useTranslation } from 'react-i18next'
 import { formatTime } from '../utils/formatters'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +28,7 @@ function CatalogGameDetail() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { game, loading, error, gameId, ensureGameId } = useCatalogGame(Number(externalId))
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist()
 
   // Recorded once the game has actually loaded, so a mistyped or dead id never lands in the
   // catalog's recently-viewed row as a card nobody can open.
@@ -60,10 +63,16 @@ function CatalogGameDetail() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/catalog')} className="mr-1">
           <ArrowLeft className="size-5" />
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-h2 font-bold">{game.name}</h1>
           <p className="mt-1 text-body-sm text-text-secondary">{t('catalog.gamePageSubtitle')}</p>
         </div>
+
+        <WishlistButton
+          wishlisted={isWishlisted(game.externalId)}
+          onToggle={() => toggleWishlist(game.externalId)}
+          size="icon"
+        />
       </div>
 
       {/* The cover leads, with the facts beside it - this is the one place in the app

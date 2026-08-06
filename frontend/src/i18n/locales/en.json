@@ -81,6 +81,8 @@
       "profileVisibility": "Profile Visibility",
       "libraryVisibility": "Library Visibility",
       "libraryClampHint": "Cannot be more visible than your profile.",
+      "wishlistVisibility": "Wishlist Visibility",
+      "wishlistClampHint": "Cannot be more visible than your profile.",
       "healthNeverShared": "Your health data - mood, hours and late-night play - is never shared with anyone, on any setting.",
       "visibility": {
         "PRIVATE": "Only me",
@@ -268,6 +270,11 @@
     "clickAgainToClear": "Click your score again to remove it.",
     "failed": "Could not save your rating"
   },
+  "wishlist": {
+    "add": "Add to wishlist",
+    "remove": "Remove from wishlist",
+    "failed": "Could not update your wishlist"
+  },
   "profile": {
     "notFound": "That profile does not exist, or is not shared with you.",
     "followers_one": "{{count}} follower",
@@ -281,6 +288,9 @@
     "totalSessions": "Sessions",
     "topGames": "Most Played",
     "libraryHidden": "This library is not shared with you.",
+    "wishlistHidden": "This wishlist is not shared with you.",
+    "wishlistEmpty": "Nothing on the wishlist yet.",
+    "wishlistAddedOn": "Wishlisted {{date}}",
     "followersLabel_one": "follower",
     "followersLabel_other": "followers",
     "followingLabel_one": "following",
@@ -288,6 +298,7 @@
     "editProfile": "Edit profile",
     "tabs": {
       "overview": "Overview",
+      "wishlist": "Wishlist",
       "followers": "Followers",
       "following": "Following"
     },
