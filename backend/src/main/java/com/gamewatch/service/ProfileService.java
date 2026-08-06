@@ -180,13 +180,25 @@ public class ProfileService {
     }
 
     private List<GameRatingEntryDto> buildRatings(User owner) {
+        // One query for every review this owner has written, instead of one
+        // findByUserAndGame round trip per rated game below.
+        Map<Long, GameReview> reviewsByGame = gameReviewRepository.findByUserId(owner.getId()).stream()
+            .collect(Collectors.toMap(review -> review.getGame().getId(), review -> review));
+
         return gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
-            .map(rating -> GameRatingEntryDto.builder()
-                .gameId(rating.getGame().getId())
-                .gameName(rating.getGame().getName())
-                .bannerImageUrl(rating.getGame().getBannerImageUrl())
-                .score(rating.getScore())
-                .build())
+            .map(rating -> {
+                GameReview review = reviewsByGame.get(rating.getGame().getId());
+                return GameRatingEntryDto.builder()
+                    .gameId(rating.getGame().getId())
+                    .gameName(rating.getGame().getName())
+                    .bannerImageUrl(rating.getGame().getBannerImageUrl())
+                    .score(rating.getScore())
+                    .ratedAt(rating.getUpdatedAt())
+                    .reviewBody(review != null ? review.getBody() : null)
+                    .reviewCreatedAt(review != null ? review.getCreatedAt() : null)
+                    .containsSpoilers(review != null && Boolean.TRUE.equals(review.getContainsSpoilers()))
+                    .build();
+            })
             .collect(Collectors.toList());
     }
 
@@ -293,14 +305,18 @@ public class ProfileService {
         List<GameReview> reviews = gameReviewRepository.findMostRecentByUser(
             owner.getId(), PageRequest.of(0, RECENT_REVIEWS_ON_PROFILE));
 
+        // One query for every score this owner has ever given, instead of one
+        // findByUserAndGame round trip per review below.
+        Map<Long, Integer> scoresByGame = gameRatingRepository
+            .findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
+            .collect(Collectors.toMap(rating -> rating.getGame().getId(), GameRating::getScore));
+
         return reviews.stream()
             .map(review -> PublicProfileDto.ProfileReviewDto.builder()
                 .gameId(review.getGame().getId())
                 .gameName(review.getGame().getName())
                 .gameBannerImageUrl(review.getGame().getBannerImageUrl())
-                .score(gameRatingRepository.findByUserAndGame(owner, review.getGame())
-                    .map(GameRating::getScore)
-                    .orElse(null))
+                .score(scoresByGame.get(review.getGame().getId()))
                 .body(review.getBody())
                 .containsSpoilers(Boolean.TRUE.equals(review.getContainsSpoilers()))
                 .createdAt(review.getCreatedAt())

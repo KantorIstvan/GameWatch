@@ -5,6 +5,7 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.WishlistEntry;
 import com.gamewatch.repository.GameRepository;
+import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.WishlistEntryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class WishlistService {
     private final WishlistEntryRepository wishlistEntryRepository;
     private final GameRepository gameRepository;
     private final GameService gameService;
+    private final UserGameRepository userGameRepository;
 
     /**
      * Adds a game to the wishlist, claiming its catalog row from IGDB on first use - the
@@ -33,9 +35,18 @@ public class WishlistService {
      *
      * Idempotent: wishlisting a game already on the list returns that entry rather than a
      * duplicate, so a client that does not track local state can call this unconditionally.
+     *
+     * Refuses a game already in the user's own library: a wishlist is what someone wants to
+     * play next, and a game they already own answered that question, so letting it onto the
+     * list would just be a stale entry nobody would ever clear themselves. Checked before
+     * resolving the catalog row, so a rejected request never creates one.
      */
     @Transactional
     public WishlistEntryDto addToWishlist(User user, Integer externalId) {
+        if (userGameRepository.existsByUserAndGameExternalId(user, externalId)) {
+            throw new IllegalArgumentException("This game is already in your library");
+        }
+
         Game game = gameService.getOrCreateCatalogGame(externalId);
 
         WishlistEntry existing = wishlistEntryRepository.findByUserAndGame(user, game).orElse(null);

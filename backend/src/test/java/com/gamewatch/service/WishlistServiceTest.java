@@ -5,6 +5,7 @@ import com.gamewatch.entity.Game;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.WishlistEntry;
 import com.gamewatch.repository.GameRepository;
+import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.WishlistEntryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -33,6 +35,9 @@ class WishlistServiceTest {
 
     @Mock
     private GameService gameService;
+
+    @Mock
+    private UserGameRepository userGameRepository;
 
     @InjectMocks
     private WishlistService wishlistService;
@@ -68,6 +73,19 @@ class WishlistServiceTest {
         verify(wishlistEntryRepository).save(captor.capture());
         assertThat(captor.getValue().getUser()).isEqualTo(user);
         assertThat(captor.getValue().getGame()).isEqualTo(game);
+    }
+
+    @Test
+    void addingAGameAlreadyInTheLibraryIsRefused() {
+        when(userGameRepository.existsByUserAndGameExternalId(user, 555)).thenReturn(true);
+
+        assertThatThrownBy(() -> wishlistService.addToWishlist(user, 555))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("This game is already in your library");
+
+        // Rejected before resolving a catalog row, so an owned game never creates one just
+        // to be turned away.
+        verifyNoInteractions(gameService, wishlistEntryRepository);
     }
 
     @Test
