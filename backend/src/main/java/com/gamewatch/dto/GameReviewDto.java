@@ -3,6 +3,7 @@ package com.gamewatch.dto;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * A review, with the evidence behind its author's opinion.
@@ -29,6 +30,24 @@ public class GameReviewDto {
     private String language;
     private int helpfulCount;
     private boolean viewerFoundHelpful;
-    private boolean isOwnReview;
+
+    /**
+     * The viewer's own review, which is the one they can edit and delete.
+     *
+     * Not named {@code isOwnReview}: Lombok would generate {@code isOwnReview()} for that
+     * field, which Jackson serialises as {@code ownReview} anyway - so the field name would
+     * claim a wire name the API never actually sends.
+     */
+    private boolean ownReview;
+
     private Instant createdAt;
+
+    /**
+     * The conversation under the review, oldest first.
+     *
+     * Inline rather than behind its own request: replies are short, flat and few, and a
+     * separate round trip per review to find out there are none would cost more than
+     * carrying them.
+     */
+    private List<ReviewReplyDto> replies;
 }

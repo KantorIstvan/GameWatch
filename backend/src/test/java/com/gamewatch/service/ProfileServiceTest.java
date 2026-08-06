@@ -1,6 +1,7 @@
 package com.gamewatch.service;
 
 import com.gamewatch.dto.PublicProfileDto;
+import com.gamewatch.entity.Follow;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
@@ -121,9 +122,10 @@ class ProfileServiceTest {
         User followersOnly = User.builder().id(4L).auth0UserId("auth0|fo").handle("followersonly")
             .profileVisibility(Visibility.FOLLOWERS).libraryVisibility(Visibility.FOLLOWERS).build();
 
-        when(userRepository.searchByHandleOrDisplayName("own"))
+        when(userRepository.searchByHandleOrName("own"))
             .thenReturn(List.of(owner, hidden, followersOnly));
         when(followService.canView(viewer, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(followService.canView(viewer, hidden, Visibility.PRIVATE)).thenReturn(false);
         when(followService.canView(viewer, followersOnly, Visibility.FOLLOWERS)).thenReturn(false);
 
         List<PublicProfileDto> results = profileService.search(viewer, " OWN ");
@@ -136,5 +138,54 @@ class ProfileServiceTest {
         assertThat(profileService.search(viewer, "a")).isEmpty();
         assertThat(profileService.search(viewer, " ")).isEmpty();
         assertThat(profileService.search(viewer, null)).isEmpty();
+    }
+
+    @Test
+    void aFollowerListIsAsHiddenAsTheProfileItBelongsTo() {
+        // A private account's follower list is the list of people it has let in. Handing
+        // that to anyone who knows the handle gives away exactly what it is set to hide.
+        owner.setProfileVisibility(Visibility.PRIVATE);
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(viewer, owner, Visibility.PRIVATE)).thenReturn(false);
+
+        assertThatThrownBy(() -> profileService.getFollowers(viewer, "owner"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Profile not found");
+    }
+
+    @Test
+    void aFollowerRowCarriesTheViewersOwnRelationshipToThatPerson() {
+        // Otherwise every follow button in the list starts on "Follow", including for the
+        // people the viewer already follows.
+        User follower = User.builder().id(5L).auth0UserId("auth0|f").handle("afollower")
+            .profileVisibility(Visibility.PUBLIC).libraryVisibility(Visibility.PUBLIC).build();
+        Follow edge = Follow.builder().id(9L).follower(follower).followee(owner)
+            .status(Follow.FollowStatus.ACCEPTED).build();
+
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(viewer, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(followRepository.findAcceptedFollowers(2L)).thenReturn(List.of(edge));
+        when(followRepository.isAcceptedFollower(1L, 5L)).thenReturn(true);
+
+        List<PublicProfileDto> followers = profileService.getFollowers(viewer, "owner");
+
+        assertThat(followers).extracting(PublicProfileDto::getHandle).containsExactly("afollower");
+        assertThat(followers.get(0).isViewerIsFollowing()).isTrue();
+    }
+
+    @Test
+    void yourOwnProfileLoadsWithoutAHandleToLookYourselfUpBy() {
+        // The own-profile page is where an unclaimed handle gets claimed, so it has to
+        // render before there is one.
+        viewer.setHandle(null);
+        viewer.setTimezone("UTC");
+        when(playthroughRepository.findByUserIdOrderByCreatedAtDesc(1L)).thenReturn(List.of());
+        when(userGameRepository.findGamesByUser(viewer)).thenReturn(List.of());
+
+        PublicProfileDto profile = profileService.getOwnProfile(viewer);
+
+        assertThat(profile.getHandle()).isNull();
+        assertThat(profile.isOwnProfile()).isTrue();
+        assertThat(profile.getLibrary()).isNotNull();
     }
 }

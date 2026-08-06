@@ -201,6 +201,7 @@ public class UserService {
             .bio(user.getBio())
             .profileVisibility(user.getProfileVisibility())
             .libraryVisibility(user.getLibraryVisibility())
+            .profilePictureUrl(user.getProfilePictureUrl())
             .build();
     }
 

@@ -50,12 +50,20 @@ export const gamesApi = {
   getById: (id: number) => apiClient.get(`/games/${id}`),
   create: (data: any) => apiClient.post('/games', data),
   delete: (id: number) => apiClient.delete(`/games/${id}`),
-  search: (query: string) => apiClient.get('/games/search', { params: { query } }),
+  // Searches all of IGDB, not this app's rows. `limit` is for the catalog's search page,
+  // which shows a full page of results; the add-a-game autocomplete omits it and gets the
+  // shorter default that fits under an input.
+  search: (query: string, limit?: number) =>
+    apiClient.get('/games/search', { params: { query, limit } }),
   getDetails: (externalId: string) => apiClient.get(`/games/details/${externalId}`),
   getStatistics: (id: number) => apiClient.get(`/games/${id}/statistics`),
-  // The universal catalog: every game anyone has added, not just the caller's library.
-  getCatalog: () => apiClient.get('/games/catalog'),
-  getCatalogById: (id: number) => apiClient.get(`/games/catalog/${id}`),
+  // Catalog pages are addressed by IGDB id, since most games opened from search have no
+  // row here. The GET returns a null `id` for those; the POST is what creates the row,
+  // and is only called on the way into a rating or a review.
+  getCatalogByExternalId: (externalId: number) =>
+    apiClient.get(`/games/catalog/external/${externalId}`),
+  resolveCatalogGame: (externalId: number) =>
+    apiClient.post(`/games/catalog/external/${externalId}`),
 }
 
 export const playthroughsApi = {
@@ -101,6 +109,16 @@ export const userApi = {
     apiClient.put('/users/me/profile', settings),
   isHandleAvailable: (handle: string) =>
     apiClient.get('/users/me/handle-available', { params: { handle } }),
+  // The blob is already downscaled by the picker - see AvatarPicker - so what goes over the
+  // wire is an avatar rather than whatever came off the camera.
+  uploadAvatar: (image: Blob) => {
+    const form = new FormData()
+    form.append('file', image, 'avatar')
+    return apiClient.post('/users/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+  deleteAvatar: () => apiClient.delete('/users/me/avatar'),
   deleteAccount: () => apiClient.delete('/users/me'),
 }
 
@@ -123,27 +141,36 @@ export const reviewsApi = {
   ) => apiClient.put(`/games/${gameId}/reviews`, review),
   deleteReview: (gameId: number) => apiClient.delete(`/games/${gameId}/reviews`),
   toggleHelpful: (reviewId: number) => apiClient.post(`/reviews/${reviewId}/helpful`),
+  // Both return the parent review, so a thread re-renders from the one response.
+  addReply: (reviewId: number, body: string) =>
+    apiClient.post(`/reviews/${reviewId}/replies`, { body }),
+  deleteReply: (replyId: number) => apiClient.delete(`/reviews/replies/${replyId}`),
 }
 
 export const profilesApi = {
   getProfile: (handle: string) => apiClient.get(`/profiles/${handle}`),
+  // Its own route rather than getProfile(ownHandle): an account that has not claimed a
+  // handle still has a profile page, and that page is where the handle gets claimed.
+  getMyProfile: () => apiClient.get('/profiles/me'),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
   compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
-}
-
-export const groupsApi = {
-  getMyGroups: () => apiClient.get('/groups'),
-  createGroup: (name: string, description: string | null) =>
-    apiClient.post('/groups', { name, description }),
-  getGroup: (slug: string) => apiClient.get('/groups/' + slug),
-  join: (slug: string) => apiClient.post('/groups/' + slug + '/join'),
-  leave: (slug: string) => apiClient.delete('/groups/' + slug + '/leave'),
-  addChallenge: (slug: string, challenge: Record<string, string>) =>
-    apiClient.post('/groups/' + slug + '/challenges', challenge),
+  getFollowers: (handle: string) => apiClient.get(`/profiles/${handle}/followers`),
+  getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
 }
 
 export const feedApi = {
-  getFeed: (limit?: number) => apiClient.get('/feed', { params: { limit } }),
+  getFeed: (limit?: number, scope?: 'following' | 'self') =>
+    apiClient.get('/feed', { params: { limit, scope } }),
+}
+
+export const notificationsApi = {
+  // Every route is implicitly the caller's own - there is no parameter that could name
+  // somebody else's notifications. All three writes return the list as it now stands, so
+  // the header never has to ask again for what it just changed.
+  getNotifications: (limit?: number) => apiClient.get('/notifications', { params: { limit } }),
+  markAllRead: () => apiClient.post('/notifications/read'),
+  markRead: (id: number) => apiClient.post(`/notifications/${id}/read`),
+  clear: () => apiClient.delete('/notifications'),
 }
 
 export const followsApi = {

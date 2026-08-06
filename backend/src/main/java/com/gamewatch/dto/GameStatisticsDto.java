@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class GameStatisticsDto {
     private Long gameId;
+    private Integer externalId;
     private String gameName;
     private String gameBannerImageUrl;
     private LocalDate gameAddedDate;

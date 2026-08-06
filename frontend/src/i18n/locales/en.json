@@ -17,7 +17,8 @@
     "settings": "Settings",
     "account": "Account",
     "social": "Social",
-    "people": "People"
+    "people": "People",
+    "profile": "Profile"
   },
   "settings": {
     "title": "Settings",
@@ -89,7 +90,15 @@
       "save": "Save Profile",
       "saving": "Saving...",
       "saved": "Profile updated",
-      "saveFailed": "Failed to update profile"
+      "saveFailed": "Failed to update profile",
+      "openProfile": "Go to your profile",
+      "addPicture": "Add picture",
+      "changePicture": "Change picture",
+      "removePicture": "Remove",
+      "pictureHint": "JPEG, PNG or WebP. Cropped to a square.",
+      "pictureSaved": "Picture updated",
+      "pictureRemoved": "Picture removed",
+      "pictureFailed": "Could not update your picture"
     },
     "timeFormat": "Time Format",
     "timeFormatDescription": "Choose how times are displayed",
@@ -170,29 +179,6 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
-  "groups": {
-    "title": "Groups",
-    "noHoursExplainer": "Challenges are never scored on hours played. Every metric counts finishing, variety or turning up regularly, so competing means playing more deliberately rather than simply more.",
-    "newGroup": "Start a group",
-    "namePlaceholder": "Backlog Club",
-    "create": "Create",
-    "created": "Group created",
-    "createFailed": "Could not create the group",
-    "empty": "You are not in any groups yet. Start one above.",
-    "memberCount_one": "{{count}} member",
-    "memberCount_other": "{{count}} members",
-    "youOwnThis": "you own this",
-    "noChallenges": "No challenges yet.",
-    "active": "Active",
-    "target_one": "target {{count}}",
-    "target_other": "target {{count}}",
-    "metric": {
-      "GAMES_FINISHED": "Games finished",
-      "DISTINCT_GAMES_PLAYED": "Different games played",
-      "DAYS_PLAYED": "Days played",
-      "BACKLOG_CLEARED": "Backlog games finished"
-    }
-  },
   "compare": {
     "title": "Compare",
     "unavailable": "That profile does not exist, or its library is not shared with you.",
@@ -210,6 +196,11 @@
     "title": "Activity",
     "emptyTitle": "Nothing here yet",
     "emptyBody": "Follow someone to see what they are playing. Their activity appears here once they share their library.",
+    "emptySelfBody": "Start or update a playthrough to see your own activity appear here.",
+    "filter": {
+      "following": "Following",
+      "self": "My Activity"
+    },
     "action": {
       "FINISHED": "finished",
       "DROPPED": "dropped",
@@ -247,7 +238,17 @@
     "onlyMyLanguage": "My language only",
     "spoilerHidden": "This review mentions spoilers. Click to read it.",
     "finished": "Finished",
-    "none": "No reviews yet."
+    "none": "No reviews yet.",
+    "replies": {
+      "reply": "Reply",
+      "count_one": "{{count}} reply",
+      "count_other": "{{count}} replies",
+      "placeholder": "Ask something, or answer the reviewer.",
+      "send": "Post reply",
+      "delete": "Delete reply",
+      "deleted": "Reply deleted",
+      "failed": "Could not post your reply"
+    }
   },
   "ratings": {
     "title": "Rating",
@@ -279,7 +280,23 @@
     "gamesCompleted": "Completed",
     "totalSessions": "Sessions",
     "topGames": "Most Played",
-    "libraryHidden": "This library is not shared with you."
+    "libraryHidden": "This library is not shared with you.",
+    "followersLabel_one": "follower",
+    "followersLabel_other": "followers",
+    "followingLabel_one": "following",
+    "followingLabel_other": "following",
+    "editProfile": "Edit profile",
+    "tabs": {
+      "overview": "Overview",
+      "followers": "Followers",
+      "following": "Following"
+    },
+    "noFollowers": "No followers yet.",
+    "notFollowingAnyone": "Not following anyone yet.",
+    "listUnavailable": "This list could not be loaded.",
+    "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
+    "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
+    "claimHandleAction": "Claim a handle"
   },
   "social": {
     "follow": {
@@ -360,6 +377,12 @@
     "failedToLoad": "Failed to load statistics",
     "comingSoon": "Coming Soon",
     "comingSoonDescription": "We're working on bringing you detailed statistics about your gaming habits!",
+    "sections": {
+      "overview": "Overview",
+      "charts": "Charts & Breakdown",
+      "recommendations": "Recommendations",
+      "records": "Records"
+    },
     "trends": {
       "title": "Trends",
       "sevenDayAverage": "7-day average",
@@ -415,7 +438,7 @@
       "inProgress": "In Progress",
       "totalSessions": "Total Sessions",
       "avgSession": "Avg Session",
-      "avgPerDay": "Avg per Day",
+      "avgPerDay": "Avg per Day Played",
       "longestSession": "Longest Session",
       "averageSession": "Average Session",
       "dailyPlaytime": "Daily Playtime",
@@ -442,6 +465,7 @@
       "hoursPlayed": "Hours Played",
       "daysToComplete": "{{days}} days to complete",
       "noData": "No data available for this period",
+      "noPlaytimeDay": "No playtime",
       "libraryCompletion": "Library Completion",
       "gamesCompletedOf": "{{completed}} of {{total}} games completed",
       "recommendedGames": "Recommended Games",
@@ -548,7 +572,22 @@
       "topGames": "Top Games",
       "totalDuration": "Total Duration",
       "avgDuration": "Average Duration",
-      "daysToComplete": "Days to Complete"
+      "daysToComplete": "Days to Complete",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "badges": "Badges",
+      "timeOfDay": "Time of Day",
+      "hourRange": "Hour Range",
+      "rollingAverageHours": "7-Day Average (Hours)",
+      "daysInPeriod": "Days in Period",
+      "previousPeriodPlaytime": "Previous Period Playtime",
+      "weekdayPlaytime": "Weekday Playtime",
+      "weekendPlaytime": "Weekend Playtime",
+      "playthroughsCompleted": "Playthroughs Completed",
+      "playthroughsDropped": "Playthroughs Dropped",
+      "backlogWindow": "Backlog Window (Months)",
+      "stalePlaythroughs": "Stale Playthroughs",
+      "daysSinceLastPlayed": "Days Since Last Played"
     }
   },
   "dashboard": {
@@ -641,16 +680,18 @@
   },
   "catalog": {
     "title": "Catalog",
-    "subtitle": "Every game the community is tracking",
+    "subtitle": "Look up any game there is, not just the ones people here are tracking.",
     "gamePageSubtitle": "Ratings and reviews from everyone tracking this game",
-    "failedToLoad": "Failed to load the catalog. Please try again.",
     "failedToLoadGame": "Failed to load this game. Please try again.",
-    "searchPlaceholder": "Search the catalog by name, genre, developer...",
-    "sortBy": "Sort by",
-    "sortRatingHigh": "Highest Rated",
-    "sortRatingCount": "Most Rated",
-    "noGames": "No games in the catalog yet.",
-    "noGamesDescription": "Games appear here once someone adds them to their library."
+    "searchPlaceholder": "Search for any game",
+    "typeMore": "Keep typing - at least 2 characters.",
+    "noResults": "No games found for \"{{query}}\".",
+    "averageCompletion": "Around {{time}} to beat",
+    "recent": {
+      "title": "Recently viewed",
+      "clearAll": "Clear all",
+      "remove": "Remove {{game}} from recently viewed"
+    }
   },
   "playthrough": {
     "title": "Playthrough Details",
@@ -908,14 +949,29 @@
     "submitting": "Submitting..."
   },
   "notifications": {
-    "breakReminder": "⏸️ Time for a break! Take a few minutes to rest your eyes.",
-    "hydrationReminder": "💧 Stay hydrated! Grab a glass of water.",
-    "standReminder": "🧘 Time to stand up and stretch!",
-    "goalReachedHours": "⚠️ Daily goal reached! You've played {{current}} hours (limit: {{max}} hours)",
-    "goalReachedSessions": "⚠️ Daily goal reached! You've had {{current}} sessions (limit: {{max}} sessions)",
-    "goalExceededHours": "🚨 Daily limit exceeded! You've played {{current}} hours (limit: {{max}} hours)",
-    "goalExceededSessions": "🚨 Daily limit exceeded! You've had {{current}} sessions (limit: {{max}} sessions)",
-    "lateNightWarning": "🌙 Late night gaming detected. Consider taking a break for better sleep."
+    "title": "Notifications",
+    "open": "Notifications",
+    "openWithCount_one": "Notifications, {{count}} unread",
+    "openWithCount_other": "Notifications, {{count}} unread",
+    "empty": "Nothing new.",
+    "clearAll": "Clear all",
+    "someone": "Someone",
+    "aGame": "a game",
+    "items": {
+      "FOLLOW_REQUEST": "{{name}} asked to follow you.",
+      "FOLLOW_ACCEPTED": "{{name}} accepted your follow request.",
+      "NEW_FOLLOWER": "{{name}} started following you.",
+      "REVIEW_REPLY": "{{name}} replied to your review of {{game}}.",
+      "REVIEW_HELPFUL": "{{name}} found your review of {{game}} helpful."
+    },
+    "breakReminder": "Time for a break. Take a few minutes to rest your eyes.",
+    "hydrationReminder": "Stay hydrated. Grab a glass of water.",
+    "standReminder": "Time to stand up and stretch.",
+    "goalReachedHours": "Daily goal reached: you've played {{current}} hours (limit: {{max}} hours).",
+    "goalReachedSessions": "Daily goal reached: you've had {{current}} sessions (limit: {{max}} sessions).",
+    "goalExceededHours": "Daily limit exceeded: you've played {{current}} hours (limit: {{max}} hours).",
+    "goalExceededSessions": "Daily limit exceeded: you've had {{current}} sessions (limit: {{max}} sessions).",
+    "lateNightWarning": "Late night gaming detected. Consider taking a break for better sleep."
   },
   "faq": {
     "title": "Help & FAQ",

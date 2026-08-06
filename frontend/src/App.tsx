@@ -15,10 +15,10 @@ import PlaythroughDetail from './pages/PlaythroughDetail'
 import Health from './pages/Health'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import MyProfile from './pages/MyProfile'
 import People from './pages/People'
 import Feed from './pages/Feed'
 import Compare from './pages/Compare'
-import Groups from './pages/Groups'
 import Help from './pages/Help'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -54,13 +54,16 @@ function AppContent() {
           <Route path="games" element={<Games />} />
           <Route path="games/:id/statistics" element={<GameStatistics />} />
           <Route path="catalog" element={<Catalog />} />
-          <Route path="catalog/:id" element={<CatalogGameDetail />} />
+          {/* IGDB id, not a row id - the catalog reaches games this app has no row for. */}
+          <Route path="catalog/:externalId" element={<CatalogGameDetail />} />
           <Route path="timeline" element={<Timeline />} />
           <Route path="health" element={<Health />} />
           <Route path="playthrough/:id" element={<PlaythroughDetail />} />
           <Route path="people" element={<People />} />
           <Route path="feed" element={<Feed />} />
-          <Route path="groups" element={<Groups />} />
+          {/* Your own profile has its own route rather than /u/<your handle>: it has to
+              render before a handle is claimed, since claiming one happens here. */}
+          <Route path="profile" element={<MyProfile />} />
           <Route path="u/:handle" element={<Profile />} />
           <Route path="u/:handle/compare" element={<Compare />} />
           <Route path="settings" element={<Settings />} />

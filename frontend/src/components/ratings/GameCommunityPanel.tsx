@@ -7,7 +7,8 @@ import { statColors } from '../../lib/statColors'
 import type { GameCommunity } from '../../types'
 
 interface GameCommunityPanelProps {
-  gameId: number
+  /** Null for a game nobody here has played yet - see {@link useCatalogGame}. */
+  gameId: number | null
 }
 
 /**
@@ -15,12 +16,19 @@ interface GameCommunityPanelProps {
  *
  * The completion figures come from measured session time rather than self-reported
  * estimates, which is the one claim here that a site like HowLongToBeat cannot make.
+ *
+ * Read-only, so unlike the rating and review panels it never claims a catalog row: a game
+ * with no row has no sessions behind it either, and the panel simply does not render.
  */
 function GameCommunityPanel({ gameId }: GameCommunityPanelProps) {
   const { t } = useTranslation()
   const [stats, setStats] = useState<GameCommunity | null>(null)
 
   useEffect(() => {
+    if (gameId === null) {
+      setStats(null)
+      return
+    }
     communityApi
       .getCommunityStats(gameId)
       .then((response) => setStats(response.data))

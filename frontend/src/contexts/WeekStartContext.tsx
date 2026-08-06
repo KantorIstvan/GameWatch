@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { userApi } from '../services/api'
 import { User } from '../types'
 import { useAuthContext } from './AuthContext'
@@ -45,20 +45,22 @@ export const WeekStartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     loadUserWeekStart()
   }, [isAuthReady, isAuthenticated])
 
-  const setWeekStart = (ws: WeekStart) => {
+  const setWeekStart = useCallback((ws: WeekStart) => {
     setWeekStartState(ws)
-  }
+  }, [])
 
-  // Returns 0 for Sunday, 1 for Monday (for calendar libraries)
-  const getFirstDayNumber = (): number => {
+  // Returns 0 for Sunday, 1 for Monday (for calendar libraries). Memoized so consumers
+  // like CalendarHeatmap - which key an effect off this function's identity - don't tear
+  // down and repaint every time an unrelated ancestor re-renders this provider.
+  const getFirstDayNumber = useCallback((): number => {
     return weekStart === 'SUNDAY' ? 0 : 1
-  }
+  }, [weekStart])
 
-  const value: WeekStartContextType = {
+  const value: WeekStartContextType = useMemo(() => ({
     weekStart,
     setWeekStart,
     getFirstDayNumber
-  }
+  }), [weekStart, setWeekStart, getFirstDayNumber])
 
   return <WeekStartContext.Provider value={value}>{children}</WeekStartContext.Provider>
 }

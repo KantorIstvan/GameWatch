@@ -30,6 +30,9 @@ class FollowServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private FollowService followService;
 

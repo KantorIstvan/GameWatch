@@ -125,9 +125,24 @@ public class IgdbApiService {
         return new ArrayList<>();
     }
 
+    /** IGDB's own ceiling on a single page of results. */
+    private static final int MAX_SEARCH_LIMIT = 50;
+
+    private static final int DEFAULT_SEARCH_LIMIT = 10;
+
     public List<GameSearchResultDto> searchGames(String query) {
+        return searchGames(query, DEFAULT_SEARCH_LIMIT);
+    }
+
+    /**
+     * The catalog's search page wants a page of results to scan, while the add-a-game
+     * autocomplete wants the handful that fit under an input - hence the caller choosing
+     * rather than a single constant serving both badly.
+     */
+    public List<GameSearchResultDto> searchGames(String query, int limit) {
         String escaped = query.replace("\"", "\\\"");
-        return queryGames(GAME_FIELDS + " search \"" + escaped + "\"; limit 10;");
+        int bounded = Math.max(1, Math.min(limit, MAX_SEARCH_LIMIT));
+        return queryGames(GAME_FIELDS + " search \"" + escaped + "\"; limit " + bounded + ";");
     }
 
     public GameSearchResultDto getGameDetails(Integer gameId) {

@@ -1,6 +1,8 @@
 package com.gamewatch.service;
 
 import com.gamewatch.dto.GameReviewDto;
+import com.gamewatch.dto.ReviewReplyDto;
+import com.gamewatch.dto.SubmitReplyRequest;
 import com.gamewatch.dto.SubmitReviewRequest;
 import com.gamewatch.entity.*;
 import com.gamewatch.repository.*;
@@ -11,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,12 +37,26 @@ public class GameReviewService {
      */
     private static final int MAX_REVIEWS_PER_DAY = 10;
 
+    private static final int MIN_REPLY_LENGTH = 1;
+    private static final int MAX_REPLY_LENGTH = 1000;
+
+    /**
+     * Replies one account may write in a day.
+     *
+     * Higher than the review limit because replying is the cheap, conversational half of
+     * this - someone answering questions under their own review should never hit it - and
+     * still low enough that an account cannot paper a game's review section overnight.
+     */
+    private static final int MAX_REPLIES_PER_DAY = 100;
+
     private final GameReviewRepository gameReviewRepository;
     private final ReviewVoteRepository reviewVoteRepository;
+    private final ReviewReplyRepository reviewReplyRepository;
     private final GameRatingRepository gameRatingRepository;
     private final GameRepository gameRepository;
     private final UserGameRepository userGameRepository;
     private final PlaythroughRepository playthroughRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public GameReviewDto submitReview(User user, Long gameId, SubmitReviewRequest request) {
@@ -79,7 +97,7 @@ public class GameReviewService {
         review = gameReviewRepository.save(review);
 
         log.info("User {} reviewed game {}", user.getId(), gameId);
-        return toDto(review, user, Set.of());
+        return toDto(review, user, Set.of(), repliesFor(review.getId()));
     }
 
     @Transactional
@@ -111,11 +129,12 @@ public class GameReviewService {
             return List.of();
         }
 
-        Set<Long> votedIds = reviewVoteRepository.findVotedReviewIds(
-            viewer.getId(), reviews.stream().map(GameReview::getId).collect(Collectors.toList()));
+        List<Long> reviewIds = reviews.stream().map(GameReview::getId).collect(Collectors.toList());
+        Set<Long> votedIds = reviewVoteRepository.findVotedReviewIds(viewer.getId(), reviewIds);
+        Map<Long, List<ReviewReply>> replies = repliesFor(reviewIds);
 
         return reviews.stream()
-            .map(review -> toDto(review, viewer, votedIds))
+            .map(review -> toDto(review, viewer, votedIds, replies))
             .collect(Collectors.toList());
     }
 
@@ -136,22 +155,115 @@ public class GameReviewService {
             throw new IllegalArgumentException("You cannot mark your own review helpful");
         }
 
-        GameReview target = review;
-        reviewVoteRepository.findByReviewAndUser(review, user)
-            .ifPresentOrElse(
-                reviewVoteRepository::delete,
-                () -> reviewVoteRepository.save(
-                    ReviewVote.builder().review(target).user(user).build()));
+        ReviewVote existing = reviewVoteRepository.findByReviewAndUser(review, user).orElse(null);
+        if (existing != null) {
+            reviewVoteRepository.delete(existing);
+        } else {
+            reviewVoteRepository.save(ReviewVote.builder().review(review).user(user).build());
+            // Only the mark is announced, never its withdrawal: someone changing their mind
+            // about a review is not news the author needs delivered to them.
+            notificationService.notifyReviewHelpful(user, review);
+        }
         reviewVoteRepository.flush();
 
         review.setHelpfulCount((int) reviewVoteRepository.countByReview(review));
         review = gameReviewRepository.save(review);
 
         Set<Long> voted = reviewVoteRepository.findVotedReviewIds(user.getId(), List.of(reviewId));
-        return toDto(review, user, voted);
+        return toDto(review, user, voted, repliesFor(reviewId));
     }
 
-    private GameReviewDto toDto(GameReview review, User viewer, Set<Long> votedReviewIds) {
+    /**
+     * Answers a review.
+     *
+     * Open to anyone who can see the review rather than restricted to people who own the
+     * game: the value of a reply is usually a question about an opinion, and the people with
+     * questions are the ones who have not bought it yet.
+     */
+    @Transactional
+    public GameReviewDto addReply(User user, Long reviewId, SubmitReplyRequest request) {
+        GameReview review = gameReviewRepository.findById(reviewId)
+            .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+
+        String body = request.getBody() == null ? "" : request.getBody().trim();
+        if (body.length() < MIN_REPLY_LENGTH) {
+            throw new IllegalArgumentException("A reply cannot be empty");
+        }
+        if (body.length() > MAX_REPLY_LENGTH) {
+            throw new IllegalArgumentException(
+                "A reply can be at most " + MAX_REPLY_LENGTH + " characters");
+        }
+
+        long recent = reviewReplyRepository.countWrittenSince(
+            user.getId(), Instant.now().minus(1, ChronoUnit.DAYS));
+        if (recent >= MAX_REPLIES_PER_DAY) {
+            throw new IllegalArgumentException(
+                "You have written a lot of replies today. Try again tomorrow.");
+        }
+
+        reviewReplyRepository.save(ReviewReply.builder()
+            .review(review)
+            .user(user)
+            .body(body)
+            .build());
+
+        notificationService.notifyReviewReply(user, review);
+
+        log.info("User {} replied to review {}", user.getId(), reviewId);
+        return reloadReview(review, user);
+    }
+
+    /**
+     * Removes a reply, on behalf of whoever wrote it.
+     *
+     * The author and nobody else - not even the author of the review it sits under. Words
+     * belong to the person who wrote them, and letting a review author quietly delete
+     * disagreement from under their own review would turn every thread into whatever the
+     * reviewer is willing to leave standing.
+     */
+    @Transactional
+    public GameReviewDto deleteReply(User user, Long replyId) {
+        ReviewReply reply = reviewReplyRepository.findById(replyId)
+            .orElseThrow(() -> new IllegalArgumentException("Reply not found"));
+
+        GameReview review = reply.getReview();
+        if (!canDeleteReply(reply, user)) {
+            // Says the same thing it would say for a reply that does not exist, so this is
+            // not a way to confirm which replies are out there.
+            throw new IllegalArgumentException("Reply not found");
+        }
+
+        reviewReplyRepository.delete(reply);
+        log.info("User {} deleted reply {}", user.getId(), replyId);
+        return reloadReview(review, user);
+    }
+
+    private boolean canDeleteReply(ReviewReply reply, User viewer) {
+        return reply.getUser().getId().equals(viewer.getId());
+    }
+
+    /** The parent review as the caller should now see it, so a reply edit needs no refetch. */
+    private GameReviewDto reloadReview(GameReview review, User viewer) {
+        reviewReplyRepository.flush();
+        Set<Long> voted = reviewVoteRepository.findVotedReviewIds(
+            viewer.getId(), List.of(review.getId()));
+        return toDto(review, viewer, voted, repliesFor(review.getId()));
+    }
+
+    private Map<Long, List<ReviewReply>> repliesFor(Long reviewId) {
+        return repliesFor(List.of(reviewId));
+    }
+
+    private Map<Long, List<ReviewReply>> repliesFor(Collection<Long> reviewIds) {
+        if (reviewIds.isEmpty()) {
+            return Map.of();
+        }
+        return reviewReplyRepository.findForReviews(reviewIds).stream()
+            .collect(Collectors.groupingBy(reply -> reply.getReview().getId()));
+    }
+
+    private GameReviewDto toDto(GameReview review, User viewer, Set<Long> votedReviewIds,
+                                Map<Long, List<ReviewReply>> repliesByReview) {
         User author = review.getUser();
 
         Integer authorScore = gameRatingRepository.findByUserAndGame(author, review.getGame())
@@ -185,8 +297,25 @@ public class GameReviewService {
             .language(review.getLanguage())
             .helpfulCount(review.getHelpfulCount())
             .viewerFoundHelpful(votedReviewIds.contains(review.getId()))
-            .isOwnReview(author.getId().equals(viewer.getId()))
+            .ownReview(author.getId().equals(viewer.getId()))
             .createdAt(review.getCreatedAt())
+            .replies(repliesByReview.getOrDefault(review.getId(), List.of()).stream()
+                .map(reply -> toReplyDto(reply, viewer))
+                .collect(Collectors.toList()))
+            .build();
+    }
+
+    private ReviewReplyDto toReplyDto(ReviewReply reply, User viewer) {
+        User author = reply.getUser();
+        return ReviewReplyDto.builder()
+            .id(reply.getId())
+            .authorHandle(author.getHandle())
+            .authorDisplayName(author.getDisplayName() != null
+                ? author.getDisplayName() : author.getUsername())
+            .authorPictureUrl(author.getProfilePictureUrl())
+            .body(reply.getBody())
+            .viewerCanDelete(canDeleteReply(reply, viewer))
+            .createdAt(reply.getCreatedAt())
             .build();
     }
 }

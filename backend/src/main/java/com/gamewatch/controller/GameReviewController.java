@@ -1,6 +1,7 @@
 package com.gamewatch.controller;
 
 import com.gamewatch.dto.GameReviewDto;
+import com.gamewatch.dto.SubmitReplyRequest;
 import com.gamewatch.dto.SubmitReviewRequest;
 import com.gamewatch.entity.User;
 import com.gamewatch.service.GameReviewService;
@@ -49,5 +50,21 @@ public class GameReviewController {
                                                        @PathVariable Long reviewId) {
         User user = userService.getOrCreateUser(authentication);
         return ResponseEntity.ok(gameReviewService.toggleHelpful(user, reviewId));
+    }
+
+    /** Both reply endpoints return the parent review, so the thread re-renders from one call. */
+    @PostMapping("/reviews/{reviewId}/replies")
+    public ResponseEntity<GameReviewDto> addReply(Authentication authentication,
+                                                  @PathVariable Long reviewId,
+                                                  @RequestBody SubmitReplyRequest request) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(gameReviewService.addReply(user, reviewId, request));
+    }
+
+    @DeleteMapping("/reviews/replies/{replyId}")
+    public ResponseEntity<GameReviewDto> deleteReply(Authentication authentication,
+                                                     @PathVariable Long replyId) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(gameReviewService.deleteReply(user, replyId));
     }
 }

@@ -3,15 +3,30 @@ import { useTranslation } from 'react-i18next'
 import { Star, Trophy, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { ratingsApi } from '../../services/api'
-import { statColors } from '../../lib/statColors'
 import type { GameRatingSummary } from '../../types'
 
 interface GameRatingPanelProps {
-  gameId: number
+  /** Null for a game nobody has rated or reviewed yet - see {@link useCatalogGame}. */
+  gameId: number | null
+  ensureGameId: () => Promise<number>
 }
 
 const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const EMPTY_SUMMARY: GameRatingSummary = {
+  gameId: 0,
+  bayesianScore: null,
+  averageScore: null,
+  ratingCount: 0,
+  distribution: {},
+  yourScore: null,
+  finisherCount: 0,
+  finisherAverageScore: null,
+  verifiedCount: 0,
+  verifiedAverageScore: null,
+}
 
 /**
  * A game's score, and this user's contribution to it.
@@ -20,14 +35,22 @@ const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
  * score is shrunk towards the global mean so a single enthusiastic rating cannot top the
  * list, which makes it defensible but not self-explanatory - the count and the histogram
  * next to it are what turn it from a magic number into something a reader can check.
+ *
+ * A game with no catalog row yet has nothing to fetch, so the panel starts from an empty
+ * summary and claims the row on the first rating. Rating a game is exactly the moment it
+ * becomes worth having a row for.
  */
-function GameRatingPanel({ gameId }: GameRatingPanelProps) {
+function GameRatingPanel({ gameId, ensureGameId }: GameRatingPanelProps) {
   const { t } = useTranslation()
   const [summary, setSummary] = useState<GameRatingSummary | null>(null)
   const [hovered, setHovered] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    if (gameId === null) {
+      setSummary(EMPTY_SUMMARY)
+      return
+    }
     ratingsApi
       .getSummary(gameId)
       .then((response) => setSummary(response.data))
@@ -38,10 +61,11 @@ function GameRatingPanel({ gameId }: GameRatingPanelProps) {
     async (score: number) => {
       setBusy(true)
       try {
+        const id = await ensureGameId()
         const response =
           summary?.yourScore === score
-            ? await ratingsApi.removeRating(gameId)
-            : await ratingsApi.rate(gameId, score)
+            ? await ratingsApi.removeRating(id)
+            : await ratingsApi.rate(id, score)
         setSummary(response.data)
       } catch (err: any) {
         toast.error(err.response?.data?.message || t('ratings.failed'))
@@ -49,7 +73,7 @@ function GameRatingPanel({ gameId }: GameRatingPanelProps) {
         setBusy(false)
       }
     },
-    [gameId, summary?.yourScore, t]
+    [ensureGameId, summary?.yourScore, t]
   )
 
   if (!summary) {
@@ -110,19 +134,27 @@ function GameRatingPanel({ gameId }: GameRatingPanelProps) {
       )}
 
       {summary.ratingCount > 0 && (
-        <div className="mb-6 flex h-16 items-end gap-1" role="img" aria-label={t('ratings.distributionLabel')}>
+        <div className="mb-6 flex h-24 gap-1" role="img" aria-label={t('ratings.distributionLabel')}>
           {SCORES.map((score) => {
             const count = summary.distribution[score] ?? 0
             return (
               <div key={score} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-sm transition-all duration-150 ease-standard"
-                  style={{
-                    height: `${Math.max(2, (count / peak) * 100)}%`,
-                    backgroundColor: count > 0 ? statColors.aqua : 'var(--color-border)',
-                  }}
-                  title={t('ratings.scoreCount', { score, count })}
-                />
+                {/* The track carries the definite height the bar's percentage resolves
+                    against - a content-sized parent would collapse the bar to nothing. */}
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className={cn(
+                      'w-full transition-all duration-150 ease-standard',
+                      // Two neutral steps rather than an accent hue: the distribution is
+                      // context for the score above it, not a mark competing with it. An
+                      // unrated score keeps a baseline tick so the axis still reads as a
+                      // chart when only one or two scores have votes.
+                      count > 0 ? 'bg-text-secondary' : 'h-0.5 bg-border'
+                    )}
+                    style={count > 0 ? { height: `${Math.max(8, (count / peak) * 100)}%` } : undefined}
+                    title={t('ratings.scoreCount', { score, count })}
+                  />
+                </div>
                 <span className="text-caption text-text-secondary">{score}</span>
               </div>
             )

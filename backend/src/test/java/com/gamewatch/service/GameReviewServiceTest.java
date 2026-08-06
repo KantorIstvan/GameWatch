@@ -1,6 +1,7 @@
 package com.gamewatch.service;
 
 import com.gamewatch.dto.GameReviewDto;
+import com.gamewatch.dto.SubmitReplyRequest;
 import com.gamewatch.dto.SubmitReviewRequest;
 import com.gamewatch.entity.*;
 import com.gamewatch.repository.*;
@@ -26,10 +27,12 @@ class GameReviewServiceTest {
 
     @Mock private GameReviewRepository gameReviewRepository;
     @Mock private ReviewVoteRepository reviewVoteRepository;
+    @Mock private ReviewReplyRepository reviewReplyRepository;
     @Mock private GameRatingRepository gameRatingRepository;
     @Mock private GameRepository gameRepository;
     @Mock private UserGameRepository userGameRepository;
     @Mock private PlaythroughRepository playthroughRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private GameReviewService gameReviewService;
 
@@ -193,5 +196,119 @@ class GameReviewServiceTest {
 
         assertThat(reviews).hasSize(1);
         assertThat(reviews.get(0).getLanguage()).isEqualTo("hu");
+    }
+
+    @Test
+    void anEmptyReplyIsRejected() {
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Something worth answering.").helpfulCount(0).build();
+        when(gameReviewRepository.findById(5L)).thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> gameReviewService.addReply(author, 5L,
+                SubmitReplyRequest.builder().body("   ").build()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("empty");
+
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    void aBurstOfRepliesFromOneAccountIsStopped() {
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Something worth answering.").helpfulCount(0).build();
+        when(gameReviewRepository.findById(5L)).thenReturn(Optional.of(review));
+        when(reviewReplyRepository.countWrittenSince(anyLong(), any())).thenReturn(100L);
+
+        assertThatThrownBy(() -> gameReviewService.addReply(author, 5L,
+                SubmitReplyRequest.builder().body("One more.").build()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("tomorrow");
+
+        verify(reviewReplyRepository, never()).save(any());
+    }
+
+    @Test
+    void aReplyCanBeClearedByWhoeverWroteIt() {
+        User replier = User.builder().id(4L).auth0UserId("auth0|4").handle("replier").build();
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Mine, with a thread underneath.").helpfulCount(0).build();
+        ReviewReply reply = ReviewReply.builder().id(7L).review(review).user(replier)
+            .body("My own words, which I may withdraw.").build();
+
+        when(reviewReplyRepository.findById(7L)).thenReturn(Optional.of(reply));
+        when(reviewVoteRepository.findVotedReviewIds(4L, List.of(5L))).thenReturn(Set.of());
+        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
+        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
+            .thenReturn(List.of());
+
+        gameReviewService.deleteReply(replier, 7L);
+
+        verify(reviewReplyRepository).delete(reply);
+    }
+
+    @Test
+    void theReviewAuthorCannotClearSomeoneElsesReplyUnderTheirReview() {
+        // Owning the review above a reply is not owning the reply. A reviewer who could
+        // delete answers would leave every thread showing only what the reviewer tolerated.
+        User replier = User.builder().id(4L).auth0UserId("auth0|4").handle("replier").build();
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Mine, with a thread underneath.").helpfulCount(0).build();
+        ReviewReply reply = ReviewReply.builder().id(7L).review(review).user(replier)
+            .body("Not the review author's words.").build();
+
+        when(reviewReplyRepository.findById(7L)).thenReturn(Optional.of(reply));
+
+        assertThatThrownBy(() -> gameReviewService.deleteReply(author, 7L))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("not found");
+
+        verify(reviewReplyRepository, never()).delete(any(ReviewReply.class));
+    }
+
+    @Test
+    void someoneWithNoStakeInAThreadCannotDeleteFromIt() {
+        User stranger = User.builder().id(3L).auth0UserId("auth0|3").handle("stranger").build();
+        User replier = User.builder().id(4L).auth0UserId("auth0|4").handle("replier").build();
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Mine, with a thread underneath.").helpfulCount(0).build();
+        ReviewReply reply = ReviewReply.builder().id(7L).review(review).user(replier)
+            .body("Someone else's words entirely.").build();
+
+        when(reviewReplyRepository.findById(7L)).thenReturn(Optional.of(reply));
+
+        // Says the same thing it would for a reply that is not there, so refusing is not a
+        // way to confirm which replies exist.
+        assertThatThrownBy(() -> gameReviewService.deleteReply(stranger, 7L))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("not found");
+
+        verify(reviewReplyRepository, never()).delete(any(ReviewReply.class));
+    }
+
+    @Test
+    void repliesTravelWithTheReviewTheyBelongTo() {
+        // Inline rather than behind a second request: a round trip per review to learn there
+        // are no replies would cost more than carrying the few that exist.
+        User replier = User.builder().id(4L).auth0UserId("auth0|4").handle("replier").build();
+        GameReview review = GameReview.builder().id(5L).user(author).game(game)
+            .body("Long enough to be a real review of this game.").helpfulCount(0).build();
+        ReviewReply reply = ReviewReply.builder().id(7L).review(review).user(replier)
+            .body("How does it run on a handheld?").build();
+
+        when(gameReviewRepository.findMostHelpful(1L)).thenReturn(List.of(review));
+        when(reviewVoteRepository.findVotedReviewIds(1L, List.of(5L))).thenReturn(Set.of());
+        when(reviewReplyRepository.findForReviews(List.of(5L))).thenReturn(List.of(reply));
+        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
+        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
+            .thenReturn(List.of());
+
+        List<GameReviewDto> reviews = gameReviewService.getReviews(author, 1L, "helpful", null);
+
+        assertThat(reviews.get(0).getReplies()).hasSize(1);
+        assertThat(reviews.get(0).getReplies().get(0).getBody())
+            .isEqualTo("How does it run on a handheld?");
+        // The review's author did not write it, so it is not theirs to remove - the delete
+        // control has to be absent for them, not merely refused when pressed.
+        assertThat(reviews.get(0).getReplies().get(0).isViewerCanDelete()).isFalse();
     }
 }

@@ -16,24 +16,92 @@ const CHART_COLORS = [
   '#36a2eb',
 ]
 
-export function useStatisticsCharts(statistics: UserStatistics | null) {
+export function useStatisticsCharts(
+  statistics: UserStatistics | null,
+  interval: 'week' | 'month' | 'year' | 'all',
+  referenceDate: Date,
+  heatmapYear: number
+) {
   const { t } = useTranslation()
   const { weekStart } = useWeekStart()
-  
+
   return useMemo(() => {
     if (!statistics) return null
 
-    // Days with no play are kept. Dropping them left the x-axis an index of played days
-    // rather than a time axis, so the area was drawn as a straight run between dates that
-    // could be weeks apart - a sparse month looked like continuous play. It also makes the
-    // trailing average meaningful, since consecutive points are now consecutive days.
-    const dailyPlaytimeData = statistics.dailyPlaytime.map((dp) => ({
-      date: new Date(dp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      hours: Math.round((dp.playtimeSeconds / 3600) * 10) / 10,
-      rollingHours: dp.rollingAverageSeconds === undefined || dp.rollingAverageSeconds === null
-        ? null
-        : Math.round((dp.rollingAverageSeconds / 3600) * 10) / 10,
-    }))
+    // Reshaped for the calendar heatmap: keyed by the raw "yyyy-MM-dd" date
+    // string (cal-heatmap parses that itself) instead of a display label, and carrying the
+    // rolling average alongside it so the heatmap's tooltip can still surface the trend
+    // line the old area chart used to show, without cal-heatmap needing a second series.
+    //
+    // "all time" fetches the user's entire daily history in one response (potentially
+    // years of entries), but the heatmap only ever shows one calendar year at a time - so
+    // only that year's entries are kept here rather than handing cal-heatmap thousands of
+    // points it will never draw.
+    const dailyHeatmapData: Record<string, number> = {}
+    const dailyHeatmapRollingSecondsByDate: Record<string, number | null | undefined> = {}
+    statistics.dailyPlaytime.forEach((dp) => {
+      if (interval !== 'all' || dp.date.startsWith(`${heatmapYear}-`)) {
+        dailyHeatmapData[dp.date] = dp.playtimeSeconds / 3600
+      }
+      dailyHeatmapRollingSecondsByDate[dp.date] = dp.rollingAverageSeconds
+    })
+
+    // The heatmap's window mirrors whichever period filter is active on the page, rather
+    // than being inferred from how much data happens to exist: "all time" gets its own
+    // independently-selectable calendar year (like the Health page's heatmap), "year"
+    // always renders the full Jan-Dec grid even mid-year (future days just show empty),
+    // and "week"/"month" narrow the grid down to exactly that single period.
+    let dailyHeatmapSpan: {
+      startDate: Date
+      range: number
+      domain: 'month' | 'week'
+      subDomainType: 'day' | 'xDay'
+    } | null = null
+    if (statistics.dailyPlaytime.length > 0) {
+      const parseLocalDate = (iso: string) => {
+        const [y, m, d] = iso.split('-').map(Number)
+        return new Date(y, m - 1, d)
+      }
+
+      switch (interval) {
+        case 'week':
+          // One week reads best as a single horizontal strip of seven days, which is what
+          // the default orientation already produces for a week domain.
+          dailyHeatmapSpan = {
+            startDate: parseLocalDate(statistics.dailyPlaytime[0].date),
+            range: 1,
+            domain: 'week',
+            subDomainType: 'day',
+          }
+          break
+        case 'month':
+          // Transposed into weekday-columns so a lone month renders as the calendar shape
+          // people already read months in, rather than a sideways slice of the year ribbon.
+          dailyHeatmapSpan = {
+            startDate: new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1),
+            range: 1,
+            domain: 'month',
+            subDomainType: 'xDay',
+          }
+          break
+        case 'year':
+          dailyHeatmapSpan = {
+            startDate: new Date(referenceDate.getFullYear(), 0, 1),
+            range: 12,
+            domain: 'month',
+            subDomainType: 'day',
+          }
+          break
+        case 'all':
+          dailyHeatmapSpan = {
+            startDate: new Date(heatmapYear, 0, 1),
+            range: 12,
+            domain: 'month',
+            subDomainType: 'day',
+          }
+          break
+      }
+    }
 
     const timeOfDayData = [
       { name: t('statistics.userStats.dawn'), fullName: `${t('statistics.userStats.dawn')} (4-7)`, value: statistics.timeOfDayStats.dawnSeconds / 3600, fill: '#ffd93d' },
@@ -92,13 +160,15 @@ export function useStatisticsCharts(statistics: UserStatistics | null) {
       avgHours: Math.round(((statistics.dayOfWeekPlaytime[day] || 0) / 3600) * 10) / 10,
     }))
 
-    return { 
-      dailyPlaytimeData, 
-      timeOfDayData, 
-      genreData, 
-      platformData, 
-      hourlyData, 
+    return {
+      dailyHeatmapData,
+      dailyHeatmapRollingSecondsByDate,
+      dailyHeatmapSpan,
+      timeOfDayData,
+      genreData,
+      platformData,
+      hourlyData,
       dayOfWeekData
     }
-  }, [statistics, t, weekStart])
+  }, [statistics, t, weekStart, interval, referenceDate, heatmapYear])
 }

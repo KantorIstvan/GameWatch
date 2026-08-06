@@ -2,11 +2,13 @@ package com.gamewatch.controller;
 
 import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
+import com.gamewatch.service.UserAvatarService;
 import com.gamewatch.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -16,6 +18,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final UserAvatarService userAvatarService;
 
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(Authentication authentication) {
@@ -62,6 +65,27 @@ public class UserController {
             @RequestBody ProfileSettingsDto request) {
         User user = userService.getOrCreateUser(authentication);
         return ResponseEntity.ok(userService.updateProfileSettings(user, request));
+    }
+
+    /**
+     * Replaces the account's profile picture.
+     *
+     * Returns the URL the picture is now served from so the caller can swap the image
+     * without refetching the whole profile.
+     */
+    @PostMapping("/me/avatar")
+    public ResponseEntity<Map<String, String>> uploadAvatar(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(Map.of("profilePictureUrl", userAvatarService.upload(user, file)));
+    }
+
+    @DeleteMapping("/me/avatar")
+    public ResponseEntity<Void> deleteAvatar(Authentication authentication) {
+        User user = userService.getOrCreateUser(authentication);
+        userAvatarService.delete(user);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -123,7 +123,7 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
                   key={option.id}
                   value={option.id}
                   onSelect={() => handleSelect(option)}
-                  className="gap-3 py-2"
+                  className="group gap-3 py-2"
                 >
                   <Avatar className="size-15 rounded-md">
                     <AvatarImage src={option.bannerImageUrl} alt={option.name} className="object-cover" />
@@ -131,11 +131,13 @@ function GameSearchAutocomplete({ onGameSelect, disabled }: GameSearchAutocomple
                   </Avatar>
                   <div className="flex-1">
                     <p className="text-body">{option.name}</p>
-                    <p className="text-caption text-text-secondary">
+                    <p className="text-caption text-text-secondary transition-colors duration-150 ease-standard group-data-[selected=true]:text-accent-foreground">
                       {option.releaseDate && `${t('games.released')}: ${option.releaseDate}`}
                     </p>
                     {option.genres && (
-                      <p className="block text-caption text-text-secondary">{option.genres}</p>
+                      <p className="block text-caption text-text-secondary transition-colors duration-150 ease-standard group-data-[selected=true]:text-accent-foreground">
+                        {option.genres}
+                      </p>
                     )}
                   </div>
                 </CommandItem>

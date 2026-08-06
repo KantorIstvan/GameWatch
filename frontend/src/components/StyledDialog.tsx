@@ -10,7 +10,7 @@ interface StyledDialogProps {
   iconColor?: string
   children: React.ReactNode
   actions?: React.ReactNode
-  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
   fullWidth?: boolean
 }
 
@@ -20,6 +20,8 @@ const maxWidthClass: Record<NonNullable<StyledDialogProps['maxWidth']>, string> 
   md: 'sm:max-w-md',
   lg: 'sm:max-w-lg',
   xl: 'sm:max-w-xl',
+  '2xl': 'sm:max-w-2xl',
+  '3xl': 'sm:max-w-3xl',
 }
 
 const StyledDialog = React.memo(({

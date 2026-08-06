@@ -27,9 +27,20 @@ export interface Game {
   alternativeNames?: string
   description?: string
   slug?: string
+  /** IGDB's average time to beat, in seconds. */
+  averageCompletionSeconds?: number
   /** This app's own shrunk community score - only populated by the catalog endpoints. */
   communityRatingScore?: number | null
   communityRatingCount?: number
+}
+
+/**
+ * A game's catalog page. Addressed by `externalId`, because it may not exist here at all:
+ * `id` is null until someone rates or reviews it and the catalog row gets created.
+ */
+export interface CatalogGame extends Omit<Game, 'id' | 'externalId'> {
+  id: number | null
+  externalId: number
 }
 
 export interface Playthrough {
@@ -78,16 +89,34 @@ export interface Playthrough {
   releaseDate?: string
 }
 
+/**
+ * A hit from the catalog's search, which searches all of IGDB rather than this app's own
+ * rows. `id` is the IGDB id - the only id most of these have, since nobody here has
+ * necessarily added them.
+ */
 export interface GameSearchResult {
-  id: string
+  id: number
   name: string
   bannerImageUrl?: string
+  description?: string
+  releaseDate?: string
   rating?: number
-  genres?: string[]
+  ratingsCount?: number
+  genres?: string
+  platforms?: string
+  developers?: string
+  publishers?: string
+  tags?: string
+  slug?: string
+  website?: string
+  esrbRating?: string
+  alternativeNames?: string
+  averageCompletionSeconds?: number
 }
 
 export interface GameStatistics {
   gameId: number
+  externalId: number
   gameName: string
   gameBannerImageUrl?: string
   gameAddedDate?: string
@@ -168,44 +197,6 @@ export interface ProfileComparison {
   sharedGameCount: number
 }
 
-export type ChallengeMetric =
-  | 'GAMES_FINISHED'
-  | 'DISTINCT_GAMES_PLAYED'
-  | 'DAYS_PLAYED'
-  | 'BACKLOG_CLEARED'
-
-export interface ChallengeStanding {
-  handle: string | null
-  displayName: string | null
-  profilePictureUrl: string | null
-  score: number
-  reachedTarget: boolean
-}
-
-export interface GroupChallenge {
-  id: number
-  name: string
-  /** Never an hours-based metric; see the backend enum for why. */
-  metric: ChallengeMetric
-  target: number | null
-  startsOn: string
-  endsOn: string
-  active: boolean
-  standings: ChallengeStanding[]
-}
-
-export interface Group {
-  id: number
-  name: string
-  slug: string
-  description: string | null
-  ownerHandle: string | null
-  memberCount: number
-  viewerIsMember: boolean
-  viewerIsOwner: boolean
-  challenges: GroupChallenge[]
-}
-
 export interface ActivityEvent {
   id: string
   actorHandle: string | null
@@ -252,7 +243,21 @@ export interface GameReview {
   language: string | null
   helpfulCount: number
   viewerFoundHelpful: boolean
-  isOwnReview: boolean
+  /** The viewer's own review - the one they can edit and delete. */
+  ownReview: boolean
+  createdAt: string
+  /** The conversation under the review, oldest first. Flat - replies are never replied to. */
+  replies: ReviewReply[]
+}
+
+export interface ReviewReply {
+  id: number
+  authorHandle: string | null
+  authorDisplayName: string | null
+  authorPictureUrl: string | null
+  body: string
+  /** True for the reply's author and nobody else - not even the author of the review. */
+  viewerCanDelete: boolean
   createdAt: string
 }
 
@@ -288,20 +293,33 @@ export interface PublicProfile {
   followingCount: number
   viewerIsFollowing: boolean
   viewerRequestPending: boolean
-  isOwnProfile: boolean
+  ownProfile: boolean
   /** Null when the viewer may see the profile but not the library behind it. */
   library: ProfileLibrary | null
 }
 
-/** One row of a user search result - just enough to render the row and its follow button. */
-export interface ProfileSearchResult {
-  handle: string
+/**
+ * One row in a list of people - a search result, a follower, someone being followed.
+ *
+ * Carries the viewer's own relationship to that person, so a follow button in a row starts
+ * in the right state instead of defaulting to "Follow" for someone already followed.
+ */
+export interface ProfileSummary {
+  /**
+   * Null for an account that has never claimed one.
+   *
+   * Such a person can still follow others and so still turns up in these lists, but has no
+   * address - nothing to link to, and nothing the follow endpoints can be keyed by.
+   */
+  handle: string | null
   displayName: string | null
   profilePictureUrl: string | null
   followerCount: number
   followingCount: number
   viewerIsFollowing: boolean
   viewerRequestPending: boolean
+  /** The viewer's own row, which gets no follow button - you cannot follow yourself. */
+  ownProfile: boolean
 }
 
 export interface FollowState {
@@ -321,6 +339,41 @@ export interface FollowPerson {
   createdAt: string
 }
 
+/** Kinds of thing the server records against an account. */
+export type ServerNotificationType =
+  | 'FOLLOW_REQUEST'
+  | 'FOLLOW_ACCEPTED'
+  | 'NEW_FOLLOWER'
+  | 'REVIEW_REPLY'
+  | 'REVIEW_HELPFUL'
+
+/**
+ * One thing that happened to the viewer.
+ *
+ * Carries no message: the wording lives in the translation files, so a notification from
+ * last month still reads in whatever language is selected today.
+ */
+export interface ServerNotification {
+  id: number
+  type: ServerNotificationType
+  actorHandle: string | null
+  actorDisplayName: string | null
+  actorPictureUrl: string | null
+  gameId: number | null
+  /** IGDB's id, which is the only address a catalog page has. */
+  gameExternalId: number | null
+  gameName: string | null
+  reviewId: number | null
+  read: boolean
+  createdAt: string
+}
+
+export interface NotificationFeed {
+  notifications: ServerNotification[]
+  /** Counted server-side, so it can exceed the length of the capped list above. */
+  unreadCount: number
+}
+
 /** Who may see part of a profile. Health data is never shareable and has no setting. */
 export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
 
@@ -331,6 +384,8 @@ export interface ProfileSettings {
   bio: string | null
   profileVisibility: Visibility
   libraryVisibility: Visibility
+  /** Read-only here: the picture is changed through the avatar upload endpoint. */
+  profilePictureUrl: string | null
 }
 
 export interface TrendStats {

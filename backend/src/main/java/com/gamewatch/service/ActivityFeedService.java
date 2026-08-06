@@ -29,7 +29,16 @@ public class ActivityFeedService {
     private final FollowService followService;
 
     /**
-     * What the people this viewer follows have been doing.
+     * Who the feed should cover: everyone the viewer follows, or just the viewer.
+     */
+    public enum FeedScope {
+        FOLLOWING,
+        SELF
+    }
+
+    /**
+     * What the people this viewer follows have been doing - or, in {@link FeedScope#SELF}
+     * mode, what the viewer themself has been doing.
      *
      * Events are derived from playthrough state rather than written to a feed table. A
      * stored feed would need updating on every timer action and then reconciling with
@@ -37,20 +46,15 @@ public class ActivityFeedService {
      * or made private simply stops appearing, with nothing to clean up.
      */
     @Transactional(readOnly = true)
-    public List<ActivityEventDto> getFeed(User viewer, Integer limit) {
-        List<User> followed = followRepository.findAcceptedFollowing(viewer.getId()).stream()
-            .map(Follow::getFollowee)
-            // Someone can restrict their library after you started following them, so the
-            // visibility check happens on read rather than being trusted from the follow.
-            .filter(owner -> followService.canView(viewer, owner, owner.getLibraryVisibility()))
-            .collect(Collectors.toList());
+    public List<ActivityEventDto> getFeed(User viewer, Integer limit, FeedScope scope) {
+        List<User> actors = resolveActors(viewer, scope != null ? scope : FeedScope.FOLLOWING);
 
-        if (followed.isEmpty()) {
+        if (actors.isEmpty()) {
             return List.of();
         }
 
         List<ActivityEventDto> events = new ArrayList<>();
-        for (User actor : followed) {
+        for (User actor : actors) {
             for (Playthrough playthrough : playthroughRepository
                     .findByUserIdOrderByCreatedAtDesc(actor.getId())) {
                 events.addAll(eventsFor(actor, playthrough));
@@ -60,6 +64,19 @@ public class ActivityFeedService {
         return events.stream()
             .sorted(Comparator.comparing(ActivityEventDto::getOccurredAt).reversed())
             .limit(limit != null && limit > 0 ? limit : DEFAULT_LIMIT)
+            .collect(Collectors.toList());
+    }
+
+    private List<User> resolveActors(User viewer, FeedScope scope) {
+        if (scope == FeedScope.SELF) {
+            return List.of(viewer);
+        }
+
+        return followRepository.findAcceptedFollowing(viewer.getId()).stream()
+            .map(Follow::getFollowee)
+            // Someone can restrict their library after you started following them, so the
+            // visibility check happens on read rather than being trusted from the follow.
+            .filter(owner -> followService.canView(viewer, owner, owner.getLibraryVisibility()))
             .collect(Collectors.toList());
     }
 

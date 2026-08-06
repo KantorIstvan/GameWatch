@@ -2,8 +2,25 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Game } from '../types'
 
+/**
+ * Only the metadata fields, so this renders equally for a library game and for a catalog
+ * game that has no row here yet (whose id is null and so is not a full {@link Game}).
+ */
+type GameMetadata = Pick<
+  Game,
+  | 'releaseDate'
+  | 'esrbRating'
+  | 'genres'
+  | 'tags'
+  | 'platforms'
+  | 'developers'
+  | 'publishers'
+  | 'website'
+  | 'alternativeNames'
+>
+
 interface GameDetailsProps {
-  game: Game
+  game: GameMetadata
   t: any
 }
 

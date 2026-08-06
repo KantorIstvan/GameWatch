@@ -1,16 +1,11 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Smile, PersonStanding, MoonStar, TrendingUp, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import CalHeatmap from 'cal-heatmap'
-import 'cal-heatmap/cal-heatmap.css'
-import Tooltip from 'cal-heatmap/plugins/Tooltip'
-import LegendLite from 'cal-heatmap/plugins/LegendLite'
 import healthApi, { HealthDashboard } from '../services/healthApi'
 import { useAuthContext } from '../contexts/AuthContext'
-import { useTheme } from '../contexts/ThemeContext'
 import Loading from '../components/Loading'
-import { useWeekStart } from '../contexts/WeekStartContext'
 import { useTimeFormat } from '../contexts/TimeFormatContext'
+import CalendarHeatmap, { CalendarHeatmapColorScale } from '../components/charts/CalendarHeatmap'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -41,18 +36,33 @@ function formatDuration(seconds: number): string {
   return `${secs}s`
 }
 
+// Red-to-green score gradient, built entirely from the app's status tokens (never a
+// standalone hardcoded ramp) via color-mix blends between the danger/warning/success
+// primitives - the same three hues getScoreColor above uses for the score readouts
+// elsewhere on this page, just carried through as a smooth 6-step threshold scale.
+function useHealthHeatmapColorScale(): CalendarHeatmapColorScale {
+  return useMemo(() => ({
+    domain: [1, 21, 41, 61, 81],
+    range: [
+      'var(--color-border)',
+      'var(--danger-500)',
+      'color-mix(in srgb, var(--danger-500) 50%, var(--warning-500) 50%)',
+      'var(--warning-500)',
+      'color-mix(in srgb, var(--warning-500) 40%, var(--success-500) 60%)',
+      'var(--success-500)',
+    ],
+  }), [])
+}
+
 export default function Health() {
-  const { mode } = useTheme()
   const { t } = useTranslation()
   const { isAuthReady, isAuthenticated } = useAuthContext()
-  const { getFirstDayNumber } = useWeekStart()
   const { timeFormat } = useTimeFormat()
   const [dashboard, setDashboard] = useState<HealthDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [heatmapYear, setHeatmapYear] = useState(new Date().getFullYear())
   const [heatmapData, setHeatmapData] = useState<Record<string, number> | null>(null)
-  const calHeatmapRef = useRef<HTMLDivElement>(null)
-  const calInstanceRef = useRef<CalHeatmap | null>(null)
+  const heatmapColorScale = useHealthHeatmapColorScale()
 
   useEffect(() => {
     if (isAuthReady && isAuthenticated) {
@@ -66,21 +76,6 @@ export default function Health() {
     }
   }, [isAuthReady, isAuthenticated, heatmapYear])
 
-  useEffect(() => {
-    if (heatmapData && calHeatmapRef.current) {
-      initializeHeatmap()
-    }
-
-    return () => {
-      if (calInstanceRef.current) {
-        calInstanceRef.current.destroy()
-      }
-    }
-    // `loading` is included so this still runs once the heatmap container mounts,
-    // in case the heatmap request resolves before the (independent) dashboard request.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [heatmapData, mode, loading])
-
   const loadHeatmap = async (year: number) => {
     try {
       const response = await healthApi.getYearlyHeatmap(year)
@@ -90,108 +85,17 @@ export default function Health() {
     }
   }
 
-  const initializeHeatmap = () => {
-    if (!calHeatmapRef.current || !heatmapData) return
-
-    if (calInstanceRef.current) {
-      calInstanceRef.current.destroy()
-    }
-
-    const heatmapPoints = Object.entries(heatmapData).map(([dateStr, score]) => {
-      const [year, month, day] = dateStr.split('-').map(Number)
-      const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
-      const timestamp = date.getTime()
-      return { date: timestamp, value: score }
+  // Memoized so a fresh function identity on every render doesn't retrigger
+  // CalendarHeatmap's paint effect (it re-runs whenever `tooltipText` changes by reference).
+  const heatmapTooltipText = useCallback((timestamp: number, value: number | null) => {
+    const date = new Date(timestamp)
+    const formattedDate = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     })
-
-    const isDark = mode === 'dark'
-
-    const cal = new CalHeatmap()
-    calInstanceRef.current = cal
-
-    const startDate = new Date(heatmapYear, 0, 1, 12, 0, 0)
-
-    cal.paint({
-      itemSelector: calHeatmapRef.current,
-      data: {
-        source: heatmapPoints,
-        x: 'date',
-        y: (d: any) => d.value,
-      },
-      date: {
-        start: startDate,
-        locale: { weekStart: getFirstDayNumber() }
-      },
-      range: 12,
-      // cal-heatmap animates its SVG width/height attributes in from 0 by default
-      // (200ms). Since the container has no `viewBox` until paint() resolves, the
-      // browser recomputes CSS `h-auto` height on every frame of that transition,
-      // producing a visible "small, framed" heatmap that pops to full size. Disabling
-      // it removes the pop; the viewBox swap below still gives a smooth CSS transition.
-      animationDuration: 0,
-      scale: {
-        color: {
-          type: 'threshold',
-          range: [
-            isDark ? '#2a2a2a' : '#f0f0f0',
-            '#ef5350',
-            '#ff9800',
-            '#ffeb3b',
-            '#81c784',
-            '#4caf50',
-          ],
-          domain: [1, 21, 41, 61, 81],
-        },
-      },
-      domain: {
-        type: 'month',
-        gutter: 6,
-        label: {
-          text: 'MMM',
-          textAlign: 'start',
-          position: 'top',
-        },
-      },
-      subDomain: {
-        type: 'day',
-        radius: 3,
-        width: 11,
-        height: 11,
-        gutter: 3,
-      },
-    }, [
-      [
-        Tooltip,
-        {
-          text: (timestamp: number, value: number | null) => {
-            const date = new Date(timestamp)
-            const formattedDate = date.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })
-            return `${formattedDate}: ${value !== null && value !== undefined ? `${t('health.scoreLabel')} ${value}` : t('health.noDataShort')}`
-          },
-        },
-      ],
-      [
-        LegendLite,
-        {
-          itemSelector: '#legend',
-          label: t('health.legend'),
-        },
-      ],
-    ]).then(() => {
-      const svg = calHeatmapRef.current?.querySelector('svg')
-      const width = svg?.getAttribute('width')
-      const height = svg?.getAttribute('height')
-      if (svg && width && height) {
-        svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-        svg.removeAttribute('width')
-        svg.removeAttribute('height')
-      }
-    })
-  }
+    return `${formattedDate}: ${value !== null && value !== undefined ? `${t('health.scoreLabel')} ${value}` : t('health.noDataShort')}`
+  }, [t])
 
   const loadDashboard = async () => {
     try {
@@ -281,9 +185,7 @@ export default function Health() {
         </div>
       </div>
 
-      <div
-        className={`${cardClass} mb-6 [&_.ch-domain-text]:fill-text-secondary [&_.ch-domain-text]:text-xs [&_.ch-domain-text]:font-semibold [&_.ch-domain-text]:uppercase [&_.ch-plugin-legend-lite]:fill-text-secondary [&_.ch-subdomain-bg]:fill-surface`}
-      >
+      <div className={`${cardClass} mb-6`}>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <p className="text-h4 font-semibold">{t('health.yearOverview')}</p>
           <Select value={String(heatmapYear)} onValueChange={(v) => setHeatmapYear(Number(v))}>
@@ -297,13 +199,15 @@ export default function Health() {
             </SelectContent>
           </Select>
         </div>
-        <div className="-mx-8 overflow-x-auto px-8 pb-1 md:mx-0 md:px-0 md:pb-0">
-          <div
-            ref={calHeatmapRef}
-            className="w-187.5 [&_.ch-container]:w-full [&_svg]:h-auto [&_svg]:w-187.5 md:w-full md:[&_svg]:w-full"
+        {heatmapData && (
+          <CalendarHeatmap
+            data={heatmapData}
+            startDate={new Date(heatmapYear, 0, 1)}
+            colorScale={heatmapColorScale}
+            tooltipText={heatmapTooltipText}
+            legendLabel={t('health.legend')}
           />
-        </div>
-        <div id="legend" className="mt-2 flex flex-wrap gap-2" />
+        )}
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">

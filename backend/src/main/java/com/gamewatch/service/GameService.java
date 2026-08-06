@@ -2,6 +2,7 @@ package com.gamewatch.service;
 
 import com.gamewatch.dto.CreateGameRequest;
 import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameSearchResultDto;
 import com.gamewatch.dto.GameStatisticsDto;
 import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
@@ -39,6 +40,7 @@ public class GameService {
     private final PlaythroughRepository playthroughRepository;
     private final SessionHistoryRepository sessionHistoryRepository;
     private final PlaythroughService playthroughService;
+    private final IgdbApiService igdbApiService;
 
     @Transactional
     public GameDto createGame(CreateGameRequest request, User user) {
@@ -116,30 +118,71 @@ public class GameService {
     }
 
     /**
-     * The full shared catalogue, not scoped to any one user's library.
+     * A game's page in the catalog, addressed by its IGDB id rather than a row id.
      *
-     * Backs the community-facing Catalog page: every game anyone has ever added, together
-     * with the cached community rating aggregate that lives on the row already (see
-     * {@link GameRatingService#recomputeAggregate}), so listing the catalogue is a single
-     * table scan rather than N calls into the rating service.
+     * The catalog searches all of IGDB, so most games opened from it have never been added
+     * by anyone and have no row here at all. Those still have a page - built straight from
+     * IGDB, with a null id and no community figures, because there is nothing to have an
+     * opinion about a game nobody has touched yet. A catalogued game is served from its
+     * row, which was populated from the same IGDB fields when it was created.
      */
     @Transactional(readOnly = true)
-    public List<GameDto> getCatalogGames() {
-        return gameRepository.findAll().stream()
+    public GameDto getCatalogGameByExternalId(Integer externalId) {
+        return gameRepository.findFirstByExternalId(externalId)
             .map(this::mapToCatalogDto)
-            .collect(Collectors.toList());
+            .orElseGet(() -> {
+                GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
+                if (details == null) {
+                    throw new IllegalArgumentException("Game not found");
+                }
+                return mapExternalToCatalogDto(details);
+            });
     }
 
     /**
-     * A single catalogue game, for the Catalog's own detail page. Unlike {@link
-     * #getGameById}, this does not require the viewer to have the game in their library -
-     * the catalogue and its community data (ratings, reviews) are public to any signed-in
-     * user, only a personal library entry is private.
+     * The catalog row for a game, created from IGDB if this is the first time anyone has
+     * had anything to say about it.
+     *
+     * Called on the way into a rating or a review, not on the way into a page: the
+     * catalogue would otherwise fill up with rows for every game anyone ever glanced at.
+     * Unlike {@link #createGame} this links the game to nobody - having an opinion about a
+     * game is not the same as putting it in your library.
      */
-    @Transactional(readOnly = true)
-    public GameDto getCatalogGameById(Long id) {
-        Game game = gameRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Game not found"));
+    @Transactional
+    public GameDto resolveCatalogGame(Integer externalId) {
+        Optional<Game> catalogued = gameRepository.findFirstByExternalId(externalId);
+        if (catalogued.isPresent()) {
+            return mapToCatalogDto(catalogued.get());
+        }
+
+        GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
+        if (details == null) {
+            throw new IllegalArgumentException("Game not found");
+        }
+
+        Game game = gameRepository.save(Game.builder()
+            .name(details.getName())
+            .bannerImageUrl(details.getBannerImageUrl())
+            .description(details.getDescription())
+            .externalId(details.getId())
+            .releaseDate(details.getReleaseDate())
+            .rating(details.getRating())
+            .ratingsCount(details.getRatingsCount())
+            .genres(details.getGenres())
+            .platforms(details.getPlatforms())
+            .developers(details.getDevelopers())
+            .publishers(details.getPublishers())
+            .tags(details.getTags())
+            .slug(details.getSlug())
+            .website(details.getWebsite())
+            .averageCompletionSeconds(details.getAverageCompletionSeconds())
+            .esrbRating(details.getEsrbRating())
+            .alternativeNames(details.getAlternativeNames())
+            .dominantColor1(details.getDominantColor1())
+            .dominantColor2(details.getDominantColor2())
+            .build());
+
+        log.info("Catalogued game {} ({}) on first community interaction", game.getName(), externalId);
         return mapToCatalogDto(game);
     }
 
@@ -148,6 +191,36 @@ public class GameService {
         dto.setCommunityRatingScore(game.getBayesianScore());
         dto.setCommunityRatingCount(game.getRatingCount());
         return dto;
+    }
+
+    /**
+     * A game that exists on IGDB but not here. The null id is what tells the caller that,
+     * and a zero rating count keeps "nobody has rated this" distinct from "no data".
+     */
+    private GameDto mapExternalToCatalogDto(GameSearchResultDto details) {
+        return GameDto.builder()
+            .id(null)
+            .name(details.getName())
+            .bannerImageUrl(details.getBannerImageUrl())
+            .description(details.getDescription())
+            .externalId(details.getId())
+            .releaseDate(details.getReleaseDate())
+            .rating(details.getRating())
+            .ratingsCount(details.getRatingsCount())
+            .genres(details.getGenres())
+            .platforms(details.getPlatforms())
+            .developers(details.getDevelopers())
+            .publishers(details.getPublishers())
+            .tags(details.getTags())
+            .slug(details.getSlug())
+            .website(details.getWebsite())
+            .averageCompletionSeconds(details.getAverageCompletionSeconds())
+            .esrbRating(details.getEsrbRating())
+            .alternativeNames(details.getAlternativeNames())
+            .dominantColor1(details.getDominantColor1())
+            .dominantColor2(details.getDominantColor2())
+            .communityRatingCount(0)
+            .build();
     }
 
     @Transactional(readOnly = true)
@@ -340,6 +413,7 @@ public class GameService {
         if (playthroughs.isEmpty()) {
             return GameStatisticsDto.builder()
                 .gameId(game.getId())
+                .externalId(game.getExternalId())
                 .gameName(game.getName())
                 .gameBannerImageUrl(game.getBannerImageUrl())
                 .gameAddedDate(addedToLibraryDate)
@@ -440,6 +514,7 @@ public class GameService {
         
         GameStatisticsDto result = GameStatisticsDto.builder()
             .gameId(game.getId())
+            .externalId(game.getExternalId())
             .gameName(game.getName())
             .gameBannerImageUrl(game.getBannerImageUrl())
             .gameAddedDate(addedToLibraryDate)
