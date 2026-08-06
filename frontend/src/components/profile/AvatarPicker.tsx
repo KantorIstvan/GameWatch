@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { userApi } from '../../services/api'
-import { toSquareAvatar } from '../../lib/image'
+import AvatarCropDialog from './AvatarCropDialog'
 
 interface AvatarPickerProps {
   value: string | null
@@ -25,22 +25,33 @@ function AvatarPicker({ value, fallback, onChange }: AvatarPickerProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  // The picked-but-not-yet-cropped file. Non-null is what opens AvatarCropDialog - see
+  // its `open` prop, which is driven straight off this rather than a separate flag.
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
 
-  const handleFile = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]
-      // Lets the same file be picked twice in a row, which otherwise fires no change event.
-      event.target.value = ''
-      if (!file) return
+  const handleFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    // Lets the same file be picked twice in a row, which otherwise fires no change event.
+    event.target.value = ''
+    if (!file) return
+    setPendingFile(file)
+  }, [])
 
+  const handleCropCancel = useCallback(() => setPendingFile(null), [])
+
+  const handleCropConfirm = useCallback(
+    async (image: Blob) => {
       setBusy(true)
       try {
-        const image = await toSquareAvatar(file)
         const response = await userApi.uploadAvatar(image)
         onChange(response.data.profilePictureUrl)
         toast.success(t('settings.profile.pictureSaved'))
+        // Only close on success - on failure the crop dialog stays open (see its own
+        // catch) so the person can retry without re-picking and re-cropping the file.
+        setPendingFile(null)
       } catch (err: any) {
         toast.error(err.response?.data?.message || t('settings.profile.pictureFailed'))
+        throw err
       } finally {
         setBusy(false)
       }
@@ -105,6 +116,8 @@ function AvatarPicker({ value, fallback, onChange }: AvatarPickerProps) {
         className="hidden"
         aria-label={t('settings.profile.changePicture')}
       />
+
+      <AvatarCropDialog file={pendingFile} onCancel={handleCropCancel} onConfirm={handleCropConfirm} />
     </div>
   )
 }
