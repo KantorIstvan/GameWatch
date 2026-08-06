@@ -13,6 +13,7 @@ public class ProfileSettingsDto {
     private String bio;
     private Visibility profileVisibility;
     private Visibility libraryVisibility;
+    private Visibility wishlistVisibility;
 
     /**
      * Read-only here, so the edit form can show what is currently set.

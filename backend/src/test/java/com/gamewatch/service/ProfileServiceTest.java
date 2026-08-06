@@ -1,6 +1,7 @@
 package com.gamewatch.service;
 
 import com.gamewatch.dto.PublicProfileDto;
+import com.gamewatch.dto.WishlistEntryDto;
 import com.gamewatch.entity.Follow;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
@@ -43,6 +44,9 @@ class ProfileServiceTest {
     @Mock
     private FollowService followService;
 
+    @Mock
+    private WishlistService wishlistService;
+
     @InjectMocks
     private ProfileService profileService;
 
@@ -58,6 +62,10 @@ class ProfileServiceTest {
             .displayName("The Owner").timezone("UTC")
             .createdAt(Instant.parse("2026-02-01T00:00:00Z"))
             .profileVisibility(Visibility.PUBLIC).libraryVisibility(Visibility.PUBLIC).build();
+        // Both default to PRIVATE (see User.wishlistVisibility) and most tests here are not
+        // about the wishlist at all, so it is stubbed once, leniently, rather than in every
+        // test that happens to reach getProfile/getOwnProfile.
+        lenient().when(wishlistService.getWishlist(any())).thenReturn(List.of());
     }
 
     @Test
@@ -96,6 +104,35 @@ class ProfileServiceTest {
 
         assertThat(profile.getHandle()).isEqualTo("owner");
         assertThat(profile.getLibrary()).isNull();
+    }
+
+    @Test
+    void aVisibleProfileWithAHiddenWishlistOmitsItEntirely() {
+        // Same reasoning as the library: null rather than an empty list, so "not shared"
+        // stays distinguishable from "shared, but empty".
+        owner.setWishlistVisibility(Visibility.FOLLOWERS);
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(viewer, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(followService.canView(viewer, owner, Visibility.FOLLOWERS)).thenReturn(false);
+        lenient().when(followRepository.findByFollowerAndFollowee(any(), any())).thenReturn(Optional.empty());
+
+        PublicProfileDto profile = profileService.getProfile(viewer, "owner");
+
+        assertThat(profile.getWishlist()).isNull();
+    }
+
+    @Test
+    void aVisibleWishlistIsPopulatedFromWishlistService() {
+        owner.setWishlistVisibility(Visibility.PUBLIC);
+        WishlistEntryDto entry = WishlistEntryDto.builder().gameId(9L).gameName("Wanted Game").build();
+        when(userRepository.findByHandleIgnoreCase("owner")).thenReturn(Optional.of(owner));
+        when(followService.canView(viewer, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(wishlistService.getWishlist(owner)).thenReturn(List.of(entry));
+        lenient().when(followRepository.findByFollowerAndFollowee(any(), any())).thenReturn(Optional.empty());
+
+        PublicProfileDto profile = profileService.getProfile(viewer, "owner");
+
+        assertThat(profile.getWishlist()).containsExactly(entry);
     }
 
     @Test

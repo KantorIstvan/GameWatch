@@ -57,6 +57,11 @@ public class User {
     @Builder.Default
     private Visibility libraryVisibility = Visibility.PRIVATE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "wishlist_visibility", nullable = false, length = 20)
+    @Builder.Default
+    private Visibility wishlistVisibility = Visibility.PRIVATE;
+
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
