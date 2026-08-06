@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import type { ProfileSettings } from '../types'
+import type { OnboardingRequest, ProfileSettings } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -104,6 +104,9 @@ export const userApi = {
   updateTimezone: (timezone: string) => apiClient.put('/users/me/timezone', { timezone }),
   updateFirstDayOfWeek: (firstDayOfWeek: 'MONDAY' | 'SUNDAY') => 
     apiClient.put('/users/me/first-day-of-week', { firstDayOfWeek }),
+  getOnboardingStatus: () => apiClient.get('/users/me/onboarding'),
+  completeOnboarding: (request: OnboardingRequest) =>
+    apiClient.post('/users/me/onboarding', request),
   getProfileSettings: () => apiClient.get('/users/me/profile'),
   updateProfileSettings: (settings: ProfileSettings) =>
     apiClient.put('/users/me/profile', settings),
@@ -132,6 +135,10 @@ export const communityApi = {
   getCommunityStats: (gameId: number) => apiClient.get(`/games/${gameId}/community`),
 }
 
+export const timeToBeatApi = {
+  getTimeToBeat: (gameId: number) => apiClient.get(`/games/${gameId}/time-to-beat`),
+}
+
 export const reviewsApi = {
   getReviews: (gameId: number, sort: string, language?: string) =>
     apiClient.get(`/games/${gameId}/reviews`, { params: { sort, language } }),
@@ -153,7 +160,6 @@ export const profilesApi = {
   // handle still has a profile page, and that page is where the handle gets claimed.
   getMyProfile: () => apiClient.get('/profiles/me'),
   search: (query: string) => apiClient.get('/profiles/search', { params: { query } }),
-  compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
   getFollowers: (handle: string) => apiClient.get(`/profiles/${handle}/followers`),
   getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
   getLibrary: (handle: string) => apiClient.get(`/profiles/${handle}/library`),

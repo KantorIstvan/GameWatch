@@ -170,33 +170,6 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
-export interface ComparisonSide {
-  handle: string | null
-  displayName: string | null
-  profilePictureUrl: string | null
-  totalPlaytimeSeconds: number
-  gamesInLibrary: number
-  gamesCompleted: number
-  totalSessions: number
-}
-
-export interface SharedGame {
-  gameId: number
-  gameName: string
-  bannerImageUrl: string | null
-  yourSeconds: number
-  theirSeconds: number
-  youFinished: boolean
-  theyFinished: boolean
-}
-
-export interface ProfileComparison {
-  you: ComparisonSide
-  them: ComparisonSide
-  sharedGames: SharedGame[]
-  sharedGameCount: number
-}
-
 export interface ActivityEvent {
   id: string
   actorHandle: string | null
@@ -227,6 +200,27 @@ export interface GameCommunity {
   hasEnoughDataToAggregate: boolean
   minimumPlayersRequired: number
   rating: GameRatingSummary
+}
+
+/** One playthrough category's community-measured time to beat - see {@link GameTimeToBeat}. */
+export interface TimeToBeatCategory {
+  /** Null until enough distinct players have logged one for an average to describe a group. */
+  averageSeconds: number | null
+  sampleSize: number
+  playerCount: number
+  hasEnoughData: boolean
+  minimumPlayersRequired: number
+}
+
+/**
+ * The community's own measured time to beat for a game, broken out by playthrough type -
+ * this app's replacement for IGDB's single self-reported average.
+ */
+export interface GameTimeToBeat {
+  gameId: number
+  story: TimeToBeatCategory
+  hundredPercent: TimeToBeatCategory
+  speedrun: TimeToBeatCategory
 }
 
 export interface GameReview {
@@ -322,12 +316,25 @@ export interface WishlistEntry {
   addedAt: string
 }
 
+/**
+ * One link on a profile, as far as either side of the API needs to know about it.
+ *
+ * Carries only the URL - which platform it is (X, GitHub, a plain website...) is worked
+ * out client-side from the host by `lib/socialLinks.ts`, not decided or stored
+ * server-side.
+ */
+export interface ProfileLink {
+  url: string
+}
+
 export interface PublicProfile {
   handle: string
   displayName: string | null
   bio: string | null
   profilePictureUrl: string | null
   joinedDate: string
+  /** Part of identity, like the avatar - visible whenever the profile itself is. */
+  links: ProfileLink[]
   followerCount: number
   followingCount: number
   viewerIsFollowing: boolean
@@ -418,6 +425,28 @@ export interface NotificationFeed {
 /** Who may see part of a profile. Health data is never shareable and has no setting. */
 export type Visibility = 'PRIVATE' | 'FOLLOWERS' | 'PUBLIC'
 
+/**
+ * Whether the account has the identity the rest of the app assumes it has.
+ *
+ * `completed` is derived server-side from the two mandatory fields rather than stored as a
+ * flag, so it can never claim an account is ready when the fields say otherwise.
+ */
+export interface OnboardingStatus {
+  completed: boolean
+  /** Null until claimed. */
+  handle: string | null
+  displayName: string | null
+  /** A free handle to prefill the form with. Null once a handle is claimed. */
+  suggestedHandle: string | null
+  /** The Auth0 nickname - a prefill, never an identity. */
+  suggestedDisplayName: string | null
+}
+
+export interface OnboardingRequest {
+  handle: string
+  displayName: string
+}
+
 export interface ProfileSettings {
   /** Null until the user claims one. */
   handle: string | null
@@ -428,6 +457,8 @@ export interface ProfileSettings {
   wishlistVisibility: Visibility
   /** Read-only here: the picture is changed through the avatar upload endpoint. */
   profilePictureUrl: string | null
+  /** Sent and returned as the whole set, in display order - saving replaces all of it. */
+  links: ProfileLink[]
 }
 
 export interface TrendStats {

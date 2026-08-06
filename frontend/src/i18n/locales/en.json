@@ -7,6 +7,28 @@
     "login": "Log In",
     "logout": "Logout"
   },
+  "onboarding": {
+    "title": "Welcome to GameWatch",
+    "description": "Choose a handle and a display name to finish setting up your account.",
+    "handle": "Handle",
+    "handlePlaceholder": "yourname",
+    "handleHint": "Lowercase letters, numbers and underscores. 3-30 characters. This is how others find you.",
+    "handleAvailable": "Handle is available",
+    "handleTaken": "Handle is taken",
+    "handleErrors": {
+      "required": "Handle is required",
+      "tooShort": "Handle must be at least 3 characters",
+      "tooLong": "Handle must be at most 30 characters",
+      "charset": "Handle may only contain lowercase letters, numbers and underscores, and cannot start or end with an underscore"
+    },
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Your name",
+    "displayNameRequired": "Display name is required",
+    "displayNameTooLong": "Display name must be at most 50 characters",
+    "submit": "Continue",
+    "submitting": "Saving...",
+    "genericError": "Something went wrong. Please try again."
+  },
   "nav": {
     "timers": "Timers",
     "statistics": "Statistics",
@@ -78,6 +100,15 @@
       "displayName": "Display Name",
       "bio": "Bio",
       "bioCount": "{{count}}/300",
+      "links": {
+        "title": "Links",
+        "hint": "Up to {{max}} links to social profiles or a website. The platform is detected automatically.",
+        "placeholder": "https://...",
+        "urlLabel": "Link {{index}}",
+        "add": "Add link",
+        "remove": "Remove link",
+        "invalid": "One of your links doesn't look like a valid web address."
+      },
       "profileVisibility": "Profile Visibility",
       "libraryVisibility": "Library Visibility",
       "libraryClampHint": "Cannot be more visible than your profile.",
@@ -189,19 +220,6 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
-  "compare": {
-    "title": "Compare",
-    "unavailable": "That profile does not exist, or its library is not shared with you.",
-    "you": "You",
-    "totalPlaytime": "Total playtime",
-    "gamesInLibrary": "Games in library",
-    "gamesCompleted": "Games completed",
-    "totalSessions": "Sessions",
-    "sharedGames_one": "{{count}} game in common",
-    "sharedGames_other": "{{count}} games in common",
-    "noSharedGames": "You have not played any of the same games yet.",
-    "compareWith": "Compare"
-  },
   "feed": {
     "title": "Activity",
     "emptyTitle": "Nothing here yet",
@@ -229,7 +247,17 @@
     "dropRate": "Abandoned",
     "medianBeforeDropping": "Median time before abandoning",
     "vsTypical": "Measured here: {{measured}}. Commonly quoted: {{typical}}.",
-    "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person."
+    "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person.",
+    "noPlayersYet": "Nobody here has played this one yet. Measured times appear as soon as people do.",
+    "unavailable": "These figures could not be loaded right now."
+  },
+  "timeToBeat": {
+    "title": "Community time to beat",
+    "subtitle": "Averaged from everyone's own measured playthroughs, not a self-reported estimate.",
+    "sampleSize_one": "{{count}} playthrough",
+    "sampleSize_other": "{{count}} playthroughs",
+    "noneLogged": "Nobody has logged one of these yet.",
+    "notEnoughPlayers": "Needs at least {{count}} players before an average is shown."
   },
   "reviews": {
     "title": "Reviews",
@@ -300,6 +328,22 @@
     "following_one": "{{count}} following",
     "following_other": "{{count}} following",
     "joined": "Joined {{date}}",
+    "links": {
+      "visit": "Visit {{platform}}",
+      "platforms": {
+        "x": "X",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "twitch": "Twitch",
+        "steam": "Steam",
+        "discord": "Discord",
+        "github": "GitHub",
+        "reddit": "Reddit",
+        "bluesky": "Bluesky",
+        "website": "Website"
+      }
+    },
     "totalPlaytime": "Total Playtime",
     "gamesInLibrary": "Games",
     "gamesCompleted": "Completed",
@@ -330,6 +374,15 @@
     "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "followSearch": {
+      "followersPlaceholder": "Search followers",
+      "followingPlaceholder": "Search following",
+      "followersLabel": "Search followers by name or handle",
+      "followingLabel": "Search following by name or handle",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matches",
+      "noMatches": "Nobody in this list matches \"{{query}}\"."
+    },
     "noRatings": "No games rated yet.",
     "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",
@@ -730,7 +783,6 @@
     "searchPlaceholder": "Search for any game",
     "typeMore": "Keep typing - at least 2 characters.",
     "noResults": "No games found for \"{{query}}\".",
-    "averageCompletion": "Around {{time}} to beat",
     "recent": {
       "title": "Recently viewed",
       "clearAll": "Clear all",

@@ -8,6 +8,8 @@ import type { ProfileReview } from '../../types'
 
 interface RecentReviewsProps {
   reviews: ProfileReview[]
+  /** Lets the grid re-span this panel when it is the only one left on its row. */
+  className?: string
 }
 
 /**
@@ -19,7 +21,7 @@ interface RecentReviewsProps {
  * own page. The spoiler-hide interaction is kept, since it's the one behavior a review row
  * on this app is not itself without.
  */
-function RecentReviews({ reviews }: RecentReviewsProps) {
+function RecentReviews({ reviews, className }: RecentReviewsProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
@@ -29,7 +31,7 @@ function RecentReviews({ reviews }: RecentReviewsProps) {
   }
 
   return (
-    <section>
+    <section className={className}>
       <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.recentReviews')}</p>
       <ul className="flex flex-col gap-3">
         {reviews.map((review, index) => {

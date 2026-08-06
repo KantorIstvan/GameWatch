@@ -43,4 +43,30 @@ public interface PlaythroughRepository extends JpaRepository<Playthrough, Long> 
     @Query("SELECT p FROM Playthrough p WHERE p.game.id = :gameId AND p.user.id IN :userIds")
     List<Playthrough> findByGameIdAndUserIdIn(@Param("gameId") Long gameId,
                                               @Param("userIds") Collection<Long> userIds);
+
+    /**
+     * [playthroughType, sampleSize, playerCount, averageSeconds] rows, one per playthrough
+     * type with at least one qualifying completion - the community's own measured time to
+     * beat, broken out by Story / 100% / Speedrun / Casual.
+     *
+     * Aggregated by the database rather than loaded row-by-row into Java, so a game with
+     * thousands of completions costs one query here regardless of how many playthroughs
+     * exist for it.
+     *
+     * Only completed playthroughs count; still-active and dropped ones are not a "time to
+     * beat" for anything. Imported time is netted out the same way
+     * {@link com.gamewatch.entity.Playthrough#effectivePlaytimeSeconds()} does, so a
+     * playthrough that absorbed another one's timer via a one-time import is not counted
+     * twice; the inner CASE floors a hypothetical negative remainder at zero instead of
+     * letting it pull the average down.
+     */
+    @Query("SELECT p.playthroughType, COUNT(p), COUNT(DISTINCT p.user.id), AVG(" +
+        "CASE WHEN p.importedFromPlaythrough IS NOT NULL " +
+        "THEN CASE WHEN p.durationSeconds - COALESCE(p.importedDurationSeconds, 0) > 0 " +
+        "THEN p.durationSeconds - COALESCE(p.importedDurationSeconds, 0) ELSE 0 END " +
+        "ELSE p.durationSeconds END) " +
+        "FROM Playthrough p " +
+        "WHERE p.game.id = :gameId AND p.isCompleted = true AND p.durationSeconds > 0 " +
+        "GROUP BY p.playthroughType")
+    List<Object[]> findCompletionStatsByGameId(@Param("gameId") Long gameId);
 }

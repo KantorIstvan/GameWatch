@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { GitCompare, SquarePen } from 'lucide-react'
+import { SquarePen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -54,10 +54,13 @@ function Profile() {
   if (loading) {
     return (
       <div className="flex flex-col gap-6">
-        <Skeleton className="h-30 w-full bg-border" />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Skeleton className="h-30 w-full rounded-xl bg-border" />
+        {/* Same hero-plus-four shape the overview grid settles into, so the page does not
+            reflow into a different number of rows the moment the data lands. */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
+          <Skeleton className="col-span-2 h-28 rounded-xl bg-border md:row-span-2 md:h-auto" />
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28 bg-border" />
+            <Skeleton key={i} className="h-28 rounded-xl bg-border" />
           ))}
         </div>
       </div>
@@ -86,28 +89,16 @@ function Profile() {
             </Link>
           </Button>
         ) : (
-          <>
-            {/* Only offered when the library is actually visible - the comparison is gated
-                on the same thing, so linking to it otherwise would dead-end. */}
-            {profile.library && (
-              <Button asChild variant="outline">
-                <Link to={`/u/${profile.handle}/compare`}>
-                  <GitCompare className="size-4" />
-                  {t('compare.compareWith')}
-                </Link>
-              </Button>
-            )}
-            <FollowButton
-              state={{
-                handle: profile.handle,
-                following: profile.viewerIsFollowing,
-                requestPending: profile.viewerRequestPending,
-                followerCount: profile.followerCount,
-                followingCount: profile.followingCount,
-              }}
-              onChange={handleFollowChange}
-            />
-          </>
+          <FollowButton
+            state={{
+              handle: profile.handle,
+              following: profile.viewerIsFollowing,
+              requestPending: profile.viewerRequestPending,
+              followerCount: profile.followerCount,
+              followingCount: profile.followingCount,
+            }}
+            onChange={handleFollowChange}
+          />
         )
       }
     />
