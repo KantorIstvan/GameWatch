@@ -101,9 +101,8 @@ class GameReviewServiceTest {
         stubWritableGame();
         when(gameReviewRepository.findByUserAndGame(author, game)).thenReturn(Optional.of(existing));
         when(gameReviewRepository.save(any(GameReview.class))).thenAnswer(i -> i.getArgument(0));
-        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
-            .thenReturn(List.of());
+        when(gameRatingRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
+        when(playthroughRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
 
         gameReviewService.submitReview(author, 1L, request("A revised review, also long enough."));
 
@@ -137,9 +136,8 @@ class GameReviewServiceTest {
         when(reviewVoteRepository.countByReview(review)).thenReturn(0L);
         when(gameReviewRepository.save(any(GameReview.class))).thenAnswer(i -> i.getArgument(0));
         when(reviewVoteRepository.findVotedReviewIds(2L, List.of(5L))).thenReturn(Set.of());
-        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
-            .thenReturn(List.of());
+        when(gameRatingRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
+        when(playthroughRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
 
         GameReviewDto result = gameReviewService.toggleHelpful(voter, 5L);
 
@@ -162,9 +160,9 @@ class GameReviewServiceTest {
 
         when(gameReviewRepository.findMostHelpful(1L)).thenReturn(List.of(review));
         when(reviewVoteRepository.findVotedReviewIds(1L, List.of(5L))).thenReturn(Set.of());
-        when(gameRatingRepository.findByUserAndGame(author, game))
-            .thenReturn(Optional.of(GameRating.builder().score(9).build()));
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
+        when(gameRatingRepository.findByGameIdAndUserIdIn(1L, List.of(1L)))
+            .thenReturn(List.of(GameRating.builder().user(author).score(9).build()));
+        when(playthroughRepository.findByGameIdAndUserIdIn(1L, List.of(1L)))
             .thenReturn(List.of(finished));
 
         List<GameReviewDto> reviews = gameReviewService.getReviews(author, 1L, "helpful", null);
@@ -188,9 +186,8 @@ class GameReviewServiceTest {
 
         when(gameReviewRepository.findMostHelpful(1L)).thenReturn(List.of(english, hungarian));
         when(reviewVoteRepository.findVotedReviewIds(anyLong(), any())).thenReturn(Set.of());
-        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(anyLong(), anyLong()))
-            .thenReturn(List.of());
+        when(gameRatingRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
+        when(playthroughRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
 
         List<GameReviewDto> reviews = gameReviewService.getReviews(author, 1L, "helpful", "hu");
 
@@ -237,9 +234,8 @@ class GameReviewServiceTest {
 
         when(reviewReplyRepository.findById(7L)).thenReturn(Optional.of(reply));
         when(reviewVoteRepository.findVotedReviewIds(4L, List.of(5L))).thenReturn(Set.of());
-        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
-            .thenReturn(List.of());
+        when(gameRatingRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
+        when(playthroughRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
 
         gameReviewService.deleteReply(replier, 7L);
 
@@ -298,9 +294,8 @@ class GameReviewServiceTest {
         when(gameReviewRepository.findMostHelpful(1L)).thenReturn(List.of(review));
         when(reviewVoteRepository.findVotedReviewIds(1L, List.of(5L))).thenReturn(Set.of());
         when(reviewReplyRepository.findForReviews(List.of(5L))).thenReturn(List.of(reply));
-        when(gameRatingRepository.findByUserAndGame(any(), any())).thenReturn(Optional.empty());
-        when(playthroughRepository.findByUserIdAndGameIdOrderByCreatedAtDesc(1L, 1L))
-            .thenReturn(List.of());
+        when(gameRatingRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
+        when(playthroughRepository.findByGameIdAndUserIdIn(any(), any())).thenReturn(List.of());
 
         List<GameReviewDto> reviews = gameReviewService.getReviews(author, 1L, "helpful", null);
 
