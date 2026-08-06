@@ -229,7 +229,9 @@
     "dropRate": "Abandoned",
     "medianBeforeDropping": "Median time before abandoning",
     "vsTypical": "Measured here: {{measured}}. Commonly quoted: {{typical}}.",
-    "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person."
+    "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person.",
+    "noPlayersYet": "Nobody here has played this one yet. Measured times appear as soon as people do.",
+    "unavailable": "These figures could not be loaded right now."
   },
   "reviews": {
     "title": "Reviews",
