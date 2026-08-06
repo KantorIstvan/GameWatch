@@ -471,6 +471,14 @@ export interface DailyPlaytime {
   rollingAverageSeconds?: number | null
 }
 
+/** One game a profile owner has rated, and the score they gave it - a "Ratings" tab row. */
+export interface GameRatingEntry {
+  gameId: number
+  gameName: string
+  bannerImageUrl?: string
+  score: number
+}
+
 export interface GameRanking {
   gameId: number
   gameName: string

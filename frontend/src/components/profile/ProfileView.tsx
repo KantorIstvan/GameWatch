@@ -4,9 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProfileIdentity from './ProfileIdentity'
 import ProfileLibrarySummary from './ProfileLibrarySummary'
 import FollowListPanel from './FollowListPanel'
+import RatingsListPanel from './RatingsListPanel'
 import type { PublicProfile } from '../../types'
 
-type ProfileTab = 'overview' | 'followers' | 'following'
+type ProfileTab = 'overview' | 'ratings' | 'followers' | 'following'
 
 interface ProfileViewProps {
   profile: PublicProfile
@@ -41,6 +42,9 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           <TabsTrigger value="overview" className="min-h-11 px-3 sm:px-4">
             {t('profile.tabs.overview')}
           </TabsTrigger>
+          <TabsTrigger value="ratings" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
+            {t('profile.tabs.ratings')}
+          </TabsTrigger>
           <TabsTrigger value="followers" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
             {t('profile.tabs.followers')}
           </TabsTrigger>
@@ -56,10 +60,14 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           />
         </TabsContent>
 
-        {/* Both lists need a handle to fetch by, and an unclaimed profile has none - the
-            triggers above are disabled in that case, so neither can be reached. */}
+        {/* All three need a handle to fetch by, and an unclaimed profile has none - the
+            triggers above are disabled in that case, so none can be reached. */}
         {profile.handle && (
           <>
+            <TabsContent value="ratings">
+              <RatingsListPanel handle={profile.handle} />
+            </TabsContent>
+
             <TabsContent value="followers">
               {followersExtra}
               <FollowListPanel
