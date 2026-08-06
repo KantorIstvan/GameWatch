@@ -1,5 +1,6 @@
 package com.gamewatch.service;
 
+import com.gamewatch.dto.GameDto;
 import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
@@ -42,6 +43,7 @@ public class ProfileService {
     private final FollowRepository followRepository;
     private final FollowService followService;
     private final GameRatingRepository gameRatingRepository;
+    private final GameService gameService;
     private final GameReviewRepository gameReviewRepository;
 
     /**
@@ -131,6 +133,25 @@ public class ProfileService {
         return followRepository.findAcceptedFollowing(owner.getId()).stream()
             .map(follow -> toSummary(follow.getFollowee(), viewer))
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Every game in this profile's library, not just the top five {@link #buildLibrary}
+     * summarizes.
+     *
+     * Gated on library visibility specifically, not just profile visibility: a profile can
+     * be open while its library stays private, and this is the contents {@link #getProfile}
+     * withholds by returning a null library in that case. Reported as "not found" rather
+     * than "forbidden" for the same reason {@link #requireViewableProfile} does - it should
+     * not be possible to tell a hidden library apart from a profile that does not exist.
+     */
+    @Transactional(readOnly = true)
+    public List<GameDto> getLibraryGames(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        if (!followService.canView(viewer, owner, owner.getLibraryVisibility())) {
+            throw new IllegalArgumentException("Profile not found");
+        }
+        return gameService.getAllGames(owner);
     }
 
     /**

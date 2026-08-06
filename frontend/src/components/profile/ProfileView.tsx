@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProfileIdentity from './ProfileIdentity'
 import ProfileLibrarySummary from './ProfileLibrarySummary'
+import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListPanel from './FollowListPanel'
 import RatingsListPanel from './RatingsListPanel'
 import type { PublicProfile } from '../../types'
 
-type ProfileTab = 'overview' | 'ratings' | 'followers' | 'following'
+type ProfileTab = 'overview' | 'library' | 'ratings' | 'followers' | 'following'
 
 interface ProfileViewProps {
   profile: PublicProfile
@@ -42,6 +43,13 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           <TabsTrigger value="overview" className="min-h-11 px-3 sm:px-4">
             {t('profile.tabs.overview')}
           </TabsTrigger>
+          <TabsTrigger
+            value="library"
+            className="min-h-11 px-3 sm:px-4"
+            disabled={!profile.handle || !profile.library}
+          >
+            {t('profile.tabs.library')}
+          </TabsTrigger>
           <TabsTrigger value="ratings" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
             {t('profile.tabs.ratings')}
           </TabsTrigger>
@@ -60,10 +68,19 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           />
         </TabsContent>
 
-        {/* All three need a handle to fetch by, and an unclaimed profile has none - the
-            triggers above are disabled in that case, so none can be reached. */}
+        {/* All these need a handle to fetch by, and an unclaimed profile has none - the
+            triggers above are disabled in that case, so none can be reached. The library
+            tab additionally needs a null library (see the trigger above) - the profile
+            fetch already carries that visibility signal, so this reuses it instead of
+            firing a request just to learn the answer is no. */}
         {profile.handle && (
           <>
+            {profile.library && (
+              <TabsContent value="library">
+                <ProfileLibraryGrid handle={profile.handle} />
+              </TabsContent>
+            )}
+
             <TabsContent value="ratings">
               <RatingsListPanel handle={profile.handle} />
             </TabsContent>

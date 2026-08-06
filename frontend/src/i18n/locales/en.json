@@ -301,10 +301,12 @@
     "editProfile": "Edit profile",
     "tabs": {
       "overview": "Overview",
+      "library": "Library",
       "ratings": "Ratings",
       "followers": "Followers",
       "following": "Following"
     },
+    "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
     "noRatings": "No games rated yet.",
