@@ -2,6 +2,7 @@ package com.gamewatch.dto;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -55,5 +56,31 @@ public class PublicProfileDto {
 
         /** Score (1-10) to how many times this user has given it, for their own histogram. */
         private Map<Integer, Long> ratingDistribution;
+
+        /** This user's most recent written reviews, newest first. */
+        private List<ProfileReviewDto> recentReviews;
+    }
+
+    /**
+     * One review, as it appears on its author's own profile.
+     *
+     * A leaner shape than {@link GameReviewDto}: the author is implicitly whoever owns this
+     * profile, so the game being reviewed is the interesting subject here instead.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProfileReviewDto {
+        private Long gameId;
+        private String gameName;
+        private String gameBannerImageUrl;
+
+        /** The author's own score for this game, when they left one. */
+        private Integer score;
+
+        private String body;
+        private boolean containsSpoilers;
+        private Instant createdAt;
     }
 }
