@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Timer, Gamepad2, CircleCheck, CalendarDays, Star, Lock } from 'lucide-react'
 import StatCard from '../StatCard'
 import RecentReviews from './RecentReviews'
@@ -25,6 +26,7 @@ const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
  */
 function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummaryProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
 
   if (!library) {
     return (
@@ -114,13 +116,18 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
                 {library.topGames.map((game) => (
                   <li
                     key={game.gameId}
-                    className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
+                    onClick={game.externalId ? () => navigate(`/catalog/${game.externalId}`) : undefined}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl',
+                      game.externalId &&
+                        'cursor-pointer transition-colors duration-150 ease-standard hover:bg-surface'
+                    )}
                   >
                     {game.bannerImageUrl && (
                       <img
                         src={game.bannerImageUrl}
                         alt=""
-                        className="h-16 w-28 shrink-0 rounded-md bg-surface object-contain"
+                        className="h-24 w-16 shrink-0 rounded-md object-cover"
                         loading="lazy"
                       />
                     )}

@@ -76,6 +76,8 @@ public class PublicProfileDto {
     @AllArgsConstructor
     public static class ProfileReviewDto {
         private Long gameId;
+        /** IGDB's id - the catalog's address for this game, for linking out to it. */
+        private Integer gameExternalId;
         private String gameName;
         private String gameBannerImageUrl;
 

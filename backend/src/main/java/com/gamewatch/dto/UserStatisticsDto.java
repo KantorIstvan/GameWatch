@@ -158,6 +158,8 @@ public class UserStatisticsDto {
     @AllArgsConstructor
     public static class GameRankingDto {
         private Long gameId;
+        /** IGDB's id - the catalog's address for this game, for linking out to it. */
+        private Integer externalId;
         private String gameName;
         private String bannerImageUrl;
         private Long playtimeSeconds;
