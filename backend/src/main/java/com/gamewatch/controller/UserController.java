@@ -1,5 +1,7 @@
 package com.gamewatch.controller;
 
+import com.gamewatch.dto.OnboardingRequestDto;
+import com.gamewatch.dto.OnboardingStatusDto;
 import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.service.UserAvatarService;
@@ -53,6 +55,29 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
+    /**
+     * Whether this account still has to choose a handle and a display name, plus what to
+     * prefill the form with. The client blocks every other route on this answer, so it is
+     * the first call a freshly signed-in session makes.
+     */
+    @GetMapping("/me/onboarding")
+    public ResponseEntity<OnboardingStatusDto> getOnboardingStatus(Authentication authentication) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(userService.getOnboardingStatus(user));
+    }
+
+    /**
+     * Claims both mandatory fields at once. Validated here as well as in the form - the UI
+     * check is a convenience, this one is the rule.
+     */
+    @PostMapping("/me/onboarding")
+    public ResponseEntity<OnboardingStatusDto> completeOnboarding(
+            Authentication authentication,
+            @RequestBody OnboardingRequestDto request) {
+        User user = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(userService.completeOnboarding(user, request));
+    }
+
     @GetMapping("/me/profile")
     public ResponseEntity<ProfileSettingsDto> getProfileSettings(Authentication authentication) {
         User user = userService.getOrCreateUser(authentication);
@@ -89,9 +114,9 @@ public class UserController {
     }
 
     /**
-     * Lets the settings form say whether a handle is free before the user commits to it.
-     * Advisory only - the claim itself is still what decides, since another account can
-     * take the handle between this call and the save.
+     * Lets the onboarding and settings forms say whether a handle is free before the user
+     * commits to it. Advisory only - the claim itself is still what decides, since another
+     * account can take the handle between this call and the save.
      */
     @GetMapping("/me/handle-available")
     public ResponseEntity<Map<String, Boolean>> isHandleAvailable(

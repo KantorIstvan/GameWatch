@@ -1,5 +1,7 @@
 package com.gamewatch.service;
 
+import com.gamewatch.dto.OnboardingRequestDto;
+import com.gamewatch.dto.OnboardingStatusDto;
 import com.gamewatch.dto.ProfileSettingsDto;
 import com.gamewatch.entity.User;
 import com.gamewatch.repository.UserRepository;
@@ -20,6 +22,8 @@ import java.util.Optional;
 @Slf4j
 public class UserService {
 
+    private static final int DISPLAY_NAME_MAX_LENGTH = 50;
+
     private final UserRepository userRepository;
 
     @Transactional
@@ -37,21 +41,20 @@ public class UserService {
         
         try {
             log.info("Creating new user for auth0UserId: {}", auth0UserId);
+            // Deliberately no handle and no display name: both are chosen in onboarding,
+            // which the account is held in until it has them. Assigning a handle here
+            // would claim a name in the unique index that the person never agreed to, and
+            // would leave "has this account chosen an identity yet?" with no honest answer.
             User newUser = User.builder()
                 .auth0UserId(auth0UserId)
                 .email(email)
                 .username(username)
-                .handle(generateHandle(username, email))
                 .profilePictureUrl(pictureUrl)
                 .build();
             return userRepository.save(newUser);
         } catch (Exception e) {
-            // Two races end up here. The same account signing in twice at once is the
-            // common one, and the row the other request wrote is what we want. The other
-            // is two different accounts whose generated handles collided in the window
-            // between the availability check and the insert, which leaves nothing to
-            // return - but is self-correcting, because the winning handle is committed by
-            // then and the next attempt generates a different one.
+            // The same account signing in twice at once ends up here, and the row the
+            // other request wrote is what we want.
             log.debug("User creation failed for {}, re-reading", auth0UserId, e);
             return userRepository.findByAuth0UserId(auth0UserId)
                 .orElseThrow(() -> new RuntimeException("Failed to create or find user"));
@@ -59,18 +62,20 @@ public class UserService {
     }
 
     /**
-     * Picks the handle a brand new account starts life with.
+     * A free handle to offer as a starting point, never one that gets assigned.
      *
      * Nickname first, email local-part second: the nickname is the closest thing Auth0
      * gives us to a name the person chose. Both can be absent for some connections, in
      * which case {@link HandleGenerator} falls back to a generic base.
      *
-     * The uniqueness check races against concurrent sign-ups exactly as the settings form
-     * does, and loses the same way - the caller already re-reads the row when the insert
-     * violates a constraint.
+     * Advisory, like every availability answer here - another account can claim the
+     * suggestion between this call and the moment it is submitted, and the unique index is
+     * what actually decides.
      */
-    private String generateHandle(String username, String email) {
-        String source = username != null && !username.isBlank() ? username : email;
+    private String suggestHandle(User user) {
+        String source = user.getUsername() != null && !user.getUsername().isBlank()
+            ? user.getUsername()
+            : user.getEmail();
         return HandleGenerator.generateUnique(
             source,
             candidate -> userRepository.findByHandleIgnoreCase(candidate).isPresent());
@@ -111,6 +116,77 @@ public class UserService {
         return user;
     }
 
+    /**
+     * Whether an account has the identity the rest of the app assumes it has.
+     *
+     * Derived rather than flagged. Every social surface addresses people by handle and
+     * labels them by display name; an account missing either is one the app cannot render,
+     * so "is onboarding done?" and "are both fields set?" are the same question. A stored
+     * flag would be a second copy of that answer, and the moment the two disagree the flag
+     * is the one that is wrong.
+     *
+     * Accounts that predate onboarding satisfy this already - handles were backfilled in
+     * V40 - so nobody who has both fields is sent back through the form.
+     */
+    public static boolean isOnboardingComplete(User user) {
+        return hasText(user.getHandle()) && hasText(user.getDisplayName());
+    }
+
+    @Transactional(readOnly = true)
+    public OnboardingStatusDto getOnboardingStatus(User user) {
+        return mapToOnboardingStatus(user);
+    }
+
+    /**
+     * Claims the handle and display name a new account cannot function without.
+     *
+     * Separate from {@link #updateProfileSettings} because the shapes are different: that
+     * one patches whichever fields were sent, this one refuses to half-finish. Handle rules
+     * come from {@link HandleValidator}, the same ones the settings form is held to, so a
+     * name accepted here can never be one the settings form would have rejected.
+     *
+     * The uniqueness check races against concurrent claims exactly as the settings form
+     * does, and the unique index on LOWER(handle) is the real guarantee - the violation is
+     * translated back into the same message rather than surfacing as a 500.
+     */
+    @Transactional
+    public OnboardingStatusDto completeOnboarding(User user, OnboardingRequestDto request) {
+        String handle = HandleValidator.normalize(request.getHandle());
+        String rejection = HandleValidator.rejectionReason(handle);
+        if (rejection != null) {
+            throw new IllegalArgumentException(rejection);
+        }
+
+        String displayName = request.getDisplayName() == null ? "" : request.getDisplayName().trim();
+        if (displayName.isEmpty()) {
+            throw new IllegalArgumentException("Display name is required");
+        }
+        if (displayName.length() > DISPLAY_NAME_MAX_LENGTH) {
+            throw new IllegalArgumentException(
+                "Display name must be at most " + DISPLAY_NAME_MAX_LENGTH + " characters");
+        }
+
+        Long ownId = user.getId();
+        boolean claimedBySomeoneElse = userRepository.findByHandleIgnoreCase(handle)
+            .filter(owner -> !owner.getId().equals(ownId))
+            .isPresent();
+        if (claimedBySomeoneElse) {
+            throw new IllegalArgumentException("That handle is already taken");
+        }
+
+        user.setHandle(handle);
+        user.setDisplayName(displayName);
+
+        try {
+            user = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("That handle is already taken");
+        }
+
+        log.info("Completed onboarding for user {}", user.getId());
+        return mapToOnboardingStatus(user);
+    }
+
     @Transactional(readOnly = true)
     public ProfileSettingsDto getProfileSettings(User user) {
         return mapToProfileSettings(user);
@@ -144,12 +220,18 @@ public class UserService {
             user.setHandle(normalized);
         }
 
+        // Clearing it is not an edit, it is an account that can no longer be rendered - and
+        // it would bounce its owner straight back into onboarding on the next navigation.
         if (request.getDisplayName() != null) {
             String trimmed = request.getDisplayName().trim();
-            if (trimmed.length() > 50) {
-                throw new IllegalArgumentException("Display name must be at most 50 characters");
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException("Display name is required");
             }
-            user.setDisplayName(trimmed.isEmpty() ? null : trimmed);
+            if (trimmed.length() > DISPLAY_NAME_MAX_LENGTH) {
+                throw new IllegalArgumentException(
+                    "Display name must be at most " + DISPLAY_NAME_MAX_LENGTH + " characters");
+            }
+            user.setDisplayName(trimmed);
         }
 
         if (request.getBio() != null) {
@@ -198,6 +280,23 @@ public class UserService {
         return userRepository.findByHandleIgnoreCase(normalized)
             .map(owner -> owner.getId().equals(user.getId()))
             .orElse(true);
+    }
+
+    private OnboardingStatusDto mapToOnboardingStatus(User user) {
+        boolean hasHandle = hasText(user.getHandle());
+        return OnboardingStatusDto.builder()
+            .completed(isOnboardingComplete(user))
+            .handle(user.getHandle())
+            .displayName(user.getDisplayName())
+            // Generating one costs a lookup loop, so it is skipped entirely once there is
+            // nothing left to suggest.
+            .suggestedHandle(hasHandle ? null : suggestHandle(user))
+            .suggestedDisplayName(user.getUsername())
+            .build();
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private ProfileSettingsDto mapToProfileSettings(User user) {
