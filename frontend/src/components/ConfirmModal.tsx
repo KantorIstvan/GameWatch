@@ -55,7 +55,7 @@ function ConfirmModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="overflow-visible rounded-xl">
+      <DialogContent className="rounded-xl">
         <div className="flex justify-center pb-2 pt-2">
           <div
             className="flex size-20 items-center justify-center rounded-full border-2"

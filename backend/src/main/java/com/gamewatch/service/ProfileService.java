@@ -2,6 +2,7 @@ package com.gamewatch.service;
 
 import com.gamewatch.dto.GameDto;
 import com.gamewatch.dto.GameRatingEntryDto;
+import com.gamewatch.dto.ProfileLinkDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
 import com.gamewatch.entity.Follow;
@@ -15,6 +16,7 @@ import com.gamewatch.repository.FollowRepository;
 import com.gamewatch.repository.GameRatingRepository;
 import com.gamewatch.repository.GameReviewRepository;
 import com.gamewatch.repository.PlaythroughRepository;
+import com.gamewatch.repository.ProfileLinkRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
 import com.gamewatch.util.TimezoneUtils;
@@ -47,6 +49,7 @@ public class ProfileService {
     private final GameRatingRepository gameRatingRepository;
     private final GameService gameService;
     private final GameReviewRepository gameReviewRepository;
+    private final ProfileLinkRepository profileLinkRepository;
 
     /**
      * A profile as far as the viewer is allowed to see it.
@@ -74,6 +77,7 @@ public class ProfileService {
             .bio(owner.getBio())
             .profilePictureUrl(owner.getProfilePictureUrl())
             .joinedDate(owner.getCreatedAt().atZone(TimezoneUtils.resolveZone(owner)).toLocalDate())
+            .links(toLinkDtos(owner))
             .followerCount(followRepository.countAcceptedFollowers(owner.getId()))
             .followingCount(followRepository.countAcceptedFollowing(owner.getId()))
             .viewerIsFollowing(!isOwnProfile && viewer != null
@@ -108,6 +112,7 @@ public class ProfileService {
             .bio(viewer.getBio())
             .profilePictureUrl(viewer.getProfilePictureUrl())
             .joinedDate(viewer.getCreatedAt().atZone(TimezoneUtils.resolveZone(viewer)).toLocalDate())
+            .links(toLinkDtos(viewer))
             .followerCount(followRepository.countAcceptedFollowers(viewer.getId()))
             .followingCount(followRepository.countAcceptedFollowing(viewer.getId()))
             .ownProfile(true)
@@ -224,6 +229,12 @@ public class ProfileService {
                     .playtimeSeconds(playtime != null && playtime > 0 ? playtime : null)
                     .build();
             })
+            .collect(Collectors.toList());
+    }
+
+    private List<ProfileLinkDto> toLinkDtos(User owner) {
+        return profileLinkRepository.findByUserOrderBySortOrderAsc(owner).stream()
+            .map(link -> ProfileLinkDto.builder().url(link.getUrl()).build())
             .collect(Collectors.toList());
     }
 

@@ -41,10 +41,13 @@ function MyProfile() {
   if (loading) {
     return (
       <div className="flex flex-col gap-6">
-        <Skeleton className="h-30 w-full bg-border" />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Skeleton className="h-30 w-full rounded-xl bg-border" />
+        {/* Same hero-plus-four shape the overview grid settles into, so the page does not
+            reflow into a different number of rows the moment the data lands. */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
+          <Skeleton className="col-span-2 h-28 rounded-xl bg-border md:row-span-2 md:h-auto" />
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28 bg-border" />
+            <Skeleton key={i} className="h-28 rounded-xl bg-border" />
           ))}
         </div>
       </div>

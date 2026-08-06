@@ -60,7 +60,7 @@ function TypedConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
-      <DialogContent className="overflow-visible rounded-xl">
+      <DialogContent className="rounded-xl">
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <div className="flex flex-col items-center pt-2 text-center">
           <div

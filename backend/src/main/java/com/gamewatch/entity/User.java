@@ -38,13 +38,19 @@ public class User {
     private String username;
 
     /**
-     * Unique, case-insensitively. Assigned at sign-up from the Auth0 nickname and editable
-     * afterwards - an account with no handle cannot be linked to, searched for or followed,
-     * so it is never left null for a live account.
+     * Unique, case-insensitively. Chosen during onboarding and editable afterwards - an
+     * account with no handle cannot be linked to, searched for or followed, so a session
+     * is held on the onboarding screen until one is claimed. Null only for an account that
+     * signed up and never finished.
      */
     @Column(length = 30)
     private String handle;
 
+    /**
+     * How the account is labelled everywhere it appears. Mandatory alongside the handle
+     * and claimed in the same step; nullable in the schema only because accounts that
+     * predate onboarding may not have one yet.
+     */
     @Column(name = "display_name", length = 50)
     private String displayName;
 
