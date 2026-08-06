@@ -141,7 +141,8 @@ class WishlistServiceTest {
         WishlistEntry older = WishlistEntry.builder().id(2L).user(user).game(game)
             .addedAt(Instant.parse("2026-03-01T00:00:00Z")).build();
         // The repository query is what orders these newest-first; the service just maps.
-        when(wishlistEntryRepository.findByUserOrderByAddedAtDesc(user)).thenReturn(List.of(first, older));
+        when(wishlistEntryRepository.findByUserWithGameOrderByAddedAtDesc(user))
+            .thenReturn(List.of(first, older));
 
         List<WishlistEntryDto> result = wishlistService.getWishlist(user);
 

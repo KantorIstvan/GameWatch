@@ -80,7 +80,7 @@ public class WishlistService {
     /** The caller's own wishlist - always visible to them, whatever their setting says. */
     @Transactional(readOnly = true)
     public List<WishlistEntryDto> getWishlist(User user) {
-        return wishlistEntryRepository.findByUserOrderByAddedAtDesc(user).stream()
+        return wishlistEntryRepository.findByUserWithGameOrderByAddedAtDesc(user).stream()
             .map(this::toDto)
             .collect(Collectors.toList());
     }
@@ -94,6 +94,13 @@ public class WishlistService {
             .bannerImageUrl(game.getBannerImageUrl())
             .releaseDate(game.getReleaseDate())
             .addedAt(entry.getAddedAt())
+            .developers(game.getDevelopers())
+            .publishers(game.getPublishers())
+            .genres(game.getGenres())
+            .description(game.getDescription())
+            .averageCompletionSeconds(game.getAverageCompletionSeconds())
+            .communityRatingScore(game.getBayesianScore())
+            .communityRatingCount(game.getRatingCount())
             .build();
     }
 }

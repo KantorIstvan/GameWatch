@@ -5,6 +5,7 @@ import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
 import com.gamewatch.entity.Follow;
+import com.gamewatch.entity.Game;
 import com.gamewatch.entity.GameRating;
 import com.gamewatch.entity.GameReview;
 import com.gamewatch.entity.Playthrough;
@@ -185,19 +186,42 @@ public class ProfileService {
         Map<Long, GameReview> reviewsByGame = gameReviewRepository.findByUserId(owner.getId()).stream()
             .collect(Collectors.toMap(review -> review.getGame().getId(), review -> review));
 
+        // Same shape again for playtime: one query for every playthrough, summed per game
+        // in memory, rather than a lookup per rated game. Summed here rather than in SQL
+        // because effectivePlaytimeSeconds() has to deduct time a playthrough absorbed from
+        // another one, which is a rule the entity owns and a SUM(duration) would get wrong.
+        Map<Long, Long> playtimeByGame = playthroughRepository
+            .findByUserIdOrderByCreatedAtDesc(owner.getId()).stream()
+            .collect(Collectors.groupingBy(
+                playthrough -> playthrough.getGame().getId(),
+                Collectors.summingLong(Playthrough::effectivePlaytimeSeconds)));
+
         return gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
             .map(rating -> {
-                GameReview review = reviewsByGame.get(rating.getGame().getId());
+                Game game = rating.getGame();
+                GameReview review = reviewsByGame.get(game.getId());
+                // Zero playtime is the same statement as no playtime here - both mean this
+                // owner has never recorded a session, so neither should print "0h".
+                Long playtime = playtimeByGame.get(game.getId());
                 return GameRatingEntryDto.builder()
-                    .gameId(rating.getGame().getId())
-                    .externalId(rating.getGame().getExternalId())
-                    .gameName(rating.getGame().getName())
-                    .bannerImageUrl(rating.getGame().getBannerImageUrl())
+                    .gameId(game.getId())
+                    .externalId(game.getExternalId())
+                    .gameName(game.getName())
+                    .bannerImageUrl(game.getBannerImageUrl())
                     .score(rating.getScore())
                     .ratedAt(rating.getUpdatedAt())
                     .reviewBody(review != null ? review.getBody() : null)
                     .reviewCreatedAt(review != null ? review.getCreatedAt() : null)
                     .containsSpoilers(review != null && Boolean.TRUE.equals(review.getContainsSpoilers()))
+                    .developers(game.getDevelopers())
+                    .publishers(game.getPublishers())
+                    .genres(game.getGenres())
+                    .releaseDate(game.getReleaseDate())
+                    .description(game.getDescription())
+                    .averageCompletionSeconds(game.getAverageCompletionSeconds())
+                    .communityRatingScore(game.getBayesianScore())
+                    .communityRatingCount(game.getRatingCount())
+                    .playtimeSeconds(playtime != null && playtime > 0 ? playtime : null)
                     .build();
             })
             .collect(Collectors.toList());
