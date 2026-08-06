@@ -6,8 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import RecentCatalogGames from '../components/catalog/RecentCatalogGames'
+import WishlistButton from '../components/wishlist/WishlistButton'
 import { gamesApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
+import { useWishlist } from '../hooks/useWishlist'
 import type { GameSearchResult } from '../types'
 
 const MIN_QUERY_LENGTH = 2
@@ -28,6 +30,7 @@ const RESULT_LIMIT = 30
 function Catalog() {
   const { t } = useTranslation()
   const { isAuthReady } = useAuthContext()
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<GameSearchResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -146,6 +149,12 @@ function Catalog() {
                     </p>
                   )}
                 </div>
+                <WishlistButton
+                  wishlisted={isWishlisted(result.id)}
+                  onToggle={() => toggleWishlist(result.id)}
+                  stopPropagation
+                  className="shrink-0"
+                />
               </Link>
             </li>
           ))}

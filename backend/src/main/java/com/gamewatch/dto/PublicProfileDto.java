@@ -40,6 +40,9 @@ public class PublicProfileDto {
     /** Null when the viewer may see the profile but not the library behind it. */
     private ProfileLibraryDto library;
 
+    /** Null when the viewer may see the profile but not the wishlist behind it. */
+    private List<WishlistEntryDto> wishlist;
+
     @Data
     @Builder
     @NoArgsConstructor

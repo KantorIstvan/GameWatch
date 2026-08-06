@@ -250,6 +250,30 @@ function EditProfileSheet({ open, onOpenChange, onSaved }: EditProfileSheetProps
                   {t('settings.profile.libraryClampHint')}
                 </p>
               </div>
+
+              <div>
+                <Label htmlFor="wishlist-visibility" className="mb-1 block text-body-sm font-semibold">
+                  {t('settings.profile.wishlistVisibility')}
+                </Label>
+                <Select
+                  value={settings.wishlistVisibility}
+                  onValueChange={(value) => update({ wishlistVisibility: value as Visibility })}
+                >
+                  <SelectTrigger id="wishlist-visibility" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITIES.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {t(`settings.profile.visibility.${value}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-caption text-text-secondary">
+                  {t('settings.profile.wishlistClampHint')}
+                </p>
+              </div>
             </div>
 
             <div className="flex items-start gap-2 rounded-lg border border-border bg-surface/60 p-3">

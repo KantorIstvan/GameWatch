@@ -160,16 +160,22 @@ public class UserService {
             user.setBio(trimmed.isEmpty() ? null : trimmed);
         }
 
-        // A profile nobody can see cannot meaningfully expose a library, so the library
-        // setting is clamped rather than silently contradicting the profile setting.
+        // A profile nobody can see cannot meaningfully expose a library or a wishlist, so
+        // both settings are clamped rather than silently contradicting the profile setting.
         if (request.getProfileVisibility() != null) {
             user.setProfileVisibility(request.getProfileVisibility());
         }
         if (request.getLibraryVisibility() != null) {
             user.setLibraryVisibility(request.getLibraryVisibility());
         }
+        if (request.getWishlistVisibility() != null) {
+            user.setWishlistVisibility(request.getWishlistVisibility());
+        }
         if (user.getLibraryVisibility().isMoreVisibleThan(user.getProfileVisibility())) {
             user.setLibraryVisibility(user.getProfileVisibility());
+        }
+        if (user.getWishlistVisibility().isMoreVisibleThan(user.getProfileVisibility())) {
+            user.setWishlistVisibility(user.getProfileVisibility());
         }
 
         try {
@@ -201,6 +207,7 @@ public class UserService {
             .bio(user.getBio())
             .profileVisibility(user.getProfileVisibility())
             .libraryVisibility(user.getLibraryVisibility())
+            .wishlistVisibility(user.getWishlistVisibility())
             .profilePictureUrl(user.getProfilePictureUrl())
             .build();
     }

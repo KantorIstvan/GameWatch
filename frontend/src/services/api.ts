@@ -175,6 +175,14 @@ export const notificationsApi = {
   clear: () => apiClient.delete('/notifications'),
 }
 
+export const wishlistApi = {
+  getMine: () => apiClient.get('/wishlist/me'),
+  // Addressed by IGDB id, same as the catalog endpoints - a wishlist button only ever has
+  // the id the catalog search itself returned, and most of those games have no row here.
+  add: (externalId: number) => apiClient.post(`/wishlist/${externalId}`),
+  remove: (externalId: number) => apiClient.delete(`/wishlist/${externalId}`),
+}
+
 export const followsApi = {
   getState: (handle: string) => apiClient.get(`/follows/${handle}`),
   follow: (handle: string) => apiClient.post(`/follows/${handle}`),

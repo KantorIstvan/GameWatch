@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProfileIdentity from './ProfileIdentity'
 import ProfileLibrarySummary from './ProfileLibrarySummary'
+import ProfileWishlistSummary from './ProfileWishlistSummary'
 import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListPanel from './FollowListPanel'
 import RatingsListPanel from './RatingsListPanel'
 import type { PublicProfile } from '../../types'
 
-type ProfileTab = 'overview' | 'library' | 'ratings' | 'followers' | 'following'
+type ProfileTab = 'overview' | 'wishlist' | 'library' | 'ratings' | 'followers' | 'following'
 
 interface ProfileViewProps {
   profile: PublicProfile
@@ -43,6 +44,9 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           <TabsTrigger value="overview" className="min-h-11 px-3 sm:px-4">
             {t('profile.tabs.overview')}
           </TabsTrigger>
+          <TabsTrigger value="wishlist" className="min-h-11 px-3 sm:px-4">
+            {t('profile.tabs.wishlist')}
+          </TabsTrigger>
           <TabsTrigger
             value="library"
             className="min-h-11 px-3 sm:px-4"
@@ -65,6 +69,13 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           <ProfileLibrarySummary
             library={profile.library}
             hiddenMessage={t('profile.libraryHidden')}
+          />
+        </TabsContent>
+
+        <TabsContent value="wishlist">
+          <ProfileWishlistSummary
+            wishlist={profile.wishlist}
+            hiddenMessage={t('profile.wishlistHidden')}
           />
         </TabsContent>
 

@@ -143,16 +143,26 @@ public class GameService {
      * The catalog row for a game, created from IGDB if this is the first time anyone has
      * had anything to say about it.
      *
-     * Called on the way into a rating or a review, not on the way into a page: the
-     * catalogue would otherwise fill up with rows for every game anyone ever glanced at.
-     * Unlike {@link #createGame} this links the game to nobody - having an opinion about a
-     * game is not the same as putting it in your library.
+     * Called on the way into a rating, a review or a wishlist add - not on the way into a
+     * page: the catalogue would otherwise fill up with rows for every game anyone ever
+     * glanced at. Unlike {@link #createGame} this links the game to nobody - having an
+     * opinion about a game, or wanting to play it, is not the same as putting it in your
+     * library.
      */
     @Transactional
     public GameDto resolveCatalogGame(Integer externalId) {
+        return mapToCatalogDto(getOrCreateCatalogGame(externalId));
+    }
+
+    /**
+     * The catalog row itself, for callers that need the entity rather than its DTO - see
+     * {@link #resolveCatalogGame} for the DTO-returning wrapper most callers want.
+     */
+    @Transactional
+    public Game getOrCreateCatalogGame(Integer externalId) {
         Optional<Game> catalogued = gameRepository.findFirstByExternalId(externalId);
         if (catalogued.isPresent()) {
-            return mapToCatalogDto(catalogued.get());
+            return catalogued.get();
         }
 
         GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
@@ -183,7 +193,7 @@ public class GameService {
             .build());
 
         log.info("Catalogued game {} ({}) on first community interaction", game.getName(), externalId);
-        return mapToCatalogDto(game);
+        return game;
     }
 
     private GameDto mapToCatalogDto(Game game) {

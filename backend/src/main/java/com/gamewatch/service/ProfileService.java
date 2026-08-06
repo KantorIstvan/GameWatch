@@ -42,6 +42,7 @@ public class ProfileService {
     private final UserGameRepository userGameRepository;
     private final FollowRepository followRepository;
     private final FollowService followService;
+    private final WishlistService wishlistService;
     private final GameRatingRepository gameRatingRepository;
     private final GameService gameService;
     private final GameReviewRepository gameReviewRepository;
@@ -64,6 +65,7 @@ public class ProfileService {
 
         boolean isOwnProfile = viewer != null && viewer.getId().equals(owner.getId());
         boolean libraryVisible = followService.canView(viewer, owner, owner.getLibraryVisibility());
+        boolean wishlistVisible = followService.canView(viewer, owner, owner.getWishlistVisibility());
 
         return PublicProfileDto.builder()
             .handle(owner.getHandle())
@@ -83,6 +85,9 @@ public class ProfileService {
             // Null, not an empty block: zeros are indistinguishable from a real empty
             // library, which misleads the viewer and hints that a hidden one exists.
             .library(libraryVisible ? buildLibrary(owner) : null)
+            // Same reasoning, same shape: null rather than an empty list, so "not shared"
+            // stays distinguishable from "shared, but nothing on it yet".
+            .wishlist(wishlistVisible ? wishlistService.getWishlist(owner) : null)
             .build();
     }
 
@@ -107,6 +112,7 @@ public class ProfileService {
             .ownProfile(true)
             // Your own library is always yours to see, whatever the visibility says.
             .library(buildLibrary(viewer))
+            .wishlist(wishlistService.getWishlist(viewer))
             .build();
     }
 
