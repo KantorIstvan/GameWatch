@@ -136,7 +136,7 @@ function FollowListPanel({ handle, relation, emptyMessage }: FollowListPanelProp
     return (
       <div className="flex flex-col gap-3">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-18 bg-border" />
+          <Skeleton key={i} className="h-18 rounded-xl bg-border" />
         ))}
       </div>
     )

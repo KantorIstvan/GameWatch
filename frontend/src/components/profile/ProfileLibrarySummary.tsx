@@ -39,13 +39,27 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
 
   const ratingPeak = Math.max(1, ...Object.values(library.ratingDistribution))
 
+  // Both panels below are conditional, and a profile that has played but not written - or
+  // written but has no playtime to rank - would otherwise leave the survivor sitting in one
+  // half of a two-column row. Whichever one is alone takes the whole row instead.
+  const panelsShown =
+    (library.topGames.length > 0 ? 1 : 0) + (library.recentReviews.length > 0 ? 1 : 0)
+  const panelSpan = panelsShown === 1 ? 'md:col-span-2' : undefined
+
   return (
     <>
       <div className="mb-6 grid grid-cols-2 gap-4 sm:gap-5 md:mb-8 md:grid-cols-4">
+        {/* Five equal tiles never tile a two- or four-column row, so the grid used to end on a
+            half-empty row on mobile and a three-quarters-empty one from md up. Playtime is the
+            headline number on a profile anyway, so it takes the hero size and the remaining
+            four fill the rows beside it exactly: 2 + 2 x 2 on mobile, 4 + 4 from md. Same
+            shape the Statistics overview uses, for the same reason. */}
         <StatCard
+          hero
+          className="col-span-2 md:row-span-2"
           title={t('profile.totalPlaytime')}
           value={formatTime(library.totalPlaytimeSeconds)}
-          icon={<Timer className="size-5" />}
+          icon={<Timer className="size-6" />}
           color={statColors.blue}
           foreground={statForegrounds.blue}
         />
@@ -108,9 +122,9 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
       )}
 
       {(library.topGames.length > 0 || library.recentReviews.length > 0) && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
           {library.topGames.length > 0 && (
-            <section>
+            <section className={panelSpan}>
               <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.topGames')}</p>
               <ul className="flex flex-col gap-3">
                 {library.topGames.map((game) => (
@@ -143,7 +157,9 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
             </section>
           )}
 
-          {library.recentReviews.length > 0 && <RecentReviews reviews={library.recentReviews} />}
+          {library.recentReviews.length > 0 && (
+            <RecentReviews reviews={library.recentReviews} className={panelSpan} />
+          )}
         </div>
       )}
     </>
