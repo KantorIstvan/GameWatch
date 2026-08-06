@@ -273,6 +273,8 @@
     "minLength": "{{count}}/5000 · at least 20 characters",
     "sortHelpful": "Most helpful",
     "sortRecent": "Most recent",
+    "helpfulCountLabel_one": "{{count}} person found this helpful",
+    "helpfulCountLabel_other": "{{count}} people found this helpful",
     "onlyMyLanguage": "My language only",
     "spoilerHidden": "This review mentions spoilers. Click to read it.",
     "finished": "Finished",
