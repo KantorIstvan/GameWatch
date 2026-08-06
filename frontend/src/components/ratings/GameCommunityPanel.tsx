@@ -65,7 +65,7 @@ function GameCommunityPanel({ gameId }: GameCommunityPanelProps) {
   ].filter(Boolean) as { icon: JSX.Element; label: string; value: string }[]
 
   return (
-    <div className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
       <p className="mb-1 text-body-sm font-bold sm:text-body-lg">{t('community.title')}</p>
       <p className="mb-4 flex items-center gap-2 text-caption text-text-secondary">
         <Users className="size-3" />

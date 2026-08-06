@@ -84,7 +84,7 @@ function GameRatingPanel({ gameId, ensureGameId }: GameRatingPanelProps) {
   const active = hovered ?? summary.yourScore ?? 0
 
   return (
-    <div className="rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
       <p className="mb-4 text-body-sm font-bold sm:text-body-lg">{t('ratings.title')}</p>
 
       {summary.ratingCount === 0 ? (

@@ -117,7 +117,7 @@ function CatalogGameDetail() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-border bg-surface/60 p-4 backdrop-blur-xl sm:p-6 md:mb-8">
+      <div className="mb-6 rounded-xl border border-border bg-surface p-4 sm:p-6 md:mb-8">
         <p className="mb-4 text-body-sm font-bold sm:text-body-lg">{t('game.aboutThisGame')}</p>
         <GameDetails game={game} t={t} />
       </div>
