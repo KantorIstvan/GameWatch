@@ -300,11 +300,14 @@
     "editProfile": "Edit profile",
     "tabs": {
       "overview": "Overview",
+      "ratings": "Ratings",
       "followers": "Followers",
       "following": "Following"
     },
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "noRatings": "No games rated yet.",
+    "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",
     "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
     "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
