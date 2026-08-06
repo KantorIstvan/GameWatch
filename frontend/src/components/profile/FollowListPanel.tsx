@@ -15,12 +15,6 @@ interface FollowListPanelProps {
 }
 
 /**
- * Below this, the whole list is already on screen and a filter field costs more room than
- * the scrolling it saves.
- */
-const SEARCH_FROM_SIZE = 8
-
-/**
  * Kept as whole keys rather than built from `relation`, so grepping for a string in the
  * translation file finds the place that uses it.
  */
@@ -155,42 +149,38 @@ function FollowListPanel({ handle, relation, emptyMessage }: FollowListPanelProp
     )
   }
 
-  const searchable = people.length >= SEARCH_FROM_SIZE
-
   return (
     <div className="flex flex-col gap-3">
-      {searchable && (
-        <div className="flex flex-col gap-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-secondary" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              // Escape clears rather than blurs, matching what the field looks like it
-              // does: there is no visible clear button to reach for instead.
-              onKeyDown={(e) => {
-                if (e.key === 'Escape' && query.length > 0) {
-                  e.preventDefault()
-                  setQuery('')
-                }
-              }}
-              placeholder={t(SEARCH_KEYS[relation].placeholder)}
-              aria-label={t(SEARCH_KEYS[relation].label)}
-              className="h-12 pl-9"
-            />
-          </div>
-          {/* Announced rather than only shown, so filtering a list you cannot see still
-              says how much of it is left. Kept mounted and empty until there is something
-              to report - a live region inserted at the same moment its text arrives is
-              unreliably announced, and reserving the line also stops the list below from
-              jumping on the first keystroke. */}
-          <p aria-live="polite" className="min-h-4 text-caption text-text-secondary">
-            {trimmedQuery.length > 0
-              ? t('profile.followSearch.matches', { count: matches.length })
-              : null}
-          </p>
+      <div className="flex flex-col gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-secondary" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            // Escape clears rather than blurs, matching what the field looks like it
+            // does: there is no visible clear button to reach for instead.
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && query.length > 0) {
+                e.preventDefault()
+                setQuery('')
+              }
+            }}
+            placeholder={t(SEARCH_KEYS[relation].placeholder)}
+            aria-label={t(SEARCH_KEYS[relation].label)}
+            className="h-12 pl-9"
+          />
         </div>
-      )}
+        {/* Announced rather than only shown, so filtering a list you cannot see still
+            says how much of it is left. Kept mounted and empty until there is something
+            to report - a live region inserted at the same moment its text arrives is
+            unreliably announced, and reserving the line also stops the list below from
+            jumping on the first keystroke. */}
+        <p aria-live="polite" className="min-h-4 text-caption text-text-secondary">
+          {trimmedQuery.length > 0
+            ? t('profile.followSearch.matches', { count: matches.length })
+            : null}
+        </p>
+      </div>
 
       {matches.length === 0 ? (
         // Deliberately not the "no followers yet" copy: this list has people in it, they
