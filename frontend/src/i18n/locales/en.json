@@ -292,6 +292,7 @@
     "ratingDistributionLabel": "Distribution of the scores this user has given, from 1 to 10",
     "ratingDistributionCount": "{{count}} ratings scored {{score}}",
     "topGames": "Most Played",
+    "recentReviews": "Recent Reviews",
     "libraryHidden": "This library is not shared with you.",
     "followersLabel_one": "follower",
     "followersLabel_other": "followers",

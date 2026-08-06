@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Timer, Gamepad2, CircleCheck, CalendarDays, Star, Lock } from 'lucide-react'
 import StatCard from '../StatCard'
+import RecentReviews from './RecentReviews'
 import { formatTime } from '../../utils/formatters'
 import { statColors, statForegrounds } from '../../lib/statColors'
 import { cn } from '@/lib/utils'
@@ -104,33 +105,39 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
         </section>
       )}
 
-      {library.topGames.length > 0 && (
-        <section>
-          <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.topGames')}</p>
-          <ul className="flex flex-col gap-3">
-            {library.topGames.map((game) => (
-              <li
-                key={game.gameId}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
-              >
-                {game.bannerImageUrl && (
-                  <img
-                    src={game.bannerImageUrl}
-                    alt=""
-                    className="h-12 w-20 shrink-0 rounded-md object-cover"
-                    loading="lazy"
-                  />
-                )}
-                <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
-                  {game.gameName}
-                </span>
-                <span className="shrink-0 text-body-sm text-text-secondary">
-                  {formatTime(game.playtimeSeconds)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {(library.topGames.length > 0 || library.recentReviews.length > 0) && (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {library.topGames.length > 0 && (
+            <section>
+              <p className="mb-3 text-body-lg font-bold sm:mb-4">{t('profile.topGames')}</p>
+              <ul className="flex flex-col gap-3">
+                {library.topGames.map((game) => (
+                  <li
+                    key={game.gameId}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
+                  >
+                    {game.bannerImageUrl && (
+                      <img
+                        src={game.bannerImageUrl}
+                        alt=""
+                        className="h-12 w-20 shrink-0 rounded-md object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-body-sm font-medium">
+                      {game.gameName}
+                    </span>
+                    <span className="shrink-0 text-body-sm text-text-secondary">
+                      {formatTime(game.playtimeSeconds)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {library.recentReviews.length > 0 && <RecentReviews reviews={library.recentReviews} />}
+        </div>
       )}
     </>
   )
