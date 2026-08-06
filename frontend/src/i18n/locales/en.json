@@ -300,9 +300,11 @@
     "editProfile": "Edit profile",
     "tabs": {
       "overview": "Overview",
+      "library": "Library",
       "followers": "Followers",
       "following": "Following"
     },
+    "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
     "listUnavailable": "This list could not be loaded.",

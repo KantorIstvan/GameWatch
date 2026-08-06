@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProfileIdentity from './ProfileIdentity'
 import ProfileLibrarySummary from './ProfileLibrarySummary'
+import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListPanel from './FollowListPanel'
 import type { PublicProfile } from '../../types'
 
-type ProfileTab = 'overview' | 'followers' | 'following'
+type ProfileTab = 'overview' | 'followers' | 'following' | 'library'
 
 interface ProfileViewProps {
   profile: PublicProfile
@@ -41,6 +42,13 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           <TabsTrigger value="overview" className="min-h-11 px-3 sm:px-4">
             {t('profile.tabs.overview')}
           </TabsTrigger>
+          <TabsTrigger
+            value="library"
+            className="min-h-11 px-3 sm:px-4"
+            disabled={!profile.handle || !profile.library}
+          >
+            {t('profile.tabs.library')}
+          </TabsTrigger>
           <TabsTrigger value="followers" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
             {t('profile.tabs.followers')}
           </TabsTrigger>
@@ -56,10 +64,19 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           />
         </TabsContent>
 
-        {/* Both lists need a handle to fetch by, and an unclaimed profile has none - the
-            triggers above are disabled in that case, so neither can be reached. */}
+        {/* All three need a handle to fetch by, and an unclaimed profile has none - the
+            triggers above are disabled in that case, so none can be reached. The library
+            tab additionally needs a null library (see the trigger above) - the profile
+            fetch already carries that visibility signal, so this reuses it instead of
+            firing a request just to learn the answer is no. */}
         {profile.handle && (
           <>
+            {profile.library && (
+              <TabsContent value="library">
+                <ProfileLibraryGrid handle={profile.handle} />
+              </TabsContent>
+            )}
+
             <TabsContent value="followers">
               {followersExtra}
               <FollowListPanel

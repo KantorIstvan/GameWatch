@@ -156,6 +156,7 @@ export const profilesApi = {
   compare: (handle: string) => apiClient.get(`/profiles/${handle}/compare`),
   getFollowers: (handle: string) => apiClient.get(`/profiles/${handle}/followers`),
   getFollowing: (handle: string) => apiClient.get(`/profiles/${handle}/following`),
+  getLibrary: (handle: string) => apiClient.get(`/profiles/${handle}/library`),
 }
 
 export const feedApi = {
