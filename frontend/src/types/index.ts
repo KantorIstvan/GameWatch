@@ -285,6 +285,25 @@ export interface ProfileLibrary {
   ratingsGiven: number
   /** Score (1-10) to how many times this user has given it, for their own histogram. */
   ratingDistribution: Record<number, number>
+  /** This user's most recent written reviews, newest first. */
+  recentReviews: ProfileReview[]
+}
+
+/**
+ * One review, as it appears on its author's own profile.
+ *
+ * Leaner than {@link GameReview}: the author is implicitly whoever owns this profile, so
+ * the game being reviewed is the interesting subject here instead of author identity.
+ */
+export interface ProfileReview {
+  gameId: number
+  gameName: string
+  gameBannerImageUrl: string | null
+  /** The author's own score for this game, when they left one. */
+  score: number | null
+  body: string
+  containsSpoilers: boolean
+  createdAt: string
 }
 
 export interface PublicProfile {
