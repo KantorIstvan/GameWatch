@@ -221,7 +221,15 @@ function GameReviewsPanel({ gameId, ensureGameId }: GameReviewsPanelProps) {
                   }
                 />
 
-                {!review.ownReview && (
+                {review.ownReview ? (
+                  <span
+                    className="flex shrink-0 items-center gap-2 text-body-sm text-text-secondary"
+                    aria-label={t('reviews.helpfulCountLabel', { count: review.helpfulCount })}
+                  >
+                    <ThumbsUp className="size-4" />
+                    {review.helpfulCount}
+                  </span>
+                ) : (
                   <Button
                     size="sm"
                     variant={review.viewerFoundHelpful ? 'default' : 'outline'}
