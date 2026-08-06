@@ -292,6 +292,7 @@
     "ratingDistributionLabel": "Distribution of the scores this user has given, from 1 to 10",
     "ratingDistributionCount": "{{count}} ratings scored {{score}}",
     "topGames": "Most Played",
+    "recentReviews": "Recent Reviews",
     "libraryHidden": "This library is not shared with you.",
     "followersLabel_one": "follower",
     "followersLabel_other": "followers",
@@ -301,12 +302,15 @@
     "tabs": {
       "overview": "Overview",
       "library": "Library",
+      "ratings": "Ratings",
       "followers": "Followers",
       "following": "Following"
     },
     "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "noRatings": "No games rated yet.",
+    "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",
     "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
     "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
@@ -335,7 +339,12 @@
     "searchPlaceholder": "Search by handle or name",
     "prompt": "Start typing to find someone.",
     "typeMore": "Keep typing - at least 2 characters.",
-    "noResults": "No one found for \"{{query}}\"."
+    "noResults": "No one found for \"{{query}}\".",
+    "recent": {
+      "title": "Recently searched",
+      "clearAll": "Clear all",
+      "remove": "Remove {{person}} from recently searched"
+    }
   },
   "theme": {
     "light": "Light Mode",

@@ -6,6 +6,7 @@ import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
 import com.gamewatch.repository.GameRatingRepository;
+import com.gamewatch.repository.GameReviewRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
@@ -47,6 +48,9 @@ class ProfileServiceTest {
     @Mock
     private GameRatingRepository gameRatingRepository;
 
+    @Mock
+    private GameReviewRepository gameReviewRepository;
+
     @InjectMocks
     private ProfileService profileService;
 
@@ -62,6 +66,10 @@ class ProfileServiceTest {
             .displayName("The Owner").timezone("UTC")
             .createdAt(Instant.parse("2026-02-01T00:00:00Z"))
             .profileVisibility(Visibility.PUBLIC).libraryVisibility(Visibility.PUBLIC).build();
+
+        // Not every test that reaches buildLibrary() cares about recent reviews - default
+        // to none so those tests don't each need their own stub for an unrelated field.
+        lenient().when(gameReviewRepository.findMostRecentByUser(any(), any())).thenReturn(List.of());
     }
 
     @Test

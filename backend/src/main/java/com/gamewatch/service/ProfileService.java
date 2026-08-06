@@ -1,20 +1,25 @@
 package com.gamewatch.service;
 
 import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
 import com.gamewatch.entity.Follow;
+import com.gamewatch.entity.GameRating;
+import com.gamewatch.entity.GameReview;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
 import com.gamewatch.entity.Visibility;
 import com.gamewatch.repository.FollowRepository;
 import com.gamewatch.repository.GameRatingRepository;
+import com.gamewatch.repository.GameReviewRepository;
 import com.gamewatch.repository.PlaythroughRepository;
 import com.gamewatch.repository.UserGameRepository;
 import com.gamewatch.repository.UserRepository;
 import com.gamewatch.util.TimezoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +35,7 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private static final int TOP_GAMES_ON_PROFILE = 5;
+    private static final int RECENT_REVIEWS_ON_PROFILE = 5;
 
     private final UserRepository userRepository;
     private final PlaythroughRepository playthroughRepository;
@@ -38,6 +44,7 @@ public class ProfileService {
     private final FollowService followService;
     private final GameRatingRepository gameRatingRepository;
     private final GameService gameService;
+    private final GameReviewRepository gameReviewRepository;
 
     /**
      * A profile as far as the viewer is allowed to see it.
@@ -147,6 +154,36 @@ public class ProfileService {
         return gameService.getAllGames(owner);
     }
 
+    /**
+     * Every game this profile's owner has rated, and the score they gave it - the list
+     * behind the "Ratings" tab.
+     *
+     * Gated on library visibility rather than profile visibility, matching {@link #buildLibrary}:
+     * ratings are part of what someone has played, not part of who they are, so the same
+     * setting that hides playtime and top games hides this too. Null, not an empty list, when
+     * hidden - an empty list would be indistinguishable from a profile that has never rated
+     * anything, which misleads the viewer and hints that a hidden list exists.
+     */
+    @Transactional(readOnly = true)
+    public List<GameRatingEntryDto> getRatings(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        if (!followService.canView(viewer, owner, owner.getLibraryVisibility())) {
+            return null;
+        }
+        return buildRatings(owner);
+    }
+
+    private List<GameRatingEntryDto> buildRatings(User owner) {
+        return gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
+            .map(rating -> GameRatingEntryDto.builder()
+                .gameId(rating.getGame().getId())
+                .gameName(rating.getGame().getName())
+                .bannerImageUrl(rating.getGame().getBannerImageUrl())
+                .score(rating.getScore())
+                .build())
+            .collect(Collectors.toList());
+    }
+
     private User requireViewableProfile(User viewer, String handle) {
         User owner = userRepository.findByHandleIgnoreCase(handle)
             .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
@@ -235,7 +272,34 @@ public class ProfileService {
             .topGames(topGames)
             .ratingsGiven(ratingsGiven)
             .ratingDistribution(ratingDistribution)
+            .recentReviews(recentReviews(owner))
             .build();
+    }
+
+    /**
+     * What this user has recently written, for the profile's "Recent Reviews" tile.
+     *
+     * Gated by the same {@code libraryVisible} check as the rest of {@link #buildLibrary} -
+     * this method is only ever reached once that check has already passed - because a
+     * review is still something someone did with their library, not a separate disclosure.
+     */
+    private List<PublicProfileDto.ProfileReviewDto> recentReviews(User owner) {
+        List<GameReview> reviews = gameReviewRepository.findMostRecentByUser(
+            owner.getId(), PageRequest.of(0, RECENT_REVIEWS_ON_PROFILE));
+
+        return reviews.stream()
+            .map(review -> PublicProfileDto.ProfileReviewDto.builder()
+                .gameId(review.getGame().getId())
+                .gameName(review.getGame().getName())
+                .gameBannerImageUrl(review.getGame().getBannerImageUrl())
+                .score(gameRatingRepository.findByUserAndGame(owner, review.getGame())
+                    .map(GameRating::getScore)
+                    .orElse(null))
+                .body(review.getBody())
+                .containsSpoilers(Boolean.TRUE.equals(review.getContainsSpoilers()))
+                .createdAt(review.getCreatedAt())
+                .build())
+            .collect(Collectors.toList());
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.gamewatch.controller;
 
 import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.ProfileComparisonDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.entity.User;
@@ -67,6 +68,13 @@ public class ProfileController {
                                                      @PathVariable String handle) {
         User viewer = userService.getOrCreateUser(authentication);
         return ResponseEntity.ok(profileService.getLibraryGames(viewer, handle));
+    }
+
+    @GetMapping("/{handle}/ratings")
+    public ResponseEntity<List<GameRatingEntryDto>> getRatings(Authentication authentication,
+                                                                @PathVariable String handle) {
+        User viewer = userService.getOrCreateUser(authentication);
+        return ResponseEntity.ok(profileService.getRatings(viewer, handle));
     }
 
     @GetMapping("/{handle}/compare")

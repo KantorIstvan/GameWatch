@@ -5,9 +5,10 @@ import ProfileIdentity from './ProfileIdentity'
 import ProfileLibrarySummary from './ProfileLibrarySummary'
 import ProfileLibraryGrid from './ProfileLibraryGrid'
 import FollowListPanel from './FollowListPanel'
+import RatingsListPanel from './RatingsListPanel'
 import type { PublicProfile } from '../../types'
 
-type ProfileTab = 'overview' | 'followers' | 'following' | 'library'
+type ProfileTab = 'overview' | 'library' | 'ratings' | 'followers' | 'following'
 
 interface ProfileViewProps {
   profile: PublicProfile
@@ -49,6 +50,9 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           >
             {t('profile.tabs.library')}
           </TabsTrigger>
+          <TabsTrigger value="ratings" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
+            {t('profile.tabs.ratings')}
+          </TabsTrigger>
           <TabsTrigger value="followers" className="min-h-11 px-3 sm:px-4" disabled={!profile.handle}>
             {t('profile.tabs.followers')}
           </TabsTrigger>
@@ -64,7 +68,7 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
           />
         </TabsContent>
 
-        {/* All three need a handle to fetch by, and an unclaimed profile has none - the
+        {/* All these need a handle to fetch by, and an unclaimed profile has none - the
             triggers above are disabled in that case, so none can be reached. The library
             tab additionally needs a null library (see the trigger above) - the profile
             fetch already carries that visibility signal, so this reuses it instead of
@@ -76,6 +80,10 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
                 <ProfileLibraryGrid handle={profile.handle} />
               </TabsContent>
             )}
+
+            <TabsContent value="ratings">
+              <RatingsListPanel handle={profile.handle} />
+            </TabsContent>
 
             <TabsContent value="followers">
               {followersExtra}
