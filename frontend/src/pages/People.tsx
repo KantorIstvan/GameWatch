@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import ProfileListRow from '../components/social/ProfileListRow'
 import { profilesApi } from '../services/api'
 import { useAuthContext } from '../contexts/AuthContext'
+import { rememberPersonSearch, useRecentPeopleSearches } from '../hooks/useRecentPeopleSearches'
 import type { FollowState, ProfileSummary } from '../types'
 
 const MIN_QUERY_LENGTH = 2
@@ -25,6 +27,7 @@ function People() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { people: recentPeople, forget: forgetRecent, clear: clearRecent } = useRecentPeopleSearches()
 
   useEffect(() => {
     if (!isAuthReady) return
@@ -73,6 +76,17 @@ function People() {
     )
   }, [])
 
+  // An unclaimed account has no handle and so nowhere to revisit it - it can turn up in
+  // results but can't be remembered as a shortcut.
+  const handleSelect = useCallback((person: Pick<ProfileSummary, 'handle' | 'displayName' | 'profilePictureUrl'>) => {
+    if (!person.handle) return
+    rememberPersonSearch({
+      handle: person.handle,
+      displayName: person.displayName,
+      profilePictureUrl: person.profilePictureUrl,
+    })
+  }, [])
+
   const trimmedQuery = query.trim()
 
   return (
@@ -100,7 +114,37 @@ function People() {
         </div>
       )}
 
-      {!loading && trimmedQuery.length === 0 && (
+      {/* Only with an empty box: once someone is searching, the results are the answer and
+          who they looked up yesterday is in the way of it. Falls back to the static prompt
+          until there's any history to show. */}
+      {!loading && trimmedQuery.length === 0 && recentPeople.length > 0 && (
+        <section>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-body font-semibold text-text-primary">{t('people.recent.title')}</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearRecent}
+              className="text-text-secondary hover:text-accent"
+            >
+              {t('people.recent.clearAll')}
+            </Button>
+          </div>
+          <ul className="flex flex-col gap-3">
+            {recentPeople.map((person) => (
+              <ProfileListRow
+                key={person.handle}
+                person={person}
+                onSelect={handleSelect}
+                onRemove={forgetRecent}
+                removeLabel={t('people.recent.remove', { person: person.displayName ?? person.handle })}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!loading && trimmedQuery.length === 0 && recentPeople.length === 0 && (
         <div className="flex items-start gap-3 rounded-xl border border-dashed border-border p-6">
           <Search className="mt-0.5 size-5 shrink-0 text-text-secondary" />
           <p className="text-body-sm text-text-secondary">{t('people.prompt')}</p>
@@ -127,6 +171,7 @@ function People() {
               key={result.handle ?? `unclaimed-${index}`}
               person={result}
               onFollowChange={handleFollowChange}
+              onSelect={handleSelect}
             />
           ))}
         </ul>
