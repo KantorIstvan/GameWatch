@@ -120,7 +120,7 @@ function ProfileLibrarySummary({ library, hiddenMessage }: ProfileLibrarySummary
                       <img
                         src={game.bannerImageUrl}
                         alt=""
-                        className="h-12 w-20 shrink-0 rounded-md object-cover"
+                        className="h-16 w-28 shrink-0 rounded-md bg-surface object-contain"
                         loading="lazy"
                       />
                     )}

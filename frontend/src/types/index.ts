@@ -488,12 +488,22 @@ export interface DailyPlaytime {
   rollingAverageSeconds?: number | null
 }
 
-/** One game a profile owner has rated, and the score they gave it - a "Ratings" tab row. */
+/**
+ * One game a profile owner has rated, and the score they gave it - a "Ratings" tab row.
+ *
+ * The review fields are undefined whenever this user rated the game without writing
+ * anything - a rating and a written review are recorded separately, and most rated games
+ * never get a review.
+ */
 export interface GameRatingEntry {
   gameId: number
   gameName: string
   bannerImageUrl?: string
   score: number
+  ratedAt: string
+  reviewBody?: string
+  reviewCreatedAt?: string
+  containsSpoilers: boolean
 }
 
 export interface GameRanking {
