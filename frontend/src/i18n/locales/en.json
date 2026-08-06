@@ -7,6 +7,28 @@
     "login": "Log In",
     "logout": "Logout"
   },
+  "onboarding": {
+    "title": "Welcome to GameWatch",
+    "description": "Choose a handle and a display name to finish setting up your account.",
+    "handle": "Handle",
+    "handlePlaceholder": "yourname",
+    "handleHint": "Lowercase letters, numbers and underscores. 3-30 characters. This is how others find you.",
+    "handleAvailable": "Handle is available",
+    "handleTaken": "Handle is taken",
+    "handleErrors": {
+      "required": "Handle is required",
+      "tooShort": "Handle must be at least 3 characters",
+      "tooLong": "Handle must be at most 30 characters",
+      "charset": "Handle may only contain lowercase letters, numbers and underscores, and cannot start or end with an underscore"
+    },
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Your name",
+    "displayNameRequired": "Display name is required",
+    "displayNameTooLong": "Display name must be at most 50 characters",
+    "submit": "Continue",
+    "submitting": "Saving...",
+    "genericError": "Something went wrong. Please try again."
+  },
   "nav": {
     "timers": "Timers",
     "statistics": "Statistics",
