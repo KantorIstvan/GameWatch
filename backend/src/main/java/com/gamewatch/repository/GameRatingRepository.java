@@ -29,6 +29,16 @@ public interface GameRatingRepository extends JpaRepository<GameRating, Long> {
     @Query("SELECT r.score, COUNT(r) FROM GameRating r WHERE r.user.id = :userId GROUP BY r.score")
     List<Object[]> findScoreDistributionByUser(@Param("userId") Long userId);
 
+    /**
+     * Every game one user has rated, with the game eagerly fetched so the "Ratings" tab on
+     * their profile does not pay for one query per row. Highest score first, ties broken by
+     * most recently rated - a rating list read top-down should read like a top-games list,
+     * not an arbitrary insertion order.
+     */
+    @Query("SELECT r FROM GameRating r JOIN FETCH r.game WHERE r.user.id = :userId "
+        + "ORDER BY r.score DESC, r.updatedAt DESC")
+    List<GameRating> findByUserIdWithGameOrderByScoreDesc(@Param("userId") Long userId);
+
     @Query("SELECT COUNT(r), COALESCE(SUM(r.score), 0) FROM GameRating r WHERE r.game.id = :gameId")
     List<Object[]> findCountAndSum(@Param("gameId") Long gameId);
 

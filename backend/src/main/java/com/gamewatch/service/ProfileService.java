@@ -1,5 +1,6 @@
 package com.gamewatch.service;
 
+import com.gamewatch.dto.GameRatingEntryDto;
 import com.gamewatch.dto.PublicProfileDto;
 import com.gamewatch.dto.UserStatisticsDto;
 import com.gamewatch.entity.Follow;
@@ -123,6 +124,36 @@ public class ProfileService {
         User owner = requireViewableProfile(viewer, handle);
         return followRepository.findAcceptedFollowing(owner.getId()).stream()
             .map(follow -> toSummary(follow.getFollowee(), viewer))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Every game this profile's owner has rated, and the score they gave it - the list
+     * behind the "Ratings" tab.
+     *
+     * Gated on library visibility rather than profile visibility, matching {@link #buildLibrary}:
+     * ratings are part of what someone has played, not part of who they are, so the same
+     * setting that hides playtime and top games hides this too. Null, not an empty list, when
+     * hidden - an empty list would be indistinguishable from a profile that has never rated
+     * anything, which misleads the viewer and hints that a hidden list exists.
+     */
+    @Transactional(readOnly = true)
+    public List<GameRatingEntryDto> getRatings(User viewer, String handle) {
+        User owner = requireViewableProfile(viewer, handle);
+        if (!followService.canView(viewer, owner, owner.getLibraryVisibility())) {
+            return null;
+        }
+        return buildRatings(owner);
+    }
+
+    private List<GameRatingEntryDto> buildRatings(User owner) {
+        return gameRatingRepository.findByUserIdWithGameOrderByScoreDesc(owner.getId()).stream()
+            .map(rating -> GameRatingEntryDto.builder()
+                .gameId(rating.getGame().getId())
+                .gameName(rating.getGame().getName())
+                .bannerImageUrl(rating.getGame().getBannerImageUrl())
+                .score(rating.getScore())
+                .build())
             .collect(Collectors.toList());
     }
 
