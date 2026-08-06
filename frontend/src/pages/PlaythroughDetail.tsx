@@ -446,7 +446,7 @@ function PlaythroughDetail() {
         </div>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="overflow-visible rounded-xl">
+          <DialogContent className="rounded-xl">
             <div className="flex justify-center pb-2 pt-2">
               <div className="flex size-20 items-center justify-center rounded-full border-2 border-accent/20 bg-accent/10 text-accent">
                 <Clock className="size-12" />
