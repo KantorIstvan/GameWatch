@@ -262,7 +262,10 @@ class ProfileServiceTest {
     @Test
     void ratingsCarryTheMatchingReviewWhenOneWasWrittenAndNullWhenOneWasNot() {
         com.gamewatch.entity.Game reviewed = com.gamewatch.entity.Game.builder()
-            .id(10L).name("Reviewed Game").build();
+            .id(10L).name("Reviewed Game")
+            .developers("Studio A").publishers("Publisher A").genres("RPG")
+            .releaseDate("2024-05-01").ratingCount(12).bayesianScore(8.4)
+            .build();
         com.gamewatch.entity.Game ratedOnly = com.gamewatch.entity.Game.builder()
             .id(11L).name("Rated-Only Game").build();
 
@@ -290,6 +293,15 @@ class ProfileServiceTest {
         assertThat(withReview.getScore()).isEqualTo(9);
         assertThat(withReview.getReviewBody()).isEqualTo("Loved every hour of it.");
         assertThat(withReview.isContainsSpoilers()).isTrue();
+        // The catalog metadata the row's byline and the tab's filters are built from.
+        assertThat(withReview.getDevelopers()).isEqualTo("Studio A");
+        assertThat(withReview.getPublishers()).isEqualTo("Publisher A");
+        assertThat(withReview.getGenres()).isEqualTo("RPG");
+        assertThat(withReview.getReleaseDate()).isEqualTo("2024-05-01");
+        assertThat(withReview.getCommunityRatingScore()).isEqualTo(8.4);
+        assertThat(withReview.getCommunityRatingCount()).isEqualTo(12);
+        // Nothing recorded against it, so the row has no playtime slot to fill.
+        assertThat(withReview.getPlaytimeSeconds()).isNull();
 
         com.gamewatch.dto.GameRatingEntryDto withoutReview = ratings.stream()
             .filter(r -> r.getGameId().equals(11L)).findFirst().orElseThrow();

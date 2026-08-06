@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Gamepad2, Lock } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Lock } from 'lucide-react'
+import GameEntryRow from './GameEntryRow'
 import type { WishlistEntry } from '../../types'
 
 interface ProfileWishlistSummaryProps {
@@ -17,6 +16,10 @@ interface ProfileWishlistSummaryProps {
  * Mirrors {@link ProfileLibrarySummary}'s null-means-hidden convention: an owner who has
  * not shared their wishlist gets the same locked message a hidden library gets, rather
  * than an empty list that would look identical to "shared, but nothing on it".
+ *
+ * Renders with the same {@link GameEntryRow} the Ratings tab uses - a wishlisted game has
+ * no score and no "rated on" date, and the row already treats both as optional rather than
+ * assuming every entry has them, so no separate wishlist-shaped row was needed.
  */
 function ProfileWishlistSummary({ wishlist, hiddenMessage }: ProfileWishlistSummaryProps) {
   const { t } = useTranslation()
@@ -31,33 +34,13 @@ function ProfileWishlistSummary({ wishlist, hiddenMessage }: ProfileWishlistSumm
   }
 
   if (wishlist.length === 0) {
-    return (
-      <p className="text-body-sm text-text-secondary">{t('profile.wishlistEmpty')}</p>
-    )
+    return <p className="text-body-sm text-text-secondary">{t('profile.wishlistEmpty')}</p>
   }
 
   return (
     <ul className="flex flex-col gap-3">
-      {wishlist.map((entry) => (
-        <li key={entry.gameId}>
-          <Link
-            to={`/catalog/${entry.externalId}`}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 outline-none backdrop-blur-xl transition-colors duration-150 ease-standard hover:border-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
-          >
-            <Avatar className="size-12 shrink-0 rounded-sm">
-              <AvatarImage src={entry.bannerImageUrl} alt="" className="object-cover" />
-              <AvatarFallback className="rounded-sm bg-surface-raised text-text-tertiary">
-                <Gamepad2 className="size-5" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-body-sm font-medium text-text-primary">{entry.gameName}</p>
-              <p className="mt-1 text-caption text-text-secondary">
-                {t('profile.wishlistAddedOn', { date: new Date(entry.addedAt).toLocaleDateString() })}
-              </p>
-            </div>
-          </Link>
-        </li>
+      {wishlist.map((entry, index) => (
+        <GameEntryRow key={entry.gameId} index={index + 1} entry={entry} />
       ))}
     </ul>
   )

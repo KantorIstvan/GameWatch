@@ -388,7 +388,40 @@
     "listUnavailable": "This list could not be loaded.",
     "ownUnavailable": "Your profile could not be loaded. Try again in a moment.",
     "claimHandlePrompt": "You have not claimed a handle yet, so nobody can find or reach your profile.",
-    "claimHandleAction": "Claim a handle"
+    "claimHandleAction": "Claim a handle",
+    "entryRow": {
+      "ratedOn": "Rated {{date}}",
+      "developerLabel": "Developer:",
+      "publisherLabel": "Publisher:",
+      "timeToBeat": "{{time}} to beat",
+      "communityScore_one": "({{count}} rating)",
+      "communityScore_other": "({{count}} ratings)",
+      "yourScoreLabel": "You",
+      "played": "Played",
+      "playedWithTime": "Played · {{time}}"
+    },
+    "filters": {
+      "developer": "Developer",
+      "publisher": "Publisher",
+      "genre": "Genre",
+      "searchDevelopers": "Search developers…",
+      "searchPublishers": "Search publishers…",
+      "searchGenres": "Search genres…",
+      "noMatches": "No matches.",
+      "sortLabel": "Sort by",
+      "sortRatedDesc": "Recently rated",
+      "sortRatedAsc": "Oldest rated",
+      "sortScoreDesc": "Highest score",
+      "sortScoreAsc": "Lowest score",
+      "sortReleaseDesc": "Newest release",
+      "sortReleaseAsc": "Oldest release",
+      "sortTitleAsc": "Title A–Z",
+      "sortTitleDesc": "Title Z–A",
+      "clearAll": "Clear filters",
+      "activeCount_one": "{{count}} filter active",
+      "activeCount_other": "{{count}} filters active",
+      "noResults": "No ratings match these filters."
+    }
   },
   "social": {
     "follow": {
@@ -919,6 +952,7 @@
     "done": "Done",
     "confirm": "Confirm",
     "create": "Create",
+    "clear": "Clear",
     "back": "Back",
     "backToDashboard": "Back to Dashboard",
     "backToTimers": "Back to Timers",

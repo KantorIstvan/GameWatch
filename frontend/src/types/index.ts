@@ -307,13 +307,33 @@ export interface ProfileReview {
  * button on a catalog search result only ever has the IGDB id on hand, the same as
  * {@link CatalogGame}.
  */
-export interface WishlistEntry {
+export interface WishlistEntry extends GameEntryCatalogFields {
   gameId: number
   externalId: number
   gameName: string
   bannerImageUrl?: string
-  releaseDate?: string
   addedAt: string
+}
+
+/**
+ * The catalog facts a profile entry row states about a game, whatever list it is in.
+ *
+ * Shared by {@link WishlistEntry} and {@link GameRatingEntry} because the Ratings and
+ * Wishlist tabs render one row component between them - a wishlist row is a rating row
+ * without a score and without a "rated on" date, not a second kind of row.
+ */
+export interface GameEntryCatalogFields {
+  /** Comma-separated, exactly as the catalog stores them. */
+  developers?: string
+  publishers?: string
+  genres?: string
+  releaseDate?: string
+  description?: string
+  /** IGDB's average time to beat, in seconds - a game's answer to a film's runtime. */
+  averageCompletionSeconds?: number
+  /** This app's own shrunk community score, and how many ratings back it. */
+  communityRatingScore?: number | null
+  communityRatingCount?: number
 }
 
 /**
@@ -528,7 +548,7 @@ export interface DailyPlaytime {
  * anything - a rating and a written review are recorded separately, and most rated games
  * never get a review.
  */
-export interface GameRatingEntry {
+export interface GameRatingEntry extends GameEntryCatalogFields {
   gameId: number
   /** IGDB's id - the catalog's address for this game, since most have no row here. */
   externalId?: number
@@ -539,6 +559,11 @@ export interface GameRatingEntry {
   reviewBody?: string
   reviewCreatedAt?: string
   containsSpoilers: boolean
+  /**
+   * What the profile's owner has recorded on the game. Absent when they rated it without
+   * ever tracking a session here, so the row leaves the slot out rather than showing 0h.
+   */
+  playtimeSeconds?: number
 }
 
 export interface GameRanking {
