@@ -170,33 +170,6 @@ export interface UserStatistics {
   favoritePublisher?: string
 }
 
-export interface ComparisonSide {
-  handle: string | null
-  displayName: string | null
-  profilePictureUrl: string | null
-  totalPlaytimeSeconds: number
-  gamesInLibrary: number
-  gamesCompleted: number
-  totalSessions: number
-}
-
-export interface SharedGame {
-  gameId: number
-  gameName: string
-  bannerImageUrl: string | null
-  yourSeconds: number
-  theirSeconds: number
-  youFinished: boolean
-  theyFinished: boolean
-}
-
-export interface ProfileComparison {
-  you: ComparisonSide
-  them: ComparisonSide
-  sharedGames: SharedGame[]
-  sharedGameCount: number
-}
-
 export interface ActivityEvent {
   id: string
   actorHandle: string | null
@@ -322,12 +295,25 @@ export interface WishlistEntry {
   addedAt: string
 }
 
+/**
+ * One link on a profile, as far as either side of the API needs to know about it.
+ *
+ * Carries only the URL - which platform it is (X, GitHub, a plain website...) is worked
+ * out client-side from the host by `lib/socialLinks.ts`, not decided or stored
+ * server-side.
+ */
+export interface ProfileLink {
+  url: string
+}
+
 export interface PublicProfile {
   handle: string
   displayName: string | null
   bio: string | null
   profilePictureUrl: string | null
   joinedDate: string
+  /** Part of identity, like the avatar - visible whenever the profile itself is. */
+  links: ProfileLink[]
   followerCount: number
   followingCount: number
   viewerIsFollowing: boolean
@@ -450,6 +436,8 @@ export interface ProfileSettings {
   wishlistVisibility: Visibility
   /** Read-only here: the picture is changed through the avatar upload endpoint. */
   profilePictureUrl: string | null
+  /** Sent and returned as the whole set, in display order - saving replaces all of it. */
+  links: ProfileLink[]
 }
 
 export interface TrendStats {

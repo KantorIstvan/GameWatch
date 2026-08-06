@@ -100,6 +100,15 @@
       "displayName": "Display Name",
       "bio": "Bio",
       "bioCount": "{{count}}/300",
+      "links": {
+        "title": "Links",
+        "hint": "Up to {{max}} links to social profiles or a website. The platform is detected automatically.",
+        "placeholder": "https://...",
+        "urlLabel": "Link {{index}}",
+        "add": "Add link",
+        "remove": "Remove link",
+        "invalid": "One of your links doesn't look like a valid web address."
+      },
       "profileVisibility": "Profile Visibility",
       "libraryVisibility": "Library Visibility",
       "libraryClampHint": "Cannot be more visible than your profile.",
@@ -211,19 +220,6 @@
     "deleteAccountRequired": "Delete",
     "deleteAccountFailed": "Failed to delete account. Please try again."
   },
-  "compare": {
-    "title": "Compare",
-    "unavailable": "That profile does not exist, or its library is not shared with you.",
-    "you": "You",
-    "totalPlaytime": "Total playtime",
-    "gamesInLibrary": "Games in library",
-    "gamesCompleted": "Games completed",
-    "totalSessions": "Sessions",
-    "sharedGames_one": "{{count}} game in common",
-    "sharedGames_other": "{{count}} games in common",
-    "noSharedGames": "You have not played any of the same games yet.",
-    "compareWith": "Compare"
-  },
   "feed": {
     "title": "Activity",
     "emptyTitle": "Nothing here yet",
@@ -312,6 +308,22 @@
     "following_one": "{{count}} following",
     "following_other": "{{count}} following",
     "joined": "Joined {{date}}",
+    "links": {
+      "visit": "Visit {{platform}}",
+      "platforms": {
+        "x": "X",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "twitch": "Twitch",
+        "steam": "Steam",
+        "discord": "Discord",
+        "github": "GitHub",
+        "reddit": "Reddit",
+        "bluesky": "Bluesky",
+        "website": "Website"
+      }
+    },
     "totalPlaytime": "Total Playtime",
     "gamesInLibrary": "Games",
     "gamesCompleted": "Completed",
@@ -342,6 +354,15 @@
     "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "followSearch": {
+      "followersPlaceholder": "Search followers",
+      "followingPlaceholder": "Search following",
+      "followersLabel": "Search followers by name or handle",
+      "followingLabel": "Search following by name or handle",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matches",
+      "noMatches": "Nobody in this list matches \"{{query}}\"."
+    },
     "noRatings": "No games rated yet.",
     "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",

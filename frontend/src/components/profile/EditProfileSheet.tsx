@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, X, Lock } from 'lucide-react'
+import { Check, X, Lock, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,9 +16,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { SocialLinkIcon } from '@/components/ui/social-icons'
+import { detectSocialPlatform, MAX_PROFILE_LINKS, normalizeProfileLink } from '@/lib/socialLinks'
 import AvatarPicker from './AvatarPicker'
 import { userApi } from '../../services/api'
-import type { ProfileSettings, Visibility } from '../../types'
+import type { ProfileLink, ProfileSettings, Visibility } from '../../types'
 
 const VISIBILITIES: Visibility[] = ['PRIVATE', 'FOLLOWERS', 'PUBLIC']
 
@@ -101,14 +103,55 @@ function EditProfileSheet({ open, onOpenChange, onSaved }: EditProfileSheetProps
     [update, onSaved]
   )
 
+  // Edited as raw text - normalizing and dropping anything unusable happens once, on
+  // save, rather than fighting the person mid-keystroke over a URL they have not
+  // finished typing yet.
+  const updateLink = useCallback((index: number, url: string) => {
+    setSettings((current) => {
+      if (!current) return current
+      const links = current.links.slice()
+      links[index] = { url }
+      return { ...current, links }
+    })
+  }, [])
+
+  const addLink = useCallback(() => {
+    setSettings((current) => {
+      if (!current || current.links.length >= MAX_PROFILE_LINKS) return current
+      return { ...current, links: [...current.links, { url: '' }] }
+    })
+  }, [])
+
+  const removeLink = useCallback((index: number) => {
+    setSettings((current) => {
+      if (!current) return current
+      return { ...current, links: current.links.filter((_, i) => i !== index) }
+    })
+  }, [])
+
   const handleSave = useCallback(async () => {
     if (!settings) return
+
+    // Blank rows (an "Add link" click nobody filled in) are dropped silently - they were
+    // never content to lose. A row with something in it that still fails to normalize is
+    // different: that is the person's typing, so the save stops and says so instead of
+    // quietly discarding it.
+    const nonBlank = settings.links.map((link) => link.url.trim()).filter((url) => url.length > 0)
+    const normalized = nonBlank.map((url) => normalizeProfileLink(url))
+    if (normalized.some((url) => url === null)) {
+      toast.error(t('settings.profile.links.invalid'))
+      return
+    }
+    const links: ProfileLink[] = normalized
+      .filter((url): url is string => url !== null)
+      .map((url) => ({ url }))
 
     setSaving(true)
     try {
       const response = await userApi.updateProfileSettings({
         ...settings,
         handle: handleInput.trim() || null,
+        links,
       })
       setSettings(response.data)
       setHandleInput(response.data.handle ?? '')
@@ -199,6 +242,56 @@ function EditProfileSheet({ open, onOpenChange, onSaved }: EditProfileSheetProps
               <p className="mt-1 text-caption text-text-secondary">
                 {t('settings.profile.bioCount', { count: (settings.bio ?? '').length })}
               </p>
+            </div>
+
+            <div>
+              <Label className="mb-1 block text-body-sm font-semibold">
+                {t('settings.profile.links.title')}
+              </Label>
+              <p className="mb-2 text-caption text-text-secondary">
+                {t('settings.profile.links.hint', { max: MAX_PROFILE_LINKS })}
+              </p>
+              <div className="flex flex-col gap-2">
+                {settings.links.map((link, index) => {
+                  const normalized = normalizeProfileLink(link.url)
+                  const platform = normalized ? detectSocialPlatform(normalized) : 'website'
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-text-secondary">
+                        <SocialLinkIcon platform={platform} className="size-4" />
+                      </span>
+                      <Input
+                        value={link.url}
+                        onChange={(e) => updateLink(index, e.target.value)}
+                        placeholder={t('settings.profile.links.placeholder')}
+                        maxLength={500}
+                        aria-label={t('settings.profile.links.urlLabel', { index: index + 1 })}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeLink(index)}
+                        aria-label={t('settings.profile.links.remove')}
+                        className="size-11 shrink-0"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  )
+                })}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addLink}
+                  disabled={settings.links.length >= MAX_PROFILE_LINKS}
+                  className="mt-1 min-h-11 w-fit"
+                >
+                  <Plus className="size-4" />
+                  {t('settings.profile.links.add')}
+                </Button>
+              </div>
             </div>
 
             <Separator />

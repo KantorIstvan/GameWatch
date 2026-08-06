@@ -2,11 +2,15 @@ package com.gamewatch.service;
 
 import com.gamewatch.dto.OnboardingRequestDto;
 import com.gamewatch.dto.OnboardingStatusDto;
+import com.gamewatch.dto.ProfileLinkDto;
 import com.gamewatch.dto.ProfileSettingsDto;
+import com.gamewatch.entity.ProfileLink;
 import com.gamewatch.entity.User;
+import com.gamewatch.repository.ProfileLinkRepository;
 import com.gamewatch.repository.UserRepository;
 import com.gamewatch.util.HandleGenerator;
 import com.gamewatch.util.HandleValidator;
+import com.gamewatch.util.ProfileLinkValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,7 +19,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ public class UserService {
     private static final int DISPLAY_NAME_MAX_LENGTH = 50;
 
     private final UserRepository userRepository;
+    private final ProfileLinkRepository profileLinkRepository;
 
     @Transactional
     public User getOrCreateUser(Authentication authentication) {
@@ -260,6 +267,28 @@ public class UserService {
             user.setWishlistVisibility(user.getProfileVisibility());
         }
 
+        // A save replaces the whole list rather than patching individual rows - matching
+        // how the edit sheet already treats "my links" as one field, not a set of rows
+        // with their own identity worth preserving across a save.
+        if (request.getLinks() != null) {
+            List<String> urls = request.getLinks().stream()
+                .map(ProfileLinkDto::getUrl)
+                .filter(url -> url != null && !url.isBlank())
+                .collect(Collectors.toList());
+
+            if (urls.size() > ProfileLinkValidator.maxLinks()) {
+                throw new IllegalArgumentException(
+                    "You can add at most " + ProfileLinkValidator.maxLinks() + " links");
+            }
+            for (String url : urls) {
+                String rejection = ProfileLinkValidator.rejectionReason(url);
+                if (rejection != null) {
+                    throw new IllegalArgumentException(rejection);
+                }
+            }
+            replaceLinks(user, urls);
+        }
+
         try {
             user = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
@@ -308,7 +337,30 @@ public class UserService {
             .libraryVisibility(user.getLibraryVisibility())
             .wishlistVisibility(user.getWishlistVisibility())
             .profilePictureUrl(user.getProfilePictureUrl())
+            .links(profileLinkRepository.findByUserOrderBySortOrderAsc(user).stream()
+                .map(link -> ProfileLinkDto.builder().url(link.getUrl()).build())
+                .collect(Collectors.toList()))
             .build();
+    }
+
+    /**
+     * Replaces this user's whole link list with {@code urls}, in the order given.
+     *
+     * Delete-then-reinsert rather than diffing against the existing rows: the list is
+     * short (capped at {@link ProfileLinkValidator#maxLinks()}), edited as a whole by the
+     * form that calls this, and a row here carries no identity worth preserving across a
+     * save - unlike, say, a wishlist entry, nothing else references a profile link by id.
+     */
+    private void replaceLinks(User user, List<String> urls) {
+        profileLinkRepository.deleteByUser(user);
+        int order = 0;
+        for (String url : urls) {
+            profileLinkRepository.save(ProfileLink.builder()
+                .user(user)
+                .url(ProfileLinkValidator.normalize(url))
+                .sortOrder(order++)
+                .build());
+        }
     }
 
     @Transactional

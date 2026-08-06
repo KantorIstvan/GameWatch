@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogBody, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 interface StyledDialogProps {
@@ -38,8 +38,13 @@ const StyledDialog = React.memo(({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className={cn('overflow-visible rounded-xl sm:rounded-xl', maxWidthClass[maxWidth])}>
-        <div className="flex justify-center pb-2 pt-2">
+      <DialogContent
+        className={cn(
+          'flex flex-col overflow-hidden rounded-xl sm:rounded-xl',
+          maxWidthClass[maxWidth]
+        )}
+      >
+        <div className="flex shrink-0 justify-center pb-2 pt-2">
           <div
             className="flex size-16 items-center justify-center rounded-full border-2 sm:size-20"
             style={{
@@ -52,14 +57,14 @@ const StyledDialog = React.memo(({
           </div>
         </div>
 
-        <DialogTitle className="pb-1 text-center text-h4 font-semibold sm:text-h3">
+        <DialogTitle className="shrink-0 pb-1 text-center text-h4 font-semibold sm:text-h3">
           {title}
         </DialogTitle>
 
-        <div className="px-0 pb-2">{children}</div>
+        <DialogBody className="px-0 pb-2">{children}</DialogBody>
 
         {actions && (
-          <div className="flex flex-col gap-3 pb-1 pt-2">{actions}</div>
+          <div className="flex shrink-0 flex-col gap-3 pb-1 pt-2">{actions}</div>
         )}
       </DialogContent>
     </Dialog>
