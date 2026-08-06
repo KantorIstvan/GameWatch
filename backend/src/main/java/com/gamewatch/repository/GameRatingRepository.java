@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,15 @@ import java.util.Optional;
 public interface GameRatingRepository extends JpaRepository<GameRating, Long> {
 
     Optional<GameRating> findByUserAndGame(User user, Game game);
+
+    /**
+     * A game's ratings from a set of users in one query, for callers (e.g. the review
+     * list) that need "this author's score" for many authors at once instead of one
+     * {@link #findByUserAndGame} round trip per author.
+     */
+    @Query("SELECT r FROM GameRating r WHERE r.game.id = :gameId AND r.user.id IN :userIds")
+    List<GameRating> findByGameIdAndUserIdIn(@Param("gameId") Long gameId,
+                                             @Param("userIds") Collection<Long> userIds);
 
     /** [score, count] pairs, for the distribution histogram shown beside the average. */
     @Query("SELECT r.score, COUNT(r) FROM GameRating r WHERE r.game.id = :gameId GROUP BY r.score")

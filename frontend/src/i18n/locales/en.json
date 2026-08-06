@@ -336,7 +336,12 @@
     "searchPlaceholder": "Search by handle or name",
     "prompt": "Start typing to find someone.",
     "typeMore": "Keep typing - at least 2 characters.",
-    "noResults": "No one found for \"{{query}}\"."
+    "noResults": "No one found for \"{{query}}\".",
+    "recent": {
+      "title": "Recently searched",
+      "clearAll": "Clear all",
+      "remove": "Remove {{person}} from recently searched"
+    }
   },
   "theme": {
     "light": "Light Mode",
