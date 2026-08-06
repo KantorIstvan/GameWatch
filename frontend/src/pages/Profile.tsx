@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { GitCompare, SquarePen } from 'lucide-react'
+import { SquarePen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -86,28 +86,16 @@ function Profile() {
             </Link>
           </Button>
         ) : (
-          <>
-            {/* Only offered when the library is actually visible - the comparison is gated
-                on the same thing, so linking to it otherwise would dead-end. */}
-            {profile.library && (
-              <Button asChild variant="outline">
-                <Link to={`/u/${profile.handle}/compare`}>
-                  <GitCompare className="size-4" />
-                  {t('compare.compareWith')}
-                </Link>
-              </Button>
-            )}
-            <FollowButton
-              state={{
-                handle: profile.handle,
-                following: profile.viewerIsFollowing,
-                requestPending: profile.viewerRequestPending,
-                followerCount: profile.followerCount,
-                followingCount: profile.followingCount,
-              }}
-              onChange={handleFollowChange}
-            />
-          </>
+          <FollowButton
+            state={{
+              handle: profile.handle,
+              following: profile.viewerIsFollowing,
+              requestPending: profile.viewerRequestPending,
+              followerCount: profile.followerCount,
+              followingCount: profile.followingCount,
+            }}
+            onChange={handleFollowChange}
+          />
         )
       }
     />
