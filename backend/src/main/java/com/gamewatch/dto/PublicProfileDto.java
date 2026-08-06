@@ -25,6 +25,14 @@ public class PublicProfileDto {
     private String profilePictureUrl;
     private LocalDate joinedDate;
 
+    /**
+     * Part of identity, like the handle and avatar - visible whenever the profile itself
+     * is, never gated by {@link #library} or {@link #wishlist} visibility. Left unset
+     * (null) rather than populated on the leaner summary rows used by search/follow
+     * lists, matching how those rows already leave {@link #library} unset.
+     */
+    private List<ProfileLinkDto> links;
+
     private long followerCount;
     private long followingCount;
     private boolean viewerIsFollowing;
