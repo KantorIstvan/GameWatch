@@ -1,17 +1,17 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Loading from '../components/Loading'
 import GameDetails from '../components/GameDetails'
 import GameRatingPanel from '../components/ratings/GameRatingPanel'
 import GameReviewsPanel from '../components/ratings/GameReviewsPanel'
 import GameCommunityPanel from '../components/ratings/GameCommunityPanel'
+import GameTimeToBeatSection from '../components/catalog/GameTimeToBeatSection'
 import WishlistButton from '../components/wishlist/WishlistButton'
 import { useCatalogGame } from '../hooks/useCatalogGame'
 import { rememberCatalogGame } from '../hooks/useRecentCatalogGames'
 import { useWishlist } from '../hooks/useWishlist'
 import { useTranslation } from 'react-i18next'
-import { formatTime } from '../utils/formatters'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -102,18 +102,11 @@ function CatalogGameDetail() {
             </div>
           )}
 
-          {game.averageCompletionSeconds != null && (
-            <p className="mb-4 flex items-center gap-2 text-body-sm text-text-secondary">
-              <Clock className="size-4 shrink-0" />
-              {t('catalog.averageCompletion', {
-                time: formatTime(game.averageCompletionSeconds),
-              })}
-            </p>
-          )}
-
           {game.description && (
             <p className="max-w-3xl text-body text-text-secondary">{game.description}</p>
           )}
+
+          <GameTimeToBeatSection gameId={gameId} />
         </div>
       </div>
 

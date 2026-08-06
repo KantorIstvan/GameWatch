@@ -231,6 +231,14 @@
     "vsTypical": "Measured here: {{measured}}. Commonly quoted: {{typical}}.",
     "notEnoughPlayers": "Needs at least {{count}} players before these are shown, so an average describes a group rather than one person."
   },
+  "timeToBeat": {
+    "title": "Community time to beat",
+    "subtitle": "Averaged from everyone's own measured playthroughs, not a self-reported estimate.",
+    "sampleSize_one": "{{count}} playthrough",
+    "sampleSize_other": "{{count}} playthroughs",
+    "noneLogged": "Nobody has logged one of these yet.",
+    "notEnoughPlayers": "Needs at least {{count}} players before an average is shown."
+  },
   "reviews": {
     "title": "Reviews",
     "writeOne": "Write a review",
@@ -720,7 +728,6 @@
     "searchPlaceholder": "Search for any game",
     "typeMore": "Keep typing - at least 2 characters.",
     "noResults": "No games found for \"{{query}}\".",
-    "averageCompletion": "Around {{time}} to beat",
     "recent": {
       "title": "Recently viewed",
       "clearAll": "Clear all",

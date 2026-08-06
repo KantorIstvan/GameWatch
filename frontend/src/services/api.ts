@@ -132,6 +132,10 @@ export const communityApi = {
   getCommunityStats: (gameId: number) => apiClient.get(`/games/${gameId}/community`),
 }
 
+export const timeToBeatApi = {
+  getTimeToBeat: (gameId: number) => apiClient.get(`/games/${gameId}/time-to-beat`),
+}
+
 export const reviewsApi = {
   getReviews: (gameId: number, sort: string, language?: string) =>
     apiClient.get(`/games/${gameId}/reviews`, { params: { sort, language } }),
