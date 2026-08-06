@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Star, Lock, EyeOff } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { profilesApi } from '../../services/api'
 import { formatDate } from '../../utils/formatters'
+import { cn } from '@/lib/utils'
 import type { GameRatingEntry } from '../../types'
 
 interface RatingsListPanelProps {
@@ -22,6 +24,7 @@ interface RatingsListPanelProps {
  */
 function RatingsListPanel({ handle }: RatingsListPanelProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [ratings, setRatings] = useState<GameRatingEntry[] | null>([])
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
@@ -93,14 +96,18 @@ function RatingsListPanel({ handle }: RatingsListPanelProps) {
         return (
           <li
             key={entry.gameId}
-            className="rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
+            onClick={entry.externalId ? () => navigate(`/catalog/${entry.externalId}`) : undefined}
+            className={cn(
+              'rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl',
+              entry.externalId && 'cursor-pointer transition-colors duration-150 ease-standard hover:bg-surface'
+            )}
           >
             <div className="flex items-center gap-3">
               {entry.bannerImageUrl && (
                 <img
                   src={entry.bannerImageUrl}
                   alt=""
-                  className="h-16 w-28 shrink-0 rounded-md bg-surface object-contain"
+                  className="h-24 w-16 shrink-0 rounded-md object-cover"
                   loading="lazy"
                 />
               )}
@@ -123,7 +130,10 @@ function RatingsListPanel({ handle }: RatingsListPanelProps) {
               hidden ? (
                 <button
                   type="button"
-                  onClick={() => reveal(entry.gameId)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    reveal(entry.gameId)
+                  }}
                   className="mt-2 flex w-full items-center gap-2 rounded-lg border border-dashed border-border p-3 text-left text-body-sm text-text-secondary transition-colors duration-150 ease-standard hover:bg-border/10"
                 >
                   <EyeOff className="size-4 shrink-0" />

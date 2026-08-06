@@ -297,6 +297,8 @@ export interface ProfileLibrary {
  */
 export interface ProfileReview {
   gameId: number
+  /** IGDB's id - the catalog's address for this game, since most have no row here. */
+  gameExternalId: number | null
   gameName: string
   gameBannerImageUrl: string | null
   /** The author's own score for this game, when they left one. */
@@ -497,6 +499,8 @@ export interface DailyPlaytime {
  */
 export interface GameRatingEntry {
   gameId: number
+  /** IGDB's id - the catalog's address for this game, since most have no row here. */
+  externalId?: number
   gameName: string
   bannerImageUrl?: string
   score: number
@@ -508,6 +512,8 @@ export interface GameRatingEntry {
 
 export interface GameRanking {
   gameId: number
+  /** IGDB's id - the catalog's address for this game, since most have no row here. */
+  externalId?: number
   gameName: string
   bannerImageUrl?: string
   playtimeSeconds: number

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { EyeOff } from 'lucide-react'
 import { formatDate } from '../../utils/formatters'
+import { cn } from '@/lib/utils'
 import type { ProfileReview } from '../../types'
 
 interface RecentReviewsProps {
@@ -19,6 +21,7 @@ interface RecentReviewsProps {
  */
 function RecentReviews({ reviews }: RecentReviewsProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
 
   const reveal = (index: number) => {
@@ -34,14 +37,21 @@ function RecentReviews({ reviews }: RecentReviewsProps) {
           return (
             <li
               key={`${review.gameId}-${review.createdAt}`}
-              className="rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl"
+              onClick={
+                review.gameExternalId ? () => navigate(`/catalog/${review.gameExternalId}`) : undefined
+              }
+              className={cn(
+                'rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl',
+                review.gameExternalId &&
+                  'cursor-pointer transition-colors duration-150 ease-standard hover:bg-surface'
+              )}
             >
               <div className="flex items-center gap-3">
                 {review.gameBannerImageUrl && (
                   <img
                     src={review.gameBannerImageUrl}
                     alt=""
-                    className="h-16 w-28 shrink-0 rounded-md bg-surface object-contain"
+                    className="h-24 w-16 shrink-0 rounded-md object-cover"
                     loading="lazy"
                   />
                 )}
@@ -65,7 +75,10 @@ function RecentReviews({ reviews }: RecentReviewsProps) {
               {hidden ? (
                 <button
                   type="button"
-                  onClick={() => reveal(index)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    reveal(index)
+                  }}
                   className="mt-2 flex w-full items-center gap-2 rounded-lg border border-dashed border-border p-3 text-left text-body-sm text-text-secondary transition-colors duration-150 ease-standard hover:bg-border/10"
                 >
                   <EyeOff className="size-4 shrink-0" />
