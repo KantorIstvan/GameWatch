@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { setAuthToken } from '../services/api'
+import { setCurrentUserId } from '../lib/currentUserId'
 
 interface AuthContextType {
   isAuthReady: boolean
@@ -19,12 +20,20 @@ export const useAuthContext = (): AuthContextType => {
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { isLoading, isAuthenticated, getAccessTokenSilently, logout: auth0Logout } = useAuth0()
+  const { isLoading, isAuthenticated, user, getAccessTokenSilently, logout: auth0Logout } = useAuth0()
   const [isAuthReady, setIsAuthReady] = useState(false)
 
   const logout = () => {
     auth0Logout({ logoutParams: { returnTo: window.location.origin } })
   }
+
+  // Kept in step with Auth0's own state rather than just set once at login: a browser
+  // reload with no session, or the moment `logout()` clears one, has to blank this out
+  // immediately, or the next account's device-local lists (recent searches, local
+  // notifications) could still resolve against the previous account's id for a render.
+  useEffect(() => {
+    setCurrentUserId(isAuthenticated ? (user?.sub ?? null) : null)
+  }, [isAuthenticated, user?.sub])
 
   useEffect(() => {
     let mounted = true

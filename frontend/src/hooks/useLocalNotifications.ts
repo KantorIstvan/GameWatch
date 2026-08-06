@@ -1,4 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { useAuth0 } from '@auth0/auth0-react'
+import { getCurrentUserId } from '../lib/currentUserId'
 
 /**
  * What the entry looks like in the bell - not what raised it.
@@ -25,7 +27,19 @@ export interface LocalNotification {
   createdAt: string
 }
 
-const STORAGE_KEY = 'gamewatch.notifications.local'
+/**
+ * Base of the storage key - never read or written to directly. Each account gets its own
+ * key built from this (see `storageKeyFor`), so one browser used by two different accounts
+ * never shows either of them the other's reminders.
+ */
+const STORAGE_KEY_BASE = 'gamewatch.notifications.local'
+
+/**
+ * The flat, unscoped key this list used before per-account scoping existed. Left on disk in
+ * anyone's browser who used the feature pre-fix - see `loadForUser` for the one-time,
+ * one-way migration out of it.
+ */
+const LEGACY_STORAGE_KEY = STORAGE_KEY_BASE
 
 /**
  * How many reminders are kept.
@@ -34,6 +48,10 @@ const STORAGE_KEY = 'gamewatch.notifications.local'
  * and nobody scrolls a reminder list looking for last Tuesday's drink of water.
  */
 const MAX_ENTRIES = 50
+
+/** Stable empty reference for the signed-out snapshot, so useSyncExternalStore never sees
+ *  a "changed" value it has to loop on just because a new array literal was returned. */
+const EMPTY: LocalNotification[] = []
 
 /**
  * Timer and health reminders, kept on the device.
@@ -44,11 +62,18 @@ const MAX_ENTRIES = 50
  * reminder you dismissed a toast for ten minutes ago, which is the whole reason people go
  * looking for a notification list in the first place.
  *
+ * Scoped per signed-in account (see `storageKeyFor`): these reminders are tied to that
+ * account's session activity (goals reached, break/hydration timing), so a shared or reused
+ * browser must never hand one account's reminders to the next person who logs in.
+ *
  * Held in a module-level cache with subscribers so that whatever fires a reminder and the
- * header that displays it need no connection to each other beyond this file.
+ * header that displays it need no connection to each other beyond this file. The cache is
+ * keyed by which account it currently reflects, not just populated once, so switching
+ * accounts within the same tab session invalidates it instead of quietly serving the
+ * previous account's entries.
  */
 let cache: LocalNotification[] | null = null
-const listeners = new Set<() => void>()
+let cachedKey: string | null = null
 
 function isEntry(value: unknown): value is LocalNotification {
   const entry = value as LocalNotification
@@ -61,24 +86,77 @@ function isEntry(value: unknown): value is LocalNotification {
   )
 }
 
-function read(): LocalNotification[] {
-  if (cache) {
+function parseEntries(raw: string): LocalNotification[] {
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter(isEntry).slice(0, MAX_ENTRIES) : []
+  } catch {
+    return []
+  }
+}
+
+function storageKeyFor(userId: string): string {
+  return `${STORAGE_KEY_BASE}.${userId}`
+}
+
+/**
+ * Loads this account's list, migrating the old unscoped list into it exactly once if
+ * nothing has been saved under the account's own key yet.
+ *
+ * Migrating (rather than abandoning the old key) avoids surprising the common case - one
+ * person, one account, on their own browser - by silently wiping the reminders they had
+ * open yesterday. The risk this trades away is that a genuinely shared/reused browser could
+ * hand its leftover unscoped reminders to whichever account happens to load the app first
+ * after this fix ships; that is bounded to a single, one-time adoption, since the legacy key
+ * is deleted the moment it is read, so no second account can ever collide with it afterward.
+ */
+function loadForUser(key: string): LocalNotification[] {
+  try {
+    const stored = window.localStorage.getItem(key)
+    if (stored) {
+      return parseEntries(stored)
+    }
+
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (legacy === null) {
+      return []
+    }
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+    const migrated = parseEntries(legacy)
+    if (migrated.length > 0) {
+      window.localStorage.setItem(key, JSON.stringify(migrated))
+    }
+    return migrated
+  } catch {
+    return []
+  }
+}
+
+function read(userId: string | null): LocalNotification[] {
+  if (!userId) {
+    // Signed out: nothing to scope this to, and there is no session raising reminders.
+    return EMPTY
+  }
+  const key = storageKeyFor(userId)
+  if (cache && cachedKey === key) {
     return cache
   }
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    const parsed = stored ? JSON.parse(stored) : []
-    cache = Array.isArray(parsed) ? parsed.filter(isEntry).slice(0, MAX_ENTRIES) : []
-  } catch {
-    cache = []
-  }
+  cache = loadForUser(key)
+  cachedKey = key
   return cache
 }
 
-function write(next: LocalNotification[]) {
+function write(userId: string | null, next: LocalNotification[]) {
+  if (!userId) {
+    // Signed out: persisting under any shared key is exactly the bug this scoping fixes,
+    // so there is nothing to do here until someone is actually signed in.
+    return
+  }
+  const key = storageKeyFor(userId)
   cache = next
+  cachedKey = key
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.localStorage.setItem(key, JSON.stringify(next))
   } catch {
     // A full or unavailable store costs the persistence, not the session: the cache still
     // drives this tab until it closes.
@@ -86,12 +164,17 @@ function write(next: LocalNotification[]) {
   listeners.forEach((listener) => listener())
 }
 
-function subscribe(listener: () => void): () => void {
+const listeners = new Set<() => void>()
+
+function subscribe(userId: string | null, listener: () => void): () => void {
   listeners.add(listener)
 
+  const key = userId ? storageKeyFor(userId) : null
+
   const onStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY || event.key === null) {
+    if (key !== null && (event.key === key || event.key === null)) {
       cache = null
+      cachedKey = null
       listeners.forEach((each) => each())
     }
   }
@@ -109,19 +192,23 @@ function subscribe(listener: () => void): () => void {
  * Called alongside the toast rather than instead of it: the toast is the interruption, and
  * this is what remains after it fades. A reminder nobody was at the screen for is exactly
  * the one worth keeping.
+ *
+ * Called from a plain singleton service, not a hook, so the acting account comes from the
+ * shared `currentUserId` mirror rather than from `useAuth0()` directly.
  */
 export function recordLocalNotification(entry: {
   messageKey: string
   values?: Record<string, string | number>
   tone: LocalNotificationTone
 }) {
+  const userId = getCurrentUserId()
   const notification: LocalNotification = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     read: false,
     createdAt: new Date().toISOString(),
     ...entry,
   }
-  write([notification, ...read()].slice(0, MAX_ENTRIES))
+  write(userId, [notification, ...read(userId)].slice(0, MAX_ENTRIES))
 }
 
 interface LocalNotifications {
@@ -132,18 +219,26 @@ interface LocalNotifications {
 }
 
 export function useLocalNotifications(): LocalNotifications {
-  const notifications = useSyncExternalStore(subscribe, read)
+  const { user } = useAuth0()
+  const userId = user?.sub ?? null
+
+  const subscribeForUser = useCallback(
+    (listener: () => void) => subscribe(userId, listener),
+    [userId]
+  )
+  const getSnapshot = useCallback(() => read(userId), [userId])
+  const notifications = useSyncExternalStore(subscribeForUser, getSnapshot)
 
   const markAllRead = useCallback(() => {
-    const current = read()
+    const current = read(userId)
     if (current.every((entry) => entry.read)) {
       // Nothing to change, and rewriting would wake every subscriber for no reason.
       return
     }
-    write(current.map((entry) => ({ ...entry, read: true })))
-  }, [])
+    write(userId, current.map((entry) => ({ ...entry, read: true })))
+  }, [userId])
 
-  const clear = useCallback(() => write([]), [])
+  const clear = useCallback(() => write(userId, []), [userId])
 
   return {
     notifications,
