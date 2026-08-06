@@ -138,3 +138,25 @@ export const getPlaythroughTypeColor = (type: string): string => {
   }
   return colors[normalizedType] || '#757575'
 }
+
+/**
+ * Splits a comma-separated catalog field (developers, publishers, genres) into trimmed,
+ * de-duplicated names, in the order they first appear.
+ *
+ * Shared by the profile entry row (which renders each name as its own element) and the
+ * ratings tab's filter controls (which need the same names as unique dropdown options) -
+ * both have to agree on what counts as "one name" out of the same raw string.
+ */
+export const splitCommaList = (value?: string): string[] => {
+  if (!value) return []
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const raw of value.split(',')) {
+    const name = raw.trim()
+    if (name && !seen.has(name)) {
+      seen.add(name)
+      result.push(name)
+    }
+  }
+  return result
+}
