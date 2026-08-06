@@ -23,7 +23,6 @@ export interface GameEntryRowData {
   releaseDate?: string
   developers?: string
   publishers?: string
-  description?: string
   averageCompletionSeconds?: number
   communityRatingScore?: number | null
   communityRatingCount?: number
@@ -49,16 +48,20 @@ interface GameEntryRowProps {
 }
 
 /**
- * One game in an IMDb/Letterboxd-style entry row: cover, "rated on" date, ordinal title,
- * release year and time-to-beat, a stats line, a short synopsis, and a Developer/Publisher
- * byline - GameWatch's answer to Director/Stars.
+ * One game in the Ratings or Wishlist tab: cover, "rated on" date, ordinal title, release
+ * year and time-to-beat, a Developer/Publisher byline, a stats line, and - as this row's
+ * own focal point, when the owner wrote one - their review. The review sits in the same
+ * quoted, left-bordered treatment {@link ReviewReplies} uses for a reply thread, integrated
+ * into the row's own column rather than tacked on as a full-width block underneath it. The
+ * game's own catalog description never renders here: that's the catalog's synopsis, not
+ * this owner's take on the game, and this row is only ever about the latter.
  *
  * The cover and the title are the only two links to the game's catalog page. Developer and
  * publisher names are separate buttons rather than nested inside that link - an `<a>`
  * containing another interactive control breaks keyboard and screen-reader navigation, and
  * clicking a company name here does something different anyway: with no per-company page in
  * this app, it narrows the current list to that company's other games instead of navigating
- * away, the same way IMDb's cast links narrow to what else that person is credited on.
+ * away.
  */
 function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: GameEntryRowProps) {
   const { t } = useTranslation()
@@ -128,6 +131,27 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
 
           {metaLine && <p className="mt-0.5 text-caption text-text-secondary">{metaLine}</p>}
 
+          {(entry.developers || entry.publishers) && (
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-caption text-text-secondary">
+              {entry.developers && (
+                <span>
+                  <span className="font-semibold text-text-primary">
+                    {t('profile.entryRow.developerLabel')}
+                  </span>{' '}
+                  <NameLinks names={entry.developers} onSelect={onDeveloperSelect} />
+                </span>
+              )}
+              {entry.publishers && (
+                <span>
+                  <span className="font-semibold text-text-primary">
+                    {t('profile.entryRow.publisherLabel')}
+                  </span>{' '}
+                  <NameLinks names={entry.publishers} onSelect={onPublisherSelect} />
+                </span>
+              )}
+            </p>
+          )}
+
           {(entry.communityRatingScore != null || isRating) && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
               {entry.communityRatingScore != null && (
@@ -162,49 +186,31 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
             </div>
           )}
 
-          {entry.description && (
-            <p className="mt-2 line-clamp-2 text-body-sm text-text-secondary">{entry.description}</p>
-          )}
-
-          {(entry.developers || entry.publishers) && (
-            <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-caption text-text-secondary">
-              {entry.developers && (
-                <span>
-                  <span className="font-semibold text-text-primary">
-                    {t('profile.entryRow.developerLabel')}
-                  </span>{' '}
-                  <NameLinks names={entry.developers} onSelect={onDeveloperSelect} />
-                </span>
+          {/* The row's own focal point when one exists: the owner's take on the game, not
+              the catalog's. Quoted with the same border-l-2 border-border treatment
+              ReviewReplies uses for a reply thread, and folded into this column instead of
+              spanning full-width below everything - it reads as this row's headline
+              content, not an appendage bolted on underneath the metadata. */}
+          {hasReview && (
+            <div className="mt-2 border-l-2 border-border pl-3">
+              {hidden ? (
+                <button
+                  type="button"
+                  onClick={() => setRevealed(true)}
+                  className="flex w-full items-center gap-2 rounded-lg border border-dashed border-border p-3 text-left text-body-sm text-text-secondary transition-colors duration-150 ease-standard hover:bg-border/10"
+                >
+                  <EyeOff className="size-4 shrink-0" />
+                  {t('reviews.spoilerHidden')}
+                </button>
+              ) : (
+                <p className="line-clamp-3 whitespace-pre-wrap text-body-sm text-text-secondary">
+                  {entry.reviewBody}
+                </p>
               )}
-              {entry.publishers && (
-                <span>
-                  <span className="font-semibold text-text-primary">
-                    {t('profile.entryRow.publisherLabel')}
-                  </span>{' '}
-                  <NameLinks names={entry.publishers} onSelect={onPublisherSelect} />
-                </span>
-              )}
-            </p>
+            </div>
           )}
         </div>
       </div>
-
-      {hasReview && (
-        hidden ? (
-          <button
-            type="button"
-            onClick={() => setRevealed(true)}
-            className="mt-2 flex w-full items-center gap-2 rounded-lg border border-dashed border-border p-3 text-left text-body-sm text-text-secondary transition-colors duration-150 ease-standard hover:bg-border/10"
-          >
-            <EyeOff className="size-4 shrink-0" />
-            {t('reviews.spoilerHidden')}
-          </button>
-        ) : (
-          <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-body-sm text-text-secondary">
-            {entry.reviewBody}
-          </p>
-        )
-      )}
     </li>
   )
 }

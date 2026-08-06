@@ -222,7 +222,6 @@ public class ProfileService {
                     .publishers(game.getPublishers())
                     .genres(game.getGenres())
                     .releaseDate(game.getReleaseDate())
-                    .description(game.getDescription())
                     .averageCompletionSeconds(game.getAverageCompletionSeconds())
                     .communityRatingScore(game.getBayesianScore())
                     .communityRatingCount(game.getRatingCount())
