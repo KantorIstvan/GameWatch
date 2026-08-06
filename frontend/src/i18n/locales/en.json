@@ -299,12 +299,22 @@
     "verified_one": "{{count}} with playtime",
     "verified_other": "{{count}} with playtime",
     "distributionLabel": "Distribution of scores from 1 to 10",
-    "scoreCount": "{{count}} rated this {{score}}",
     "yourScore": "You rated this {{score}}/10",
     "rateIt": "Rate this game",
     "rateAria": "Rate {{score}} out of 10",
     "clickAgainToClear": "Click your score again to remove it.",
     "failed": "Could not save your rating"
+  },
+  "ratingDistribution": {
+    "score": "Score {{score}}",
+    "games_one": "{{count}} game",
+    "games_other": "{{count}} games",
+    "ratings_one": "{{count}} rating",
+    "ratings_other": "{{count}} ratings",
+    "gamesBarLabel_one": "Score {{score}}: {{count}} game",
+    "gamesBarLabel_other": "Score {{score}}: {{count}} games",
+    "ratingsBarLabel_one": "Score {{score}}: {{count}} rating",
+    "ratingsBarLabel_other": "Score {{score}}: {{count}} ratings"
   },
   "wishlist": {
     "add": "Add to wishlist",
@@ -341,7 +351,7 @@
     "ratingsGiven": "Ratings Given",
     "ratingDistributionTitle": "Rating Distribution",
     "ratingDistributionLabel": "Distribution of the scores this user has given, from 1 to 10",
-    "ratingDistributionCount": "{{count}} ratings scored {{score}}",
+    "ratingAverage": "Average score",
     "topGames": "Most Played",
     "recentReviews": "Recent Reviews",
     "libraryHidden": "This library is not shared with you.",
