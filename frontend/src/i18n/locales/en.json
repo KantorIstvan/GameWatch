@@ -320,6 +320,15 @@
     "libraryEmpty": "No games in this library yet.",
     "noFollowers": "No followers yet.",
     "notFollowingAnyone": "Not following anyone yet.",
+    "followSearch": {
+      "followersPlaceholder": "Search followers",
+      "followingPlaceholder": "Search following",
+      "followersLabel": "Search followers by name or handle",
+      "followingLabel": "Search following by name or handle",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matches",
+      "noMatches": "Nobody in this list matches \"{{query}}\"."
+    },
     "noRatings": "No games rated yet.",
     "ratingScore": "{{score}}/10",
     "listUnavailable": "This list could not be loaded.",
