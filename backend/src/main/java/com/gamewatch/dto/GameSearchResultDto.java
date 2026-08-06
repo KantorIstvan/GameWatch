@@ -30,6 +30,8 @@ public class GameSearchResultDto {
 
     private String alternativeNames;
 
-    private String dominantColor1;
-    private String dominantColor2;
+    // No dominantColor1/2 here: IGDB's API doesn't return dominant colors, and nothing in
+    // IgdbApiService computes them, so this DTO never legitimately carries them. Colors are
+    // computed separately from the banner image once a game is catalogued - see
+    // GameService.getOrCreateCatalogGame - and read off the persisted Game/GameDto from then on.
 }

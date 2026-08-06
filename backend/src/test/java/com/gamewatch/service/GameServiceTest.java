@@ -2,6 +2,7 @@ package com.gamewatch.service;
 
 import com.gamewatch.dto.CreateGameRequest;
 import com.gamewatch.dto.GameDto;
+import com.gamewatch.dto.GameSearchResultDto;
 import com.gamewatch.entity.Game;
 import com.gamewatch.entity.Playthrough;
 import com.gamewatch.entity.User;
@@ -45,6 +46,9 @@ class GameServiceTest {
 
     @Mock
     private IgdbApiService igdbApiService;
+
+    @Mock
+    private ColorExtractionService colorExtractionService;
 
     @InjectMocks
     private GameService gameService;
@@ -322,5 +326,64 @@ class GameServiceTest {
 
         verify(gameRepository).save(any(Game.class));
         verify(userGameRepository).save(any(UserGame.class));
+    }
+
+    @Test
+    void getOrCreateCatalogGame_ComputesDominantColorsFromBannerOnFirstCatalog() {
+        // The catalog row is inserted exactly once, ever, on the first rating/review/wishlist
+        // for a game - so this is where dominant colors get computed, the same one-time,
+        // synchronous pattern PlaythroughService already uses for a playthrough's colors.
+        GameSearchResultDto details = GameSearchResultDto.builder()
+            .id(12345)
+            .name("Test Game")
+            .bannerImageUrl("https://example.com/banner.jpg")
+            .build();
+
+        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.empty());
+        when(igdbApiService.getGameDetails(12345)).thenReturn(details);
+        when(colorExtractionService.extractDominantColors("https://example.com/banner.jpg"))
+            .thenReturn(new String[]{"#111111", "#222222"});
+        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Game result = gameService.getOrCreateCatalogGame(12345);
+
+        assertThat(result.getDominantColor1()).isEqualTo("#111111");
+        assertThat(result.getDominantColor2()).isEqualTo("#222222");
+        verify(colorExtractionService).extractDominantColors("https://example.com/banner.jpg");
+    }
+
+    @Test
+    void getOrCreateCatalogGame_AlreadyCatalogued_NeverRecomputesColors() {
+        // The one-time cost must actually stay one-time: a game that already has a row is
+        // returned as-is, with no IGDB call and no re-extraction of colors already stored.
+        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.of(testGame));
+
+        Game result = gameService.getOrCreateCatalogGame(12345);
+
+        assertThat(result).isEqualTo(testGame);
+        verifyNoInteractions(igdbApiService, colorExtractionService);
+    }
+
+    @Test
+    void getCatalogGameByExternalId_NeverCataloguedGame_DoesNotComputeColorsSynchronously() {
+        // The never-catalogued, read-only path (majority of catalog page views) is called on
+        // every page view - computing colors here would mean an uncached image download plus
+        // k-means clustering on every ordinary read. The gradient is deliberately absent until
+        // the game is actually catalogued instead.
+        GameSearchResultDto details = GameSearchResultDto.builder()
+            .id(12345)
+            .name("Test Game")
+            .bannerImageUrl("https://example.com/banner.jpg")
+            .build();
+
+        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.empty());
+        when(igdbApiService.getGameDetails(12345)).thenReturn(details);
+
+        GameDto result = gameService.getCatalogGameByExternalId(12345);
+
+        assertThat(result.getId()).isNull();
+        assertThat(result.getDominantColor1()).isNull();
+        assertThat(result.getDominantColor2()).isNull();
+        verifyNoInteractions(colorExtractionService);
     }
 }

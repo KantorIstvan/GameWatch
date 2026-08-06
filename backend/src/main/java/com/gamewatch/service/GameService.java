@@ -41,6 +41,7 @@ public class GameService {
     private final SessionHistoryRepository sessionHistoryRepository;
     private final PlaythroughService playthroughService;
     private final IgdbApiService igdbApiService;
+    private final ColorExtractionService colorExtractionService;
 
     @Transactional
     public GameDto createGame(CreateGameRequest request, User user) {
@@ -170,6 +171,17 @@ public class GameService {
             throw new IllegalArgumentException("Game not found");
         }
 
+        // IGDB doesn't return dominant colors, so they're computed here instead - the same
+        // synchronous, once-only extraction PlaythroughService already does for a playthrough's
+        // colors. This is the game's one and only catalog-row insert, ever (see this method's
+        // own doc comment), so the download-and-cluster cost is paid exactly once per game,
+        // not on every page view - unlike the read-only, never-catalogued path in
+        // mapExternalToCatalogDto, which deliberately does *not* pay this cost per view.
+        String[] colors = null;
+        if (details.getBannerImageUrl() != null && !details.getBannerImageUrl().isEmpty()) {
+            colors = colorExtractionService.extractDominantColors(details.getBannerImageUrl());
+        }
+
         Game game = gameRepository.save(Game.builder()
             .name(details.getName())
             .bannerImageUrl(details.getBannerImageUrl())
@@ -188,8 +200,8 @@ public class GameService {
             .averageCompletionSeconds(details.getAverageCompletionSeconds())
             .esrbRating(details.getEsrbRating())
             .alternativeNames(details.getAlternativeNames())
-            .dominantColor1(details.getDominantColor1())
-            .dominantColor2(details.getDominantColor2())
+            .dominantColor1(colors != null && colors.length > 0 ? colors[0] : null)
+            .dominantColor2(colors != null && colors.length > 1 ? colors[1] : null)
             .build());
 
         log.info("Catalogued game {} ({}) on first community interaction", game.getName(), externalId);
@@ -206,6 +218,18 @@ public class GameService {
     /**
      * A game that exists on IGDB but not here. The null id is what tells the caller that,
      * and a zero rating count keeps "nobody has rated this" distinct from "no data".
+     *
+     * Dominant colors are deliberately left null rather than computed on the spot. This is
+     * called on every page view of a game nobody has catalogued yet - the majority case for
+     * a catalog browse - so, unlike {@link #getOrCreateCatalogGame}'s one-time insert, there
+     * is no row to cache the result on and no way to avoid re-downloading and re-clustering
+     * the banner on every single view of a game most visitors will never interact with. Doing
+     * that synchronously here would add a real, uncached image-download-plus-k-means cost to
+     * an ordinary read. Instead the gradient simply doesn't render for a game's pre-catalog
+     * views (CatalogGameDetail.tsx already handles null colors by omitting it) and starts
+     * showing up from the moment someone rates, reviews or wishlists it - the same first
+     * community interaction that creates the catalog row and computes the colors once, for
+     * good.
      */
     private GameDto mapExternalToCatalogDto(GameSearchResultDto details) {
         return GameDto.builder()
@@ -227,8 +251,6 @@ public class GameService {
             .averageCompletionSeconds(details.getAverageCompletionSeconds())
             .esrbRating(details.getEsrbRating())
             .alternativeNames(details.getAlternativeNames())
-            .dominantColor1(details.getDominantColor1())
-            .dominantColor2(details.getDominantColor2())
             .communityRatingCount(0)
             .build();
     }
