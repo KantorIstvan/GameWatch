@@ -1,8 +1,7 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Trophy, CircleSlash, RotateCcw, PlayCircle, Users } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import UserLink from './UserLink'
 import { formatTime } from '../../utils/formatters'
 import type { ActivityEvent } from '../../types'
 
@@ -62,21 +61,20 @@ function ActivityList({ events, scope, loading }: ActivityListProps) {
           key={`${event.actorHandle}-${event.id}`}
           className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 p-3 backdrop-blur-xl sm:p-4"
         >
-          <Avatar className="size-10 shrink-0">
-            <AvatarImage src={event.actorPictureUrl ?? undefined} alt="" />
-            <AvatarFallback>
-              {(event.actorHandle ?? '?').charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <UserLink
+            variant="avatar"
+            handle={event.actorHandle}
+            displayName={event.actorDisplayName}
+            pictureUrl={event.actorPictureUrl}
+          />
 
           <div className="min-w-0 flex-1">
             <p className="text-body-sm">
-              <Link
-                to={`/u/${event.actorHandle}`}
-                className="font-medium text-text-primary hover:underline"
-              >
-                {event.actorDisplayName ?? event.actorHandle}
-              </Link>{' '}
+              <UserLink
+                variant="name"
+                handle={event.actorHandle}
+                displayName={event.actorDisplayName}
+              />{' '}
               <span className="text-text-secondary">
                 {t(`feed.action.${event.type}`)}
               </span>{' '}

@@ -20,14 +20,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByHandleIgnoreCase(String handle);
 
     /**
-     * Candidates for handle search. Rows without a handle cannot be addressed at all, so
+     * Candidates for people search. Rows without a handle cannot be addressed at all, so
      * they are excluded here rather than filtered out afterwards.
      *
-     * Handles match on prefix and display names on substring: a handle is an identifier
-     * people type from the start, a display name is prose they remember a fragment of.
+     * Handles match on prefix and names on substring: a handle is an identifier people
+     * type from the start, a name is prose they remember a fragment of.
+     *
+     * The Auth0 username is searched alongside the chosen display name because it is the
+     * only name most accounts have - display_name is null until someone fills the settings
+     * form in, and searching for a person by the name they actually go by should not
+     * depend on whether they have done that.
      */
     @Query("SELECT u FROM User u WHERE u.handle IS NOT NULL AND ("
         + "LOWER(u.handle) LIKE CONCAT(:query, '%') "
-        + "OR LOWER(u.displayName) LIKE CONCAT('%', :query, '%'))")
-    List<User> searchByHandleOrDisplayName(@Param("query") String query);
+        + "OR LOWER(u.displayName) LIKE CONCAT('%', :query, '%') "
+        + "OR LOWER(u.username) LIKE CONCAT('%', :query, '%'))")
+    List<User> searchByHandleOrName(@Param("query") String query);
 }

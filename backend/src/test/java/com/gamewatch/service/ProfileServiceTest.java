@@ -122,9 +122,10 @@ class ProfileServiceTest {
         User followersOnly = User.builder().id(4L).auth0UserId("auth0|fo").handle("followersonly")
             .profileVisibility(Visibility.FOLLOWERS).libraryVisibility(Visibility.FOLLOWERS).build();
 
-        when(userRepository.searchByHandleOrDisplayName("own"))
+        when(userRepository.searchByHandleOrName("own"))
             .thenReturn(List.of(owner, hidden, followersOnly));
         when(followService.canView(viewer, owner, Visibility.PUBLIC)).thenReturn(true);
+        when(followService.canView(viewer, hidden, Visibility.PRIVATE)).thenReturn(false);
         when(followService.canView(viewer, followersOnly, Visibility.FOLLOWERS)).thenReturn(false);
 
         List<PublicProfileDto> results = profileService.search(viewer, " OWN ");
