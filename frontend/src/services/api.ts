@@ -222,6 +222,12 @@ export const adminApi = {
   searchUsers: (query: string, page: number = 0, size: number = 20) =>
     apiClient.get('/admin/users', { params: { query, page, size } }),
   getUser: (id: number) => apiClient.get(`/admin/users/${id}`),
+  blockUser: (id: number) => apiClient.post(`/admin/users/${id}/block`),
+  unblockUser: (id: number) => apiClient.post(`/admin/users/${id}/unblock`),
+  sendPasswordReset: (id: number) => apiClient.post(`/admin/users/${id}/send-password-reset`),
+  deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
+  getAuditLog: (id: number, page: number = 0, size: number = 20) =>
+    apiClient.get(`/admin/users/${id}/audit-log`, { params: { page, size } }),
 }
 
 export default apiClient

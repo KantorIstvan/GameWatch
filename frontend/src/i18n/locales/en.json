@@ -1194,6 +1194,46 @@
       "pageOf": "Page {{page}} of {{totalPages}}",
       "backToDirectory": "Back to Users",
       "notFound": "That user could not be found.",
+      "rowActions": "Row actions",
+      "viewDetails": "View details",
+      "blockedBadge": "Blocked",
+      "block": "Block",
+      "unblock": "Unblock",
+      "blockSuccess": "Blocked {{name}}.",
+      "unblockSuccess": "Unblocked {{name}}.",
+      "blockFailed": "Failed to block this account.",
+      "unblockFailed": "Failed to unblock this account.",
+      "blockConfirmTitle": "Block this account?",
+      "blockConfirmMessage": "{{name}} will be signed out and unable to log back in until you unblock them.",
+      "unblockConfirmTitle": "Unblock this account?",
+      "unblockConfirmMessage": "{{name}} will be able to log in again.",
+      "sendPasswordReset": "Send password reset email",
+      "passwordResetSuccess": "If {{email}} uses a password to sign in, a reset email has been sent.",
+      "passwordResetFailed": "Could not send a password reset email.",
+      "deleteAccount": "Delete account",
+      "deleteConfirmTitle": "Delete this account?",
+      "deleteConfirmMessage": "This permanently deletes {{email}}'s account, including their library, playthroughs, reviews and every other record tied to it. This cannot be undone.",
+      "deleteSuccess": "Deleted {{email}}'s account.",
+      "deleteFailed": "Failed to delete this account.",
+      "moderation": {
+        "title": "Moderation",
+        "description": "Admins never see or set a password directly - only trigger a reset email, or block/unblock sign-in."
+      },
+      "dangerZone": {
+        "title": "Danger zone",
+        "description": "Deleting an account removes it and all of its data permanently."
+      },
+      "auditLog": {
+        "title": "Activity log",
+        "empty": "No admin actions recorded for this account yet.",
+        "by": "by {{email}}",
+        "actions": {
+          "BLOCK": "Blocked",
+          "UNBLOCK": "Unblocked",
+          "PASSWORD_RESET_SENT": "Password reset email sent",
+          "DELETE_ACCOUNT": "Account deleted"
+        }
+      },
       "detail": {
         "id": "User ID",
         "auth0UserId": "Auth0 user ID",

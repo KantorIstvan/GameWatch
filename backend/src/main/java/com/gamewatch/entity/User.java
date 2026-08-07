@@ -91,6 +91,18 @@ public class User {
     @Builder.Default
     private String firstDayOfWeek = "MONDAY";
 
+    /**
+     * Local mirror of Auth0's blocked flag, checked on every request in
+     * {@link com.gamewatch.service.UserService#getOrCreateUser} - see V43's migration
+     * comment for why a mirror is needed at all rather than trusting Auth0 alone.
+     */
+    @Column(name = "blocked", nullable = false)
+    @Builder.Default
+    private Boolean blocked = false;
+
+    @Column(name = "blocked_at")
+    private Instant blockedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

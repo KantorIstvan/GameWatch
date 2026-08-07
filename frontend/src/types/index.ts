@@ -731,6 +731,15 @@ export interface AdminUserSummary {
   handle?: string
   displayName?: string
   profilePictureUrl?: string
+  blocked?: boolean
+  createdAt: string
+}
+
+export interface AdminAuditLogEntry {
+  id: number
+  adminEmail: string
+  action: 'BLOCK' | 'UNBLOCK' | 'PASSWORD_RESET_SENT' | 'DELETE_ACCOUNT'
+  details: string | null
   createdAt: string
 }
 
@@ -758,6 +767,8 @@ export interface AdminUserDetail {
   age?: number
   timezone?: string
   firstDayOfWeek?: 'MONDAY' | 'SUNDAY'
+  blocked: boolean
+  blockedAt: string | null
   createdAt: string
   updatedAt: string
 }
