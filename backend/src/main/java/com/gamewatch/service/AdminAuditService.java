@@ -37,10 +37,27 @@ public class AdminAuditService {
     private AdminAuditLogDto toDto(AdminAuditLog log) {
         return AdminAuditLogDto.builder()
             .id(log.getId())
-            .adminEmail(log.getAdminUser().getEmail())
+            .adminEmail(identify(log.getAdminUser()))
             .action(log.getAction())
             .details(log.getDetails())
             .createdAt(log.getCreatedAt())
             .build();
+    }
+
+    /**
+     * A readable identifier for an audit-trail line, for accounts whose email is null -
+     * some Auth0 social connections never put an email claim on the access token
+     * UserService.getOrCreateUser reads, so this column is nullable in practice, not just
+     * in the schema. Shared by every admin service that writes a detail string mentioning
+     * a target (or reads one back for display), so "for null"/"by null" can't recur.
+     */
+    static String identify(User user) {
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            return user.getEmail();
+        }
+        if (user.getHandle() != null && !user.getHandle().isBlank()) {
+            return "@" + user.getHandle();
+        }
+        return "user #" + user.getId();
     }
 }

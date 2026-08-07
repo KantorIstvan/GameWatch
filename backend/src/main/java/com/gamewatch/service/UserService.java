@@ -33,6 +33,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ProfileLinkRepository profileLinkRepository;
+    private final Auth0AuthenticationApiService auth0AuthenticationApiService;
 
     @Transactional
     public User getOrCreateUser(Authentication authentication) {
@@ -54,9 +55,19 @@ public class UserService {
             if (Boolean.TRUE.equals(user.getBlocked())) {
                 throw new AccessDeniedException("This account has been blocked");
             }
+            // Self-heals accounts whose email was never captured (see resolveEmail) -
+            // costs one extra outbound call only while the column is still empty, not on
+            // every request once it's backfilled.
+            if (user.getEmail() == null && email == null) {
+                String resolved = auth0AuthenticationApiService.fetchEmail(jwt.getTokenValue());
+                if (resolved != null) {
+                    user.setEmail(resolved);
+                    user = userRepository.save(user);
+                }
+            }
             return user;
         }
-        
+
         try {
             log.info("Creating new user for auth0UserId: {}", auth0UserId);
             // Deliberately no handle and no display name: both are chosen in onboarding,
@@ -65,7 +76,7 @@ public class UserService {
             // would leave "has this account chosen an identity yet?" with no honest answer.
             User newUser = User.builder()
                 .auth0UserId(auth0UserId)
-                .email(email)
+                .email(resolveEmail(email, jwt))
                 .username(username)
                 .profilePictureUrl(pictureUrl)
                 .build();
@@ -77,6 +88,19 @@ public class UserService {
             return userRepository.findByAuth0UserId(auth0UserId)
                 .orElseThrow(() -> new RuntimeException("Failed to create or find user"));
         }
+    }
+
+    /**
+     * The access token's "email" claim is frequently absent - this app requests the
+     * "openid profile email" scopes, but Auth0's resource-server access token only
+     * embeds profile claims when a tenant-side Action explicitly adds them, which this
+     * tenant's isn't configured to do. Falling back to a standard OIDC UserInfo call
+     * (Auth0AuthenticationApiService.fetchEmail) reflects the scopes that were actually
+     * granted at login regardless, so this resolves for every account, social login
+     * included, instead of only the ones whose token happened to carry the claim.
+     */
+    private String resolveEmail(String claimEmail, Jwt jwt) {
+        return claimEmail != null ? claimEmail : auth0AuthenticationApiService.fetchEmail(jwt.getTokenValue());
     }
 
     /**

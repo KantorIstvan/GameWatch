@@ -82,7 +82,9 @@ function AdminUserRow({ user, onBlockedChange }: AdminUserRowProps) {
             )}
           </Link>
         </TableCell>
-        <TableCell className="text-body-sm text-text-secondary">{user.email}</TableCell>
+        <TableCell className="text-body-sm text-text-secondary">
+          {user.email || t('admin.users.noEmail')}
+        </TableCell>
         <TableCell className="text-body-sm text-text-secondary">
           {user.handle ? `@${user.handle}` : t('admin.users.noHandle')}
         </TableCell>

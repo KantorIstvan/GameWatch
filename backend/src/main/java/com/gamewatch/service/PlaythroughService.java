@@ -696,12 +696,15 @@ public class PlaythroughService {
         return mapToDto(targetPlaythrough);
     }
 
-    private PlaythroughDto mapToDto(Playthrough playthrough) {
+    // Package-private rather than private: AdminPlaythroughService reuses this exact
+    // ~30-field mapping instead of duplicating it, since it lives in the same package.
+    PlaythroughDto mapToDto(Playthrough playthrough) {
         return PlaythroughDto.builder()
             .id(playthrough.getId())
             .gameId(playthrough.getGame().getId())
             .gameName(playthrough.getGame().getName())
             .gameBannerImageUrl(playthrough.getGame().getBannerImageUrl())
+            .gamePlatforms(playthrough.getGame().getPlatforms())
             .playthroughType(playthrough.getPlaythroughType())
             .title(playthrough.getTitle())
             .platform(playthrough.getPlatform())

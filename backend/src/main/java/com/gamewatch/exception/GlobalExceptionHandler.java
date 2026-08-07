@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -45,6 +46,29 @@ public class GlobalExceptionHandler {
             .message(ex.getMessage())
             .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    /**
+     * A failed call to Auth0's Management/Authentication API (wrong credentials, missing
+     * scope, tenant misconfiguration...) is a WebClientResponseException, which - like
+     * AccessDeniedException above - extends RuntimeException and would otherwise vanish
+     * into the generic 500 below with no detail. Auth0's error responses are JSON bodies
+     * that actually say what went wrong (e.g. "access_denied: insufficient scope"), so the
+     * body is logged in full and a truncated version returned - safe to expose here since
+     * every caller of the admin endpoints that reach Auth0 is already an authenticated
+     * admin, not an untrusted client.
+     */
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ErrorResponse> handleWebClientResponseException(WebClientResponseException ex) {
+        log.error("Upstream request to Auth0 failed: {} {} - body: {}",
+            ex.getStatusCode(), ex.getStatusText(), ex.getResponseBodyAsString(), ex);
+        ErrorResponse error = ErrorResponse.builder()
+            .timestamp(Instant.now())
+            .status(HttpStatus.BAD_GATEWAY.value())
+            .error("Bad Gateway")
+            .message("Auth0 request failed (" + ex.getStatusCode() + "): " + ex.getResponseBodyAsString())
+            .build();
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)

@@ -45,7 +45,7 @@ public class Auth0ManagementApiService {
     private synchronized String getAccessToken() {
         if (accessToken == null || Instant.now().isAfter(tokenExpiresAt)) {
             JsonNode response = authClient.post()
-                    .uri("/oauth2/token")
+                    .uri("/oauth/token")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of(
                             "client_id", clientId,
