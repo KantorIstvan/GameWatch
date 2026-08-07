@@ -395,10 +395,9 @@
       "ratedOn": "Rated {{date}}",
       "developerLabel": "Developer:",
       "publisherLabel": "Publisher:",
-      "timeToBeat": "{{time}} to beat",
       "communityScore_one": "({{count}} rating)",
       "communityScore_other": "({{count}} ratings)",
-      "yourScoreLabel": "You",
+      "you": "You",
       "played": "Played",
       "playedWithTime": "Played · {{time}}"
     },

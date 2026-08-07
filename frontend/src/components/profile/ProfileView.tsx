@@ -93,7 +93,11 @@ function ProfileView({ profile, actions, followersExtra }: ProfileViewProps) {
             )}
 
             <TabsContent value="ratings">
-              <RatingsListPanel handle={profile.handle} />
+              <RatingsListPanel
+                handle={profile.handle}
+                ownProfile={profile.ownProfile}
+                displayName={profile.displayName}
+              />
             </TabsContent>
 
             <TabsContent value="followers">

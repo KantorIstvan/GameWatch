@@ -328,8 +328,6 @@ export interface GameEntryCatalogFields {
   publishers?: string
   genres?: string
   releaseDate?: string
-  /** IGDB's average time to beat, in seconds - a game's answer to a film's runtime. */
-  averageCompletionSeconds?: number
   /** This app's own shrunk community score, and how many ratings back it. */
   communityRatingScore?: number | null
   communityRatingCount?: number

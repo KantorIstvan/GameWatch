@@ -5,8 +5,6 @@ import { Star, CircleCheck, EyeOff, Gamepad2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { formatDate, formatTime, splitCommaList } from '../../utils/formatters'
-import { statColors } from '../../lib/statColors'
-import { cn } from '@/lib/utils'
 
 /**
  * Everything one row of the Ratings or Wishlist tab might need to show.
@@ -23,7 +21,6 @@ export interface GameEntryRowData {
   releaseDate?: string
   developers?: string
   publishers?: string
-  averageCompletionSeconds?: number
   communityRatingScore?: number | null
   communityRatingCount?: number
   /** Present on a rating, absent on a wishlist entry. */
@@ -42,28 +39,33 @@ interface GameEntryRowProps {
   /** 1-based position in the list as currently filtered and sorted. */
   index: number
   entry: GameEntryRowData
-  /** Present only where the row sits inside a filterable list (the Ratings tab). */
-  onDeveloperSelect?: (name: string) => void
-  onPublisherSelect?: (name: string) => void
+  /**
+   * Whose score is shown next to the score badge - present only where the entry can carry
+   * a score (the Ratings tab). `true` on the viewer's own profile, in which case the label
+   * just reads "You"; otherwise the profile owner's name is shown instead.
+   */
+  ownProfile?: boolean
+  /** The profile owner's display name; falls back to {@link handle} when unset. */
+  displayName?: string | null
+  /** The profile owner's handle, used as the score label's fallback when there's no display name. */
+  handle?: string
 }
 
 /**
  * One game in the Ratings or Wishlist tab: cover, "rated on" date, ordinal title, release
- * year and time-to-beat, a Developer/Publisher byline, a stats line, and - as this row's
- * own focal point, when the owner wrote one - their review. The review sits in the same
- * quoted, left-bordered treatment {@link ReviewReplies} uses for a reply thread, integrated
- * into the row's own column rather than tacked on as a full-width block underneath it. The
+ * year, a Developer/Publisher byline, a stats line, and - as this row's own focal point,
+ * when the owner wrote one - their review. The review sits in the same quoted,
+ * left-bordered treatment {@link ReviewReplies} uses for a reply thread, integrated into
+ * the row's own column rather than tacked on as a full-width block underneath it. The
  * game's own catalog description never renders here: that's the catalog's synopsis, not
  * this owner's take on the game, and this row is only ever about the latter.
  *
  * The cover and the title are the only two links to the game's catalog page. Developer and
- * publisher names are separate buttons rather than nested inside that link - an `<a>`
- * containing another interactive control breaks keyboard and screen-reader navigation, and
- * clicking a company name here does something different anyway: with no per-company page in
- * this app, it narrows the current list to that company's other games instead of navigating
- * away.
+ * publisher names are plain text, not links or buttons: there's no per-company page in this
+ * app, and filtering the list by company is handled entirely by the `MultiSelectFilter`
+ * chips above the list, not by clicking a name inside a row.
  */
-function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: GameEntryRowProps) {
+function GameEntryRow({ index, entry, ownProfile, displayName, handle }: GameEntryRowProps) {
   const { t } = useTranslation()
   const [revealed, setRevealed] = useState(false)
 
@@ -78,10 +80,6 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
     : addedDate && t('profile.wishlistAddedOn', { date: addedDate })
 
   const releaseYear = entry.releaseDate?.split('-')[0]
-  const timeToBeat = entry.averageCompletionSeconds
-    ? t('profile.entryRow.timeToBeat', { time: formatTime(entry.averageCompletionSeconds) })
-    : null
-  const metaLine = [releaseYear, timeToBeat].filter(Boolean).join(' · ')
 
   const gameLink = entry.externalId ? `/catalog/${entry.externalId}` : null
 
@@ -129,7 +127,7 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
             )}
           </p>
 
-          {metaLine && <p className="mt-0.5 text-caption text-text-secondary">{metaLine}</p>}
+          {releaseYear && <p className="mt-0.5 text-caption text-text-secondary">{releaseYear}</p>}
 
           {(entry.developers || entry.publishers) && (
             <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-caption text-text-secondary">
@@ -138,7 +136,7 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
                   <span className="font-semibold text-text-primary">
                     {t('profile.entryRow.developerLabel')}
                   </span>{' '}
-                  <NameLinks names={entry.developers} onSelect={onDeveloperSelect} />
+                  <NameLinks names={entry.developers} />
                 </span>
               )}
               {entry.publishers && (
@@ -146,7 +144,7 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
                   <span className="font-semibold text-text-primary">
                     {t('profile.entryRow.publisherLabel')}
                   </span>{' '}
-                  <NameLinks names={entry.publishers} onSelect={onPublisherSelect} />
+                  <NameLinks names={entry.publishers} />
                 </span>
               )}
             </p>
@@ -156,7 +154,7 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
               {entry.communityRatingScore != null && (
                 <span className="flex items-center gap-1 text-body-sm font-medium text-text-secondary">
-                  <Star className="size-3.5 fill-current" style={{ color: statColors.yellow }} />
+                  <Star className="size-3.5 fill-current text-accent" />
                   {entry.communityRatingScore.toFixed(1)}
                   <span className="text-caption text-text-tertiary">
                     {t('profile.entryRow.communityScore', {
@@ -169,7 +167,7 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
               {isRating && (
                 <span className="flex items-center gap-1.5">
                   <span className="text-caption text-text-tertiary">
-                    {t('profile.entryRow.yourScoreLabel')}
+                    {ownProfile ? t('profile.entryRow.you') : displayName || handle}
                   </span>
                   <Badge variant="secondary">{t('profile.ratingScore', { score: entry.score })}</Badge>
                 </span>
@@ -215,31 +213,14 @@ function GameEntryRow({ index, entry, onDeveloperSelect, onPublisherSelect }: Ga
   )
 }
 
-/** A comma-separated catalog field, rendered as one clickable name per entry. */
-function NameLinks({ names, onSelect }: { names: string; onSelect?: (name: string) => void }) {
+/** A comma-separated catalog field, rendered as plain, non-interactive names. */
+function NameLinks({ names }: { names: string }) {
   const list = splitCommaList(names)
   return (
     <>
       {list.map((name, i) => (
         <span key={name}>
-          {onSelect ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.preventDefault()
-                event.stopPropagation()
-                onSelect(name)
-              }}
-              className={cn(
-                'text-accent underline-offset-2 outline-none hover:underline',
-                'focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:rounded-sm'
-              )}
-            >
-              {name}
-            </button>
-          ) : (
-            name
-          )}
+          {name}
           {i < list.length - 1 && ', '}
         </span>
       ))}
