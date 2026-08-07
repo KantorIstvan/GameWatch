@@ -366,7 +366,7 @@ function GameStatisticsPage() {
                       borderRadius: 8,
                     }}
                     labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
-                    formatter={(value: number | undefined) => [formatDurationWords(Math.round((value || 0) * 3600), t), t('statistics.gameStats.playtime')]}
+                    formatter={(value) => [formatDurationWords(Math.round((Number(value) || 0) * 3600), t), t('statistics.gameStats.playtime')]}
                   />
                   <Area
                     type="monotone"

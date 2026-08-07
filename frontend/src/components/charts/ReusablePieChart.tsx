@@ -33,7 +33,7 @@ function ReusablePieChart({
   const filteredData = data.filter(item => item.value > 0)
   const total = filteredData.reduce((sum, item) => sum + item.value, 0)
 
-  const tooltipContent = (value: any, name: string | undefined, props: any) => {
+  const tooltipContent = (value: any, name: any, props: any) => {
     const displayName = props?.payload?.fullName || name || ''
     const formattedValue = valueFormatter ? valueFormatter(Number(value)) : `${Number(value).toFixed(1)}h`
     return [formattedValue, displayName]
