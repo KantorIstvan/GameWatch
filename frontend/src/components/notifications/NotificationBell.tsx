@@ -88,8 +88,12 @@ function NotificationBell() {
           </div>
         ) : (
           // Capped rather than growing with the list: a dropdown taller than the window
-          // cannot be closed by clicking away from it.
-          <ScrollArea className="max-h-96">
+          // cannot be closed by clicking away from it. `grid` is load-bearing here, not
+          // decorative — Radix's Viewport sizes itself to 100% of this element, and a
+          // block-level max-height can't resolve that percentage (only an explicit
+          // height can), so without it the list silently overflows past the border
+          // instead of scrolling. Grid track sizing does honor max-height.
+          <ScrollArea className="grid max-h-96">
             <ul className="flex flex-col gap-1 p-2">
               {items.map((item) => (
                 <NotificationRow
