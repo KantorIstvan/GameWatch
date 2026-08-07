@@ -1,6 +1,8 @@
 package com.gamewatch.repository;
 
 import com.gamewatch.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,4 +38,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
         + "OR LOWER(u.displayName) LIKE CONCAT('%', :query, '%') "
         + "OR LOWER(u.username) LIKE CONCAT('%', :query, '%'))")
     List<User> searchByHandleOrName(@Param("query") String query);
+
+    /**
+     * The admin directory's search, deliberately not a reuse of searchByHandleOrName:
+     * that one requires a non-null handle because it exists to find people who can be
+     * followed. An account stuck mid-onboarding with no handle at all still needs to be
+     * findable here - "can't get past onboarding" is exactly the kind of ticket this
+     * search exists for. The exact id match is cheap to add and directly useful for a
+     * support ticket that quotes a raw user id.
+     */
+    @Query("SELECT u FROM User u WHERE :query = '' "
+        + "OR LOWER(u.email) LIKE CONCAT('%', :query, '%') "
+        + "OR LOWER(u.handle) LIKE CONCAT('%', :query, '%') "
+        + "OR LOWER(u.displayName) LIKE CONCAT('%', :query, '%') "
+        + "OR LOWER(u.username) LIKE CONCAT('%', :query, '%') "
+        + "OR CAST(u.id AS string) = :query")
+    Page<User> searchForAdmin(@Param("query") String query, Pageable pageable);
 }
