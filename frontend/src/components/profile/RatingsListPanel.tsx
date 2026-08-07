@@ -12,6 +12,10 @@ import type { GameRatingEntry } from '../../types'
 
 interface RatingsListPanelProps {
   handle: string
+  /** Whether the viewer is looking at their own profile - picks the score label in each row. */
+  ownProfile: boolean
+  /** The profile owner's display name, passed through to each row's score label. */
+  displayName: string | null
 }
 
 type SortKey =
@@ -55,7 +59,7 @@ function effectiveRatedAt(entry: GameRatingEntry): number {
  * change with no correctness benefit. That stops being true the moment this list grows a
  * server-side page size, at which point filtering has to move into the request instead.
  */
-function RatingsListPanel({ handle }: RatingsListPanelProps) {
+function RatingsListPanel({ handle, ownProfile, displayName }: RatingsListPanelProps) {
   const { t } = useTranslation()
   const [ratings, setRatings] = useState<GameRatingEntry[] | null>([])
   const [loading, setLoading] = useState(true)
@@ -147,11 +151,6 @@ function RatingsListPanel({ handle }: RatingsListPanelProps) {
   }, [ratings, filters, sort])
 
   const clearFilters = () => setFilters(EMPTY_FILTERS)
-
-  const addDeveloperFilter = (name: string) =>
-    setFilters((current) => ({ ...current, developers: new Set(current.developers).add(name) }))
-  const addPublisherFilter = (name: string) =>
-    setFilters((current) => ({ ...current, publishers: new Set(current.publishers).add(name) }))
 
   if (loading) {
     return (
@@ -253,8 +252,9 @@ function RatingsListPanel({ handle }: RatingsListPanelProps) {
               key={entry.gameId}
               index={index + 1}
               entry={entry}
-              onDeveloperSelect={addDeveloperFilter}
-              onPublisherSelect={addPublisherFilter}
+              ownProfile={ownProfile}
+              displayName={displayName}
+              handle={handle}
             />
           ))}
         </ul>
