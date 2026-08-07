@@ -52,7 +52,7 @@ class GameRatingServiceTest {
     private void stubAggregate(long count, long sum, Double globalMean) {
         when(gameRatingRepository.findCountAndSum(1L))
             .thenReturn(Collections.singletonList(new Object[]{count, sum}));
-        lenient().when(gameRatingRepository.findGlobalMeanScore()).thenReturn(globalMean);
+        lenient().when(gameRatingRepository.findGlobalMeanScore(anyLong())).thenReturn(globalMean);
         lenient().when(gameRepository.save(any(Game.class))).thenAnswer(i -> i.getArgument(0));
     }
 
@@ -100,6 +100,19 @@ class GameRatingServiceTest {
 
         // (1/11)*8 + (10/11)*5.5
         assertThat(game.getBayesianScore()).isCloseTo(5.727, within(0.01));
+    }
+
+    @Test
+    void theGameBeingScoredIsExcludedFromItsOwnPrior() {
+        // Regression test: the global mean must never include the row currently being
+        // written, or a game that is the only (or only recently active) rated game in the
+        // database gets a prior identical to its own mean and shrinkage silently cancels
+        // out - whatever score you give comes back unchanged.
+        stubAggregate(1, 10, 7.0);
+
+        gameRatingService.recomputeAggregate(game);
+
+        verify(gameRatingRepository).findGlobalMeanScore(game.getId());
     }
 
     @Test

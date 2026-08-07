@@ -62,13 +62,22 @@ public interface GameRatingRepository extends JpaRepository<GameRating, Long> {
     List<Object[]> findCountAndSum(@Param("gameId") Long gameId);
 
     /**
-     * Mean score across every rated game, weighting each game equally rather than each
-     * rating. This is the prior a game with few ratings is pulled towards, so it has to
-     * represent "a typical game" - weighting by rating count would make it "a typical
-     * rating", which is dominated by whatever happens to be popular.
+     * Mean score across every rated game other than {@code excludedGameId}, weighting each
+     * game equally rather than each rating. This is the prior a game with few ratings is
+     * pulled towards, so it has to represent "a typical game" - weighting by rating count
+     * would make it "a typical rating", which is dominated by whatever happens to be
+     * popular.
+     *
+     * The game being scored is excluded rather than left in. Its own count/sum are updated
+     * on the same managed entity earlier in the same transaction, so an included self would
+     * let Hibernate's autoflush make this query see that pending write - collapsing the
+     * prior to exactly the game's own mean and cancelling the shrinkage out entirely
+     * whenever it is the only (or only recently active) rated game, which is silent and
+     * only shows up once a database has few rated games, e.g. right after a fresh deploy.
      */
-    @Query("SELECT AVG(g.ratingSum * 1.0 / g.ratingCount) FROM Game g WHERE g.ratingCount > 0")
-    Double findGlobalMeanScore();
+    @Query("SELECT AVG(g.ratingSum * 1.0 / g.ratingCount) FROM Game g "
+        + "WHERE g.ratingCount > 0 AND g.id <> :excludedGameId")
+    Double findGlobalMeanScore(@Param("excludedGameId") Long excludedGameId);
 
     /**
      * Ratings from users who have actually recorded time on the game, which is the claim
