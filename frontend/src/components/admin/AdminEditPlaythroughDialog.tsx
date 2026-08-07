@@ -5,7 +5,7 @@ import { TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Dialog,
@@ -26,26 +26,28 @@ interface AdminEditPlaythroughDialogProps {
   onSaved: () => void
 }
 
+type PlaythroughStatus = 'IN_PROGRESS' | 'COMPLETED' | 'DROPPED'
+
 interface FormState {
   title: string
   platform: string
   durationSeconds: string
-  isActive: boolean
-  isPaused: boolean
-  isCompleted: boolean
-  isDropped: boolean
+  status: PlaythroughStatus
   startDate: string
   endDate: string
+}
+
+const statusOf = (playthrough: Playthrough): PlaythroughStatus => {
+  if (playthrough.isCompleted) return 'COMPLETED'
+  if (playthrough.isDropped) return 'DROPPED'
+  return 'IN_PROGRESS'
 }
 
 const toFormState = (playthrough: Playthrough): FormState => ({
   title: playthrough.title ?? '',
   platform: playthrough.platform ?? '',
   durationSeconds: String(playthrough.durationSeconds ?? 0),
-  isActive: playthrough.isActive,
-  isPaused: playthrough.isPaused ?? false,
-  isCompleted: playthrough.isCompleted,
-  isDropped: playthrough.isDropped ?? false,
+  status: statusOf(playthrough),
   startDate: playthrough.startDate ?? '',
   endDate: playthrough.endDate ?? '',
 })
@@ -53,7 +55,10 @@ const toFormState = (playthrough: Playthrough): FormState => ({
 /**
  * An admin override, not the same form the owning user gets: none of the normal guards
  * (no shrinking duration, no editing while active) apply here, because fixing a stuck or
- * runaway playthrough is exactly the reason this exists.
+ * runaway playthrough is exactly the reason this exists. Status is deliberately a 3-way
+ * choice rather than exposing isActive/isPaused directly - those are live-timer states
+ * with bookkeeping (startedAt, sessionStartTime, pauseCount...) that only the owning
+ * user's actual start/pause/resume actions keep consistent.
  */
 function AdminEditPlaythroughDialog({ userId, playthrough, onClose, onSaved }: AdminEditPlaythroughDialogProps) {
   const { t } = useTranslation()
@@ -63,6 +68,10 @@ function AdminEditPlaythroughDialog({ userId, playthrough, onClose, onSaved }: A
   useEffect(() => {
     setForm(playthrough ? toFormState(playthrough) : null)
   }, [playthrough])
+
+  const availablePlatforms = playthrough?.gamePlatforms
+    ? playthrough.gamePlatforms.split(',').map((p) => p.trim()).filter(Boolean)
+    : []
 
   const handleSave = async () => {
     if (!playthrough || !form) return
@@ -76,12 +85,10 @@ function AdminEditPlaythroughDialog({ userId, playthrough, onClose, onSaved }: A
     try {
       await adminApi.updatePlaythrough(userId, playthrough.id, {
         title: form.title.trim(),
-        platform: form.platform.trim(),
+        platform: form.platform,
         durationSeconds,
-        isActive: form.isActive,
-        isPaused: form.isPaused,
-        isCompleted: form.isCompleted,
-        isDropped: form.isDropped,
+        isCompleted: form.status === 'COMPLETED',
+        isDropped: form.status === 'DROPPED',
         startDate: form.startDate || undefined,
         endDate: form.endDate || undefined,
       })
@@ -125,11 +132,27 @@ function AdminEditPlaythroughDialog({ userId, playthrough, onClose, onSaved }: A
               <Label htmlFor="pt-platform" className="mb-1 block text-body-sm font-semibold">
                 {t('admin.users.playthroughs.fieldPlatform')}
               </Label>
-              <Input
-                id="pt-platform"
+              <Select
                 value={form.platform}
-                onChange={(e) => setForm({ ...form, platform: e.target.value })}
-              />
+                onValueChange={(value) => setForm({ ...form, platform: value })}
+                disabled={availablePlatforms.length === 0}
+              >
+                <SelectTrigger id="pt-platform" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePlatforms.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {availablePlatforms.length === 0 && (
+                <p className="mt-1 text-caption text-text-secondary">
+                  {t('admin.users.playthroughs.noPlatformsAvailable')}
+                </p>
+              )}
             </div>
 
             <div>
@@ -173,47 +196,23 @@ function AdminEditPlaythroughDialog({ userId, playthrough, onClose, onSaved }: A
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="pt-active" className="text-body-sm font-semibold">
-                  {t('admin.users.playthroughs.fieldActive')}
-                </Label>
-                <Switch
-                  id="pt-active"
-                  checked={form.isActive}
-                  onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="pt-paused" className="text-body-sm font-semibold">
-                  {t('admin.users.playthroughs.fieldPaused')}
-                </Label>
-                <Switch
-                  id="pt-paused"
-                  checked={form.isPaused}
-                  onCheckedChange={(checked) => setForm({ ...form, isPaused: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="pt-completed" className="text-body-sm font-semibold">
-                  {t('admin.users.playthroughs.fieldCompleted')}
-                </Label>
-                <Switch
-                  id="pt-completed"
-                  checked={form.isCompleted}
-                  onCheckedChange={(checked) => setForm({ ...form, isCompleted: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="pt-dropped" className="text-body-sm font-semibold">
-                  {t('admin.users.playthroughs.fieldDropped')}
-                </Label>
-                <Switch
-                  id="pt-dropped"
-                  checked={form.isDropped}
-                  onCheckedChange={(checked) => setForm({ ...form, isDropped: checked })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="pt-status" className="mb-1 block text-body-sm font-semibold">
+                {t('admin.users.playthroughs.fieldStatus')}
+              </Label>
+              <Select
+                value={form.status}
+                onValueChange={(value) => setForm({ ...form, status: value as PlaythroughStatus })}
+              >
+                <SelectTrigger id="pt-status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IN_PROGRESS">{t('admin.users.playthroughs.statusInProgress')}</SelectItem>
+                  <SelectItem value="COMPLETED">{t('admin.users.playthroughs.statusCompleted')}</SelectItem>
+                  <SelectItem value="DROPPED">{t('admin.users.playthroughs.statusDropped')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}

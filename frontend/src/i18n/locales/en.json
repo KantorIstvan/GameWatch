@@ -1212,8 +1212,9 @@
       "passwordResetFailed": "Could not send a password reset email.",
       "deleteAccount": "Delete account",
       "deleteConfirmTitle": "Delete this account?",
-      "deleteConfirmMessage": "This permanently deletes {{email}}'s account, including their library, playthroughs, reviews and every other record tied to it. This cannot be undone.",
-      "deleteSuccess": "Deleted {{email}}'s account.",
+      "deleteConfirmMessage": "This permanently deletes {{identity}}'s account, including their library, playthroughs, reviews and every other record tied to it. This cannot be undone.",
+      "deleteSuccess": "Deleted {{identity}}'s account.",
+      "noEmail": "No email on file",
       "deleteFailed": "Failed to delete this account.",
       "tabs": {
         "profile": "Profile",
@@ -1242,16 +1243,15 @@
         "statusDropped": "Dropped",
         "statusCompleted": "Completed",
         "statusNotStarted": "Not started",
+        "statusInProgress": "In progress",
         "activeWarning": "This playthrough's timer is currently running. Changing its duration restarts the current session - the owner's live timer may jump if they have the app open right now.",
         "fieldTitle": "Title",
         "fieldPlatform": "Platform",
         "fieldDuration": "Duration (seconds)",
         "fieldStartDate": "Start date",
         "fieldEndDate": "End date",
-        "fieldActive": "Active",
-        "fieldPaused": "Paused",
-        "fieldCompleted": "Completed",
-        "fieldDropped": "Dropped",
+        "fieldStatus": "Status",
+        "noPlatformsAvailable": "This game has no listed platforms.",
         "invalidDuration": "Duration must be a positive number of seconds.",
         "saveSuccess": "Playthrough updated.",
         "saveFailed": "Failed to update this playthrough."
@@ -1272,13 +1272,14 @@
           "BLOCK": "Blocked",
           "UNBLOCK": "Unblocked",
           "PASSWORD_RESET_SENT": "Password reset email sent",
-          "DELETE_ACCOUNT": "Account deleted"
+          "DELETE_ACCOUNT": "Account deleted",
+          "PROFILE_EDIT": "Profile edited",
+          "PLAYTHROUGH_EDIT": "Playthrough edited"
         }
       },
       "detail": {
         "id": "User ID",
         "auth0UserId": "Auth0 user ID",
-        "username": "Username",
         "bio": "Bio",
         "age": "Age",
         "timezone": "Timezone",

@@ -48,6 +48,8 @@ export interface Playthrough {
   gameId: number
   gameName: string
   gameBannerImageUrl?: string
+  /** The game's comma-separated release platforms - not this playthrough's own `platform`. */
+  gamePlatforms?: string
   name: string
   title?: string
   playthroughType: 'story' | 'speedrun' | 'casual' | '100%'
@@ -726,8 +728,8 @@ export interface AdminMe {
 export interface AdminUserSummary {
   id: number
   auth0UserId: string
-  email: string
-  username: string
+  email: string | null
+  username: string | null
   handle?: string
   displayName?: string
   profilePictureUrl?: string
@@ -745,12 +747,11 @@ export interface AdminProfileUpdateRequest {
   wishlistVisibility?: Visibility
 }
 
+/** No isActive/isPaused - see the backend DTO's doc comment for why admin can't set those. */
 export interface AdminUpdatePlaythroughRequest {
   title?: string
   platform?: string
   durationSeconds?: number
-  isActive?: boolean
-  isPaused?: boolean
   isCompleted?: boolean
   isDropped?: boolean
   startDate?: string
@@ -777,8 +778,9 @@ export interface PagedResponse<T> {
 export interface AdminUserDetail {
   id: number
   auth0UserId: string
-  email: string
-  username: string
+  /** Null for some OAuth connections that never put an email claim on the access token. */
+  email: string | null
+  username: string | null
   handle: string | null
   displayName: string | null
   bio: string | null

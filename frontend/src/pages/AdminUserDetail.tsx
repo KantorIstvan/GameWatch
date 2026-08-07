@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ArrowLeft, KeyRound, ShieldCheck, ShieldOff, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronsUpDown, KeyRound, ShieldCheck, ShieldOff, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +27,9 @@ import TypedConfirmDialog from '../components/TypedConfirmDialog'
 import AdminPlaythroughsTable from '../components/admin/AdminPlaythroughsTable'
 import { adminApi } from '../services/api'
 import { resolveAssetUrl } from '@/lib/asset-url'
+import { cn } from '@/lib/utils'
 import { formatDateTime } from '../utils/formatters'
+import { COMMON_TIMEZONES } from '../utils/timezones'
 import Loading from '../components/Loading'
 import type { AdminAuditLogEntry, AdminUserDetail as AdminUserDetailType, PagedResponse, Visibility } from '../types'
 
@@ -43,6 +47,10 @@ interface ProfileFormState {
   libraryVisibility: Visibility
   wishlistVisibility: Visibility
 }
+
+/** A readable identifier for a user with no email on file (some OAuth connections never put one on the access token). */
+const identify = (user: AdminUserDetailType): string =>
+  user.handle ? `@${user.handle}` : user.email || `user #${user.id}`
 
 const toFormState = (user: AdminUserDetailType): ProfileFormState => ({
   displayName: user.displayName ?? '',
@@ -70,6 +78,7 @@ function AdminUserDetail() {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [working, setWorking] = useState(false)
+  const [timezonePickerOpen, setTimezonePickerOpen] = useState(false)
 
   const fetchUser = useCallback(() => {
     if (!id) return
@@ -167,7 +176,7 @@ function AdminUserDetail() {
     if (!user) return
     try {
       await adminApi.deleteUser(user.id)
-      toast.success(t('admin.users.deleteSuccess', { email: user.email }))
+      toast.success(t('admin.users.deleteSuccess', { identity: identify(user) }))
       navigate('/admin')
     } catch {
       toast.error(t('admin.users.deleteFailed'))
@@ -191,7 +200,7 @@ function AdminUserDetail() {
     )
   }
 
-  const deleteConfirmText = user.handle ?? user.email
+  const deleteConfirmText = identify(user)
 
   return (
     <div>
@@ -221,7 +230,7 @@ function AdminUserDetail() {
               t('admin.users.noHandle')
             )}
             {' · '}
-            {user.email}
+            {user.email || t('admin.users.noEmail')}
           </p>
         </div>
       </div>
@@ -292,11 +301,43 @@ function AdminUserDetail() {
                 <Label htmlFor="admin-timezone" className="mb-1 block text-body-sm font-semibold">
                   {t('admin.users.detail.timezone')}
                 </Label>
-                <Input
-                  id="admin-timezone"
-                  value={form.timezone}
-                  onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                />
+                <Popover open={timezonePickerOpen} onOpenChange={setTimezonePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="admin-timezone"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className={cn(!form.timezone && 'text-muted-foreground')}>
+                        {form.timezone || t('settings.selectTimezone')}
+                      </span>
+                      <ChevronsUpDown className="size-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder={t('settings.selectTimezone')} />
+                      <CommandList className="max-h-75">
+                        <CommandEmpty>{t('settings.noTimezoneFound')}</CommandEmpty>
+                        <CommandGroup>
+                          {COMMON_TIMEZONES.map((tz) => (
+                            <CommandItem
+                              key={tz}
+                              value={tz}
+                              onSelect={() => {
+                                setForm({ ...form, timezone: tz })
+                                setTimezonePickerOpen(false)
+                              }}
+                            >
+                              {tz}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label htmlFor="admin-first-day" className="mb-1 block text-body-sm font-semibold">
@@ -358,7 +399,6 @@ function AdminUserDetail() {
               {[
                 [t('admin.users.detail.id'), String(user.id)],
                 [t('admin.users.detail.auth0UserId'), user.auth0UserId],
-                [t('admin.users.detail.username'), user.username],
                 [t('admin.users.detail.createdAt'), formatDateTime(user.createdAt)],
                 [t('admin.users.detail.updatedAt'), formatDateTime(user.updatedAt)],
               ].map(([label, value]) => (
@@ -460,7 +500,7 @@ function AdminUserDetail() {
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDelete}
         title={t('admin.users.deleteConfirmTitle')}
-        message={t('admin.users.deleteConfirmMessage', { email: user.email })}
+        message={t('admin.users.deleteConfirmMessage', { identity: identify(user) })}
         confirmText={t('admin.users.deleteAccount')}
         requiredText={deleteConfirmText}
       />
