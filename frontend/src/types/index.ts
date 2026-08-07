@@ -735,6 +735,28 @@ export interface AdminUserSummary {
   createdAt: string
 }
 
+/** No `links` field - omitting it leaves the target's link list untouched on save. */
+export interface AdminProfileUpdateRequest {
+  handle?: string | null
+  displayName?: string | null
+  bio?: string | null
+  profileVisibility?: Visibility
+  libraryVisibility?: Visibility
+  wishlistVisibility?: Visibility
+}
+
+export interface AdminUpdatePlaythroughRequest {
+  title?: string
+  platform?: string
+  durationSeconds?: number
+  isActive?: boolean
+  isPaused?: boolean
+  isCompleted?: boolean
+  isDropped?: boolean
+  startDate?: string
+  endDate?: string
+}
+
 export interface AdminAuditLogEntry {
   id: number
   adminEmail: string

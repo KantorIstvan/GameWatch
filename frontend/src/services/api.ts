@@ -1,5 +1,10 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import type { OnboardingRequest, ProfileSettings } from '../types'
+import type {
+  AdminProfileUpdateRequest,
+  AdminUpdatePlaythroughRequest,
+  OnboardingRequest,
+  ProfileSettings,
+} from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
@@ -228,6 +233,16 @@ export const adminApi = {
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
   getAuditLog: (id: number, page: number = 0, size: number = 20) =>
     apiClient.get(`/admin/users/${id}/audit-log`, { params: { page, size } }),
+  updateProfile: (id: number, request: AdminProfileUpdateRequest) =>
+    apiClient.put(`/admin/users/${id}/profile`, request),
+  updateAge: (id: number, age: number) => apiClient.put(`/admin/users/${id}/age`, { age }),
+  updateTimezone: (id: number, timezone: string) =>
+    apiClient.put(`/admin/users/${id}/timezone`, { timezone }),
+  updateFirstDayOfWeek: (id: number, firstDayOfWeek: 'MONDAY' | 'SUNDAY') =>
+    apiClient.put(`/admin/users/${id}/first-day-of-week`, { firstDayOfWeek }),
+  getPlaythroughs: (id: number) => apiClient.get(`/admin/users/${id}/playthroughs`),
+  updatePlaythrough: (id: number, playthroughId: number, request: AdminUpdatePlaythroughRequest) =>
+    apiClient.put(`/admin/users/${id}/playthroughs/${playthroughId}`, request),
 }
 
 export default apiClient

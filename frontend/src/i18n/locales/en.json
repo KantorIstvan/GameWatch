@@ -1215,6 +1215,47 @@
       "deleteConfirmMessage": "This permanently deletes {{email}}'s account, including their library, playthroughs, reviews and every other record tied to it. This cannot be undone.",
       "deleteSuccess": "Deleted {{email}}'s account.",
       "deleteFailed": "Failed to delete this account.",
+      "tabs": {
+        "profile": "Profile",
+        "playthroughs": "Playthroughs",
+        "danger": "Moderation & danger zone"
+      },
+      "profile": {
+        "displayName": "Display name",
+        "handle": "Handle",
+        "bio": "Bio",
+        "firstDayOfWeek": "First day of week",
+        "invalidAge": "Age must be between 0 and 150.",
+        "saveSuccess": "Profile updated.",
+        "saveFailed": "Failed to update this profile."
+      },
+      "playthroughs": {
+        "empty": "This user has no playthroughs yet.",
+        "columnGame": "Game",
+        "columnStatus": "Status",
+        "columnDuration": "Duration",
+        "columnSessions": "Sessions",
+        "edit": "Edit playthrough",
+        "editTitle": "Edit {{game}}",
+        "statusActive": "Active",
+        "statusPaused": "Paused",
+        "statusDropped": "Dropped",
+        "statusCompleted": "Completed",
+        "statusNotStarted": "Not started",
+        "activeWarning": "This playthrough's timer is currently running. Changing its duration restarts the current session - the owner's live timer may jump if they have the app open right now.",
+        "fieldTitle": "Title",
+        "fieldPlatform": "Platform",
+        "fieldDuration": "Duration (seconds)",
+        "fieldStartDate": "Start date",
+        "fieldEndDate": "End date",
+        "fieldActive": "Active",
+        "fieldPaused": "Paused",
+        "fieldCompleted": "Completed",
+        "fieldDropped": "Dropped",
+        "invalidDuration": "Duration must be a positive number of seconds.",
+        "saveSuccess": "Playthrough updated.",
+        "saveFailed": "Failed to update this playthrough."
+      },
       "moderation": {
         "title": "Moderation",
         "description": "Admins never see or set a password directly - only trigger a reset email, or block/unblock sign-in."
