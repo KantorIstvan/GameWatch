@@ -20,5 +20,6 @@ public class AdminUserSummaryDto {
     private String handle;
     private String displayName;
     private String profilePictureUrl;
+    private Boolean blocked;
     private Instant createdAt;
 }

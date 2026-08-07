@@ -45,6 +45,7 @@ public class AdminUserService {
             .handle(user.getHandle())
             .displayName(user.getDisplayName())
             .profilePictureUrl(user.getProfilePictureUrl())
+            .blocked(user.getBlocked())
             .createdAt(user.getCreatedAt())
             .build();
     }

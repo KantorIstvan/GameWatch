@@ -14,6 +14,7 @@ import com.gamewatch.util.ProfileLinkValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,17 @@ public class UserService {
 
         Optional<User> existingUser = userRepository.findByAuth0UserId(auth0UserId);
         if (existingUser.isPresent()) {
-            return existingUser.get();
+            User user = existingUser.get();
+            // Auth0 blocking only stops new token issuance - it does nothing to a token
+            // already in the browser, since this resource server validates JWTs purely by
+            // signature/issuer/audience/expiry and never calls back to Auth0. Every
+            // controller resolves "who is this" through this method, so checking here is
+            // what makes a block take effect on the very next request instead of whenever
+            // that stale token happens to expire.
+            if (Boolean.TRUE.equals(user.getBlocked())) {
+                throw new AccessDeniedException("This account has been blocked");
+            }
+            return user;
         }
         
         try {
