@@ -45,7 +45,7 @@ services:
         VITE_AUTH0_DOMAIN: ${VITE_AUTH0_DOMAIN}
         VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID}
         VITE_AUTH0_AUDIENCE: ${VITE_AUTH0_AUDIENCE}
-        VITE_API_BASE_URL: /api
+        VITE_API_BASE_URL: http://localhost:8080/api
     container_name: gamewatch-frontend
     ports:
       - "3000:80"
