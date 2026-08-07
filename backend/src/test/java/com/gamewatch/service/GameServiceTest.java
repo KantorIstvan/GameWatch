@@ -47,9 +47,6 @@ class GameServiceTest {
     @Mock
     private IgdbApiService igdbApiService;
 
-    @Mock
-    private GameColorCacheService gameColorCacheService;
-
     @InjectMocks
     private GameService gameService;
 
@@ -329,68 +326,18 @@ class GameServiceTest {
     }
 
     @Test
-    void getOrCreateCatalogGame_ComputesDominantColorsFromBannerOnFirstCatalog() {
-        // The catalog row is inserted exactly once, ever, on the first rating/review/wishlist
-        // for a game - colors are resolved through the shared cache so that, if the game's
-        // read-only page was ever viewed first, this reuses that result instead of extracting
-        // again.
-        GameSearchResultDto details = GameSearchResultDto.builder()
-            .id(12345)
-            .name("Test Game")
-            .bannerImageUrl("https://example.com/banner.jpg")
-            .build();
-
-        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.empty());
-        when(igdbApiService.getGameDetails(12345)).thenReturn(details);
-        when(gameColorCacheService.getColors(12345, "https://example.com/banner.jpg"))
-            .thenReturn(new String[]{"#111111", "#222222"});
-        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Game result = gameService.getOrCreateCatalogGame(12345);
-
-        assertThat(result.getDominantColor1()).isEqualTo("#111111");
-        assertThat(result.getDominantColor2()).isEqualTo("#222222");
-        verify(gameColorCacheService).getColors(12345, "https://example.com/banner.jpg");
-    }
-
-    @Test
-    void getOrCreateCatalogGame_AlreadyCataloguedWithColors_NeverRecomputesColors() {
-        // The one-time cost must actually stay one-time: a game that already has both colors
-        // stored is returned as-is, with no IGDB call and no re-extraction.
-        testGame.setDominantColor1("#111111");
-        testGame.setDominantColor2("#222222");
+    void getOrCreateCatalogGame_AlreadyCatalogued_ReturnsExistingRowUnchanged() {
+        // A game that already has a row is returned as-is, with no IGDB call.
         when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.of(testGame));
 
         Game result = gameService.getOrCreateCatalogGame(12345);
 
         assertThat(result).isEqualTo(testGame);
-        verifyNoInteractions(igdbApiService, gameColorCacheService);
-    }
-
-    @Test
-    void getOrCreateCatalogGame_AlreadyCataloguedMissingColors_BackfillsThem() {
-        // A row catalogued before color extraction existed on this path - or before this game's
-        // banner was reachable - must not stay null forever: the next time anyone touches it,
-        // colors are resolved through the cache and the row is updated.
-        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.of(testGame));
-        when(gameColorCacheService.getColors(12345, "https://example.com/banner.jpg"))
-            .thenReturn(new String[]{"#555555", "#666666"});
-        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Game result = gameService.getOrCreateCatalogGame(12345);
-
-        assertThat(result.getDominantColor1()).isEqualTo("#555555");
-        assertThat(result.getDominantColor2()).isEqualTo("#666666");
-        verify(gameRepository).save(testGame);
         verifyNoInteractions(igdbApiService);
     }
 
     @Test
-    void getCatalogGameByExternalId_NeverCataloguedGame_ComputesColorsViaCache() {
-        // The gradient must always render, including on a game's very first ever view - the
-        // never-catalogued, read-only path (majority of catalog page views) now resolves colors
-        // through GameColorCacheService instead of leaving them null, so the per-view cost is
-        // only ever paid once per externalId regardless of how many people view the page.
+    void getCatalogGameByExternalId_NeverCataloguedGame_BuildsFromIgdbWithNoId() {
         GameSearchResultDto details = GameSearchResultDto.builder()
             .id(12345)
             .name("Test Game")
@@ -399,32 +346,10 @@ class GameServiceTest {
 
         when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.empty());
         when(igdbApiService.getGameDetails(12345)).thenReturn(details);
-        when(gameColorCacheService.getColors(12345, "https://example.com/banner.jpg"))
-            .thenReturn(new String[]{"#333333", "#444444"});
 
         GameDto result = gameService.getCatalogGameByExternalId(12345);
 
         assertThat(result.getId()).isNull();
-        assertThat(result.getDominantColor1()).isEqualTo("#333333");
-        assertThat(result.getDominantColor2()).isEqualTo("#444444");
-        verify(gameColorCacheService).getColors(12345, "https://example.com/banner.jpg");
-    }
-
-    @Test
-    void getCatalogGameByExternalId_AlreadyCataloguedMissingColors_BackfillsThem() {
-        // A game caught in the DB from before color extraction covered this path - or from
-        // before this fix existed at all - must self-heal on the next ordinary page view of it,
-        // not stay blank forever.
-        when(gameRepository.findFirstByExternalId(12345)).thenReturn(Optional.of(testGame));
-        when(gameColorCacheService.getColors(12345, "https://example.com/banner.jpg"))
-            .thenReturn(new String[]{"#777777", "#888888"});
-        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        GameDto result = gameService.getCatalogGameByExternalId(12345);
-
-        assertThat(result.getDominantColor1()).isEqualTo("#777777");
-        assertThat(result.getDominantColor2()).isEqualTo("#888888");
-        verify(gameRepository).save(testGame);
-        verifyNoInteractions(igdbApiService);
+        assertThat(result.getExternalId()).isEqualTo(12345);
     }
 }

@@ -41,7 +41,6 @@ public class GameService {
     private final SessionHistoryRepository sessionHistoryRepository;
     private final PlaythroughService playthroughService;
     private final IgdbApiService igdbApiService;
-    private final GameColorCacheService gameColorCacheService;
 
     @Transactional
     public GameDto createGame(CreateGameRequest request, User user) {
@@ -127,10 +126,9 @@ public class GameService {
      * opinion about a game nobody has touched yet. A catalogued game is served from its
      * row, which was populated from the same IGDB fields when it was created.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public GameDto getCatalogGameByExternalId(Integer externalId) {
         return gameRepository.findFirstByExternalId(externalId)
-            .map(this::backfillColorsIfMissing)
             .map(this::mapToCatalogDto)
             .orElseGet(() -> {
                 GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
@@ -164,20 +162,13 @@ public class GameService {
     public Game getOrCreateCatalogGame(Integer externalId) {
         Optional<Game> catalogued = gameRepository.findFirstByExternalId(externalId);
         if (catalogued.isPresent()) {
-            return backfillColorsIfMissing(catalogued.get());
+            return catalogued.get();
         }
 
         GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
         if (details == null) {
             throw new IllegalArgumentException("Game not found");
         }
-
-        // IGDB doesn't return dominant colors, so they're resolved here instead, through the
-        // same process-lifetime cache mapExternalToCatalogDto's read-only path already primes
-        // (see GameColorCacheService) - a game viewed before it was ever rated, reviewed or
-        // wishlisted has its colors extracted and cached there already, so cataloguing it here
-        // reuses that result instead of downloading and clustering the banner a second time.
-        String[] colors = gameColorCacheService.getColors(details.getId(), details.getBannerImageUrl());
 
         Game game = gameRepository.save(Game.builder()
             .name(details.getName())
@@ -197,8 +188,6 @@ public class GameService {
             .averageCompletionSeconds(details.getAverageCompletionSeconds())
             .esrbRating(details.getEsrbRating())
             .alternativeNames(details.getAlternativeNames())
-            .dominantColor1(colors != null && colors.length > 0 ? colors[0] : null)
-            .dominantColor2(colors != null && colors.length > 1 ? colors[1] : null)
             .build());
 
         log.info("Catalogued game {} ({}) on first community interaction", game.getName(), externalId);
@@ -213,40 +202,10 @@ public class GameService {
     }
 
     /**
-     * A row catalogued before color extraction existed on this path - or before its banner
-     * was reachable - is missing its dominant colors permanently unless something fills them
-     * in the next time anyone looks at the game. This is that fill-in: a no-op read if the
-     * row already has both colors, one cache lookup and a save if it doesn't.
-     */
-    private Game backfillColorsIfMissing(Game game) {
-        if (game.getDominantColor1() != null && game.getDominantColor2() != null) {
-            return game;
-        }
-        String[] colors = gameColorCacheService.getColors(game.getExternalId(), game.getBannerImageUrl());
-        if (colors != null) {
-            game.setDominantColor1(colors[0]);
-            game.setDominantColor2(colors[1]);
-            game = gameRepository.save(game);
-        }
-        return game;
-    }
-
-    /**
      * A game that exists on IGDB but not here. The null id is what tells the caller that,
      * and a zero rating count keeps "nobody has rated this" distinct from "no data".
-     *
-     * The backdrop gradient has to render on every catalog page view, including a game's very
-     * first ever view, so dominant colors are resolved here too rather than left null. This is
-     * called on every page view of a game nobody has catalogued yet - the majority case for a
-     * catalog browse - and there is no row here to persist the result on, so the extraction
-     * itself goes through {@link GameColorCacheService} instead: the first view for a given
-     * external id pays the real download-plus-k-means cost once, and every view after (this
-     * path or {@link #getOrCreateCatalogGame}'s, whichever comes first) reuses the cached
-     * result rather than recomputing it.
      */
     private GameDto mapExternalToCatalogDto(GameSearchResultDto details) {
-        String[] colors = gameColorCacheService.getColors(details.getId(), details.getBannerImageUrl());
-
         return GameDto.builder()
             .id(null)
             .name(details.getName())
@@ -266,8 +225,6 @@ public class GameService {
             .averageCompletionSeconds(details.getAverageCompletionSeconds())
             .esrbRating(details.getEsrbRating())
             .alternativeNames(details.getAlternativeNames())
-            .dominantColor1(colors != null && colors.length > 0 ? colors[0] : null)
-            .dominantColor2(colors != null && colors.length > 1 ? colors[1] : null)
             .communityRatingCount(0)
             .build();
     }

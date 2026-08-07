@@ -206,15 +206,6 @@ function Layout() {
       </Sidebar>
 
       <SidebarInset>
-        {/* Empty anchor a page's own content can portal a full-bleed backdrop into (see
-            CatalogGameDetail.tsx). A direct child of this relative element so inset-x-0
-            resolves against the main content area's actual width - sidebar to window edge,
-            not the page's own max-w-7xl content wrapper below - and placed first with -z-10
-            so it sits behind the header, whose bg-bg/80 backdrop-blur-xl lets it bleed
-            through under the navbar instead of getting fully hidden by it. Renders nothing
-            when no page has portaled into it. */}
-        <div id="page-backdrop-root" className="pointer-events-none absolute inset-x-0 top-0 -z-10" aria-hidden="true" />
-
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/60 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:px-6">
           <SidebarTrigger className="hidden md:inline-flex" />
 
