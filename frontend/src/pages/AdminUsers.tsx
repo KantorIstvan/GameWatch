@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Table, TableHeader, TableBody, TableRow, TableHead } from '@/components/ui/table'
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination'
+import AdminUserRow from '../components/admin/AdminUserRow'
 import { adminApi } from '../services/api'
-import { resolveAssetUrl } from '@/lib/asset-url'
-import { formatDate } from '../utils/formatters'
 import type { AdminUserSummary, PagedResponse } from '../types'
 
 const DEBOUNCE_MS = 300
@@ -51,6 +48,16 @@ function AdminUsers() {
   useEffect(() => {
     setPage(0)
   }, [query])
+
+  // Reflects a row-level block/unblock immediately rather than refetching the whole
+  // page - the action already succeeded server-side by the time this fires.
+  const handleBlockedChange = (id: number, blocked: boolean) => {
+    setResult((current) =>
+      current
+        ? { ...current, content: current.content.map((u) => (u.id === id ? { ...u, blocked } : u)) }
+        : current
+    )
+  }
 
   return (
     <div>
@@ -94,32 +101,12 @@ function AdminUsers() {
                   <TableHead>{t('admin.users.columnEmail')}</TableHead>
                   <TableHead>{t('admin.users.columnHandle')}</TableHead>
                   <TableHead>{t('admin.users.columnCreatedAt')}</TableHead>
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {result.content.map((user) => (
-                  <TableRow key={user.id} className="cursor-pointer">
-                    <TableCell>
-                      <Link to={`/admin/users/${user.id}`} className="flex items-center gap-3">
-                        <Avatar className="size-8 shrink-0">
-                          <AvatarImage src={resolveAssetUrl(user.profilePictureUrl)} alt="" />
-                          <AvatarFallback>
-                            {(user.displayName ?? user.handle ?? user.username ?? '?').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="truncate text-body-sm font-medium text-text-primary">
-                          {user.displayName ?? user.username}
-                        </span>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-body-sm text-text-secondary">{user.email}</TableCell>
-                    <TableCell className="text-body-sm text-text-secondary">
-                      {user.handle ? `@${user.handle}` : t('admin.users.noHandle')}
-                    </TableCell>
-                    <TableCell className="text-body-sm text-text-secondary">
-                      {formatDate(user.createdAt)}
-                    </TableCell>
-                  </TableRow>
+                  <AdminUserRow key={user.id} user={user} onBlockedChange={handleBlockedChange} />
                 ))}
               </TableBody>
             </Table>
