@@ -227,14 +227,22 @@
     "emptySelfBody": "Start or update a playthrough to see your own activity appear here.",
     "filter": {
       "following": "Following",
-      "self": "My Activity"
+      "self": "My Activity",
+      "people": "People",
+      "searchPeople": "Search people",
+      "noMatches": "No matches"
     },
     "action": {
       "FINISHED": "finished",
       "DROPPED": "dropped",
       "PICKED_UP": "picked up",
-      "STARTED": "started playing"
-    }
+      "STARTED": "started playing",
+      "REVIEWED": "reviewed",
+      "RATED": "rated",
+      "WISHLISTED": "wishlisted"
+    },
+    "scoreValue": "{{score}}/10",
+    "loadMore": "Load more"
   },
   "community": {
     "title": "How others played it",

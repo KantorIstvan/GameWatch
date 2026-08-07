@@ -1,5 +1,14 @@
 import { useTranslation } from 'react-i18next'
-import { Trophy, CircleSlash, RotateCcw, PlayCircle, Users } from 'lucide-react'
+import {
+  Trophy,
+  CircleSlash,
+  RotateCcw,
+  PlayCircle,
+  Users,
+  MessageSquare,
+  Star,
+  Heart,
+} from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import UserLink from './UserLink'
 import { formatTime } from '../../utils/formatters'
@@ -12,7 +21,13 @@ const ICONS: Record<string, JSX.Element> = {
   DROPPED: <CircleSlash className="size-4" />,
   PICKED_UP: <RotateCcw className="size-4" />,
   STARTED: <PlayCircle className="size-4" />,
+  REVIEWED: <MessageSquare className="size-4" />,
+  RATED: <Star className="size-4" />,
+  WISHLISTED: <Heart className="size-4" />,
 }
+
+/** Playtime is only recorded on playthrough-derived events - everything else has nothing to show there. */
+const PLAYTIME_TYPES = new Set(['FINISHED', 'DROPPED', 'PICKED_UP', 'STARTED'])
 
 interface ActivityListProps {
   events: ActivityEvent[]
@@ -29,6 +44,19 @@ interface ActivityListProps {
  */
 function ActivityList({ events, scope, loading }: ActivityListProps) {
   const { t } = useTranslation()
+
+  // The one extra fact worth surfacing beside the icon and date - playtime for a
+  // playthrough milestone, the score for a rating, nothing for a review or a wishlist add
+  // (the sentence above already says everything there is to say about those).
+  const metaLabel = (event: ActivityEvent): string | null => {
+    if (PLAYTIME_TYPES.has(event.type)) {
+      return formatTime(event.playtimeSeconds)
+    }
+    if (event.type === 'RATED' && event.score != null) {
+      return t('feed.scoreValue', { score: event.score })
+    }
+    return null
+  }
 
   if (loading) {
     return (
@@ -83,7 +111,7 @@ function ActivityList({ events, scope, loading }: ActivityListProps) {
             <p className="flex items-center gap-2 text-caption text-text-secondary">
               <span className="flex items-center gap-1">
                 {ICONS[event.type]}
-                {formatTime(event.playtimeSeconds)}
+                {metaLabel(event)}
               </span>
               <span>{new Date(event.occurredAt).toLocaleDateString()}</span>
             </p>
