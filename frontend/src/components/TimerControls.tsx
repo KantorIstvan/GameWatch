@@ -90,9 +90,7 @@ function TimerControls({
         )}
       </div>
 
-      {/* Available on completed and dropped playthroughs too: forgotten time is usually
-          remembered after finishing, and editing the duration can only revise downwards. */}
-      {!playthrough.isActive && !playthrough.isPaused && (
+      {!playthrough.isActive && !playthrough.isPaused && !playthrough.isCompleted && !playthrough.isDropped && (
         <div className="mt-2 flex justify-center px-4 sm:px-0">
           <Button
             variant="outline"
