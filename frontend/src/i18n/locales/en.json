@@ -40,7 +40,8 @@
     "account": "Account",
     "social": "Social",
     "people": "People",
-    "profile": "Profile"
+    "profile": "Profile",
+    "admin": "Admin"
   },
   "settings": {
     "title": "Settings",
@@ -1175,5 +1176,10 @@
       "q4": "My games aren't appearing in search",
       "a4": "Game search uses the IGDB API. Try using different search terms, checking spelling, or searching by the game's original title. Some older or lesser-known games may not be in the database."
     }
+  },
+  "admin": {
+    "title": "Admin",
+    "subtitle": "You have admin access to this account.",
+    "permissionsLabel": "Your permissions"
   }
 }

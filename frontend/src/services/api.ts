@@ -214,4 +214,11 @@ export const followsApi = {
   reject: (followId: number) => apiClient.post(`/follows/me/requests/${followId}/reject`),
 }
 
+export const adminApi = {
+  // No admin authority required to call this one - a non-admin needs to be able to ask
+  // and get back an empty list, so the frontend can tell "not an admin" apart from a
+  // network error when deciding whether to show the admin nav.
+  getMe: () => apiClient.get('/admin/me'),
+}
+
 export default apiClient

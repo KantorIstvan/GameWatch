@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UserRound } from 'lucide-react'
+import { Moon, Sun, Settings as SettingsIcon, Timer, BarChart, Gamepad2, Library, GanttChart, Heart, CircleHelp, LogOut, ChevronsUpDown, Search, Rss, UserRound, Shield } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAdminContext } from '../contexts/AdminContext'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -41,6 +42,7 @@ const isFocusRoute = (pathname: string) =>
 function Layout() {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0()
   const { mode, toggleTheme } = useTheme()
+  const { isAdmin } = useAdminContext()
   const { t } = useTranslation()
   const location = useLocation()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
@@ -65,6 +67,13 @@ function Layout() {
   const socialItems = [
     { label: t('nav.people'), path: '/people', icon: <Search className="size-4.5" /> },
     { label: t('feed.title'), path: '/feed', icon: <Rss className="size-4.5" /> },
+  ]
+
+  // Only rendered for accounts whose JWT carries an admin:* permission (see
+  // AdminContext) - same "own group, excluded from the mobile bottom bar" treatment as
+  // socialItems above, since this is even less of a core tracking tab than those are.
+  const adminItems = [
+    { label: t('admin.title'), path: '/admin', icon: <Shield className="size-4.5" /> },
   ]
 
   if (!isAuthenticated) {
@@ -155,6 +164,30 @@ function Layout() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {isAdmin && (
+            <SidebarGroup>
+              <SidebarGroupLabel>{t('nav.admin')}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {adminItems.map((item) => (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname.startsWith(item.path)}
+                        tooltip={item.label}
+                      >
+                        <Link to={item.path}>
+                          {item.icon}
+                          <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </SidebarContent>
 
         <SidebarFooter>
@@ -303,6 +336,25 @@ function Layout() {
                 </Link>
               </Button>
             ))}
+            {isAdmin && (
+              <>
+                <SidebarSeparator className="mx-0 my-1" />
+                {adminItems.map((item) => (
+                  <Button
+                    key={item.path}
+                    variant="ghost"
+                    asChild
+                    className="h-12 justify-start gap-3 text-body"
+                    onClick={() => setAccountSheetOpen(false)}
+                  >
+                    <Link to={item.path}>
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </Button>
+                ))}
+              </>
+            )}
             <SidebarSeparator className="mx-0 my-1" />
             <Button
               variant="ghost"
