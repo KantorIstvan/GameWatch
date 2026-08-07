@@ -723,6 +723,45 @@ export interface AdminMe {
   permissions: string[]
 }
 
+export interface AdminUserSummary {
+  id: number
+  auth0UserId: string
+  email: string
+  username: string
+  handle?: string
+  displayName?: string
+  profilePictureUrl?: string
+  createdAt: string
+}
+
+export interface PagedResponse<T> {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+/** The full User entity, as returned by GET /admin/users/{id} - not the self-service User above. */
+export interface AdminUserDetail {
+  id: number
+  auth0UserId: string
+  email: string
+  username: string
+  handle: string | null
+  displayName: string | null
+  bio: string | null
+  profileVisibility: Visibility
+  libraryVisibility: Visibility
+  wishlistVisibility: Visibility
+  profilePictureUrl: string | null
+  age?: number
+  timezone?: string
+  firstDayOfWeek?: 'MONDAY' | 'SUNDAY'
+  createdAt: string
+  updatedAt: string
+}
+
 export function normalizePlatformName(platformName?: string): string {
   if (!platformName) return 'Unknown'
   

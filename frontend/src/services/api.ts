@@ -219,6 +219,9 @@ export const adminApi = {
   // and get back an empty list, so the frontend can tell "not an admin" apart from a
   // network error when deciding whether to show the admin nav.
   getMe: () => apiClient.get('/admin/me'),
+  searchUsers: (query: string, page: number = 0, size: number = 20) =>
+    apiClient.get('/admin/users', { params: { query, page, size } }),
+  getUser: (id: number) => apiClient.get(`/admin/users/${id}`),
 }
 
 export default apiClient
