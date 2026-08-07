@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { cn } from '@/lib/utils'
 import type { NotificationItem } from '../../hooks/useNotifications'
 
@@ -117,7 +118,7 @@ function NotificationRow({ item, onNavigate }: NotificationRowProps) {
   const body = (
     <>
       <Avatar className="mt-0.5 size-8 shrink-0">
-        <AvatarImage src={item.actorPictureUrl ?? undefined} alt="" />
+        <AvatarImage src={resolveAssetUrl(item.actorPictureUrl)} alt="" />
         <AvatarFallback>{who.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
 

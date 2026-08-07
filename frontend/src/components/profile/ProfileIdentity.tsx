@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { CalendarDays } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { SocialLinkIcon } from '@/components/ui/social-icons'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { detectSocialPlatform, normalizeProfileLink } from '@/lib/socialLinks'
 import type { PublicProfile } from '../../types'
 
@@ -36,7 +37,7 @@ function ProfileIdentity({
     <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between md:mb-8">
       <div className="flex min-w-0 items-start gap-4">
         <Avatar className="size-20 shrink-0 border border-border">
-          <AvatarImage src={profile.profilePictureUrl ?? undefined} alt="" />
+          <AvatarImage src={resolveAssetUrl(profile.profilePictureUrl)} alt="" />
           <AvatarFallback className="text-h3">
             {(profile.handle ?? profile.displayName ?? '?').charAt(0).toUpperCase()}
           </AvatarFallback>

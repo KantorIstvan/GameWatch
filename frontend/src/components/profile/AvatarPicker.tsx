@@ -4,6 +4,7 @@ import { ImageUp, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { userApi } from '../../services/api'
 import AvatarCropDialog from './AvatarCropDialog'
 
@@ -75,7 +76,7 @@ function AvatarPicker({ value, fallback, onChange }: AvatarPickerProps) {
   return (
     <div className="flex items-center gap-4">
       <Avatar className="size-20 shrink-0 border border-border">
-        <AvatarImage src={value ?? undefined} alt="" />
+        <AvatarImage src={resolveAssetUrl(value)} alt="" />
         <AvatarFallback className="text-h3">{fallback}</AvatarFallback>
       </Avatar>
 

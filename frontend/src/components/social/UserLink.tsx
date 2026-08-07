@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { cn } from '@/lib/utils'
 
 const AVATAR_SIZES = {
@@ -51,7 +52,7 @@ function UserLink({
 
   const avatar = (
     <Avatar className={cn(AVATAR_SIZES[size], 'shrink-0')}>
-      <AvatarImage src={pictureUrl ?? undefined} alt="" />
+      <AvatarImage src={resolveAssetUrl(pictureUrl)} alt="" />
       <AvatarFallback>{initial}</AvatarFallback>
     </Avatar>
   )
