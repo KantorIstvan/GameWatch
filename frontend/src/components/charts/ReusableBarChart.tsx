@@ -121,7 +121,7 @@ function ReusableBarChart({
                   border: '1px solid var(--color-border)',
                   borderRadius: 8,
                 }}
-                formatter={valueFormatter ? (value: number | undefined, name: string | undefined) => [valueFormatter(value || 0), name || ''] : undefined}
+                formatter={valueFormatter ? (value, name) => [valueFormatter(Number(value) || 0), String(name ?? '')] : undefined}
               />
               {showLegend && <Legend />}
               {bars.map((bar, index) => (
