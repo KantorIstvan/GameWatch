@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import Loading from '../components/Loading'
@@ -58,44 +57,8 @@ function CatalogGameDetail() {
     ...(game.platforms?.split(',').map((p) => p.trim()).filter(Boolean) ?? []),
   ]
 
-  // Same two colors and the same colorthief-derived sourcing the timer page reads off a
-  // playthrough (see usePlaythrough.ts / TimelineEventPanel.tsx) - just faded vertically
-  // here instead of on their 135deg diagonal, since this is a page background behind
-  // ordinary body text rather than a hero band behind a scrim or bold display type.
-  //
-  // Each stop is color-mixed against the page's own --color-bg token at a low, fixed
-  // percentage (the same "tint over a token surface" approach StatCard/InfoCard already
-  // use for arbitrary stat colors) rather than the raw cover color. That bounds the
-  // worst case structurally: whatever the source hue is - a bright yellow cover in light
-  // mode, a near-black one in dark mode - the visible background can only drift a small,
-  // fixed distance from --color-bg's own lightness, so text-text-primary sitting directly
-  // on it keeps effectively the same contrast ratio the plain background already had.
-  const backdropGradient = game.dominantColor1 && game.dominantColor2
-    ? `linear-gradient(to bottom, ` +
-      `color-mix(in srgb, ${game.dominantColor1} 20%, var(--color-bg)) 0%, ` +
-      `color-mix(in srgb, ${game.dominantColor2} 10%, var(--color-bg)) 55%, ` +
-      `var(--color-bg) 100%)`
-    : null
-
-  // Portaled rather than rendered inline: this page's own root below sits inside Layout's
-  // max-w-7xl routed-content wrapper, which the backdrop needs to bleed out of on both sides
-  // to reach the actual edges of the main content area. #page-backdrop-root (see Layout.tsx)
-  // is a sibling of that wrapper - a direct child of the full-width SidebarInset - so mounting
-  // the gradient there instead resolves its inset-x-0 against the right box. React unmounts
-  // the portaled node itself on navigation, so nothing lingers on other pages.
-  const backdropRoot = document.getElementById('page-backdrop-root')
-
   return (
     <div className="mx-auto max-w-8xl">
-      {backdropGradient && backdropRoot && createPortal(
-        <div
-          className="pointer-events-none h-96 w-full"
-          style={{ background: backdropGradient }}
-          aria-hidden="true"
-        />,
-        backdropRoot
-      )}
-
       <div className="mb-6 flex flex-wrap items-center gap-4 md:mb-8">
         <Button variant="ghost" size="icon" onClick={() => navigate('/catalog')} className="mr-1">
           <ArrowLeft className="size-5" />
