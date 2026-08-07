@@ -127,9 +127,10 @@ public class GameService {
      * opinion about a game nobody has touched yet. A catalogued game is served from its
      * row, which was populated from the same IGDB fields when it was created.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public GameDto getCatalogGameByExternalId(Integer externalId) {
         return gameRepository.findFirstByExternalId(externalId)
+            .map(this::backfillColorsIfMissing)
             .map(this::mapToCatalogDto)
             .orElseGet(() -> {
                 GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
@@ -163,7 +164,7 @@ public class GameService {
     public Game getOrCreateCatalogGame(Integer externalId) {
         Optional<Game> catalogued = gameRepository.findFirstByExternalId(externalId);
         if (catalogued.isPresent()) {
-            return catalogued.get();
+            return backfillColorsIfMissing(catalogued.get());
         }
 
         GameSearchResultDto details = igdbApiService.getGameDetails(externalId);
@@ -209,6 +210,25 @@ public class GameService {
         dto.setCommunityRatingScore(game.getBayesianScore());
         dto.setCommunityRatingCount(game.getRatingCount());
         return dto;
+    }
+
+    /**
+     * A row catalogued before color extraction existed on this path - or before its banner
+     * was reachable - is missing its dominant colors permanently unless something fills them
+     * in the next time anyone looks at the game. This is that fill-in: a no-op read if the
+     * row already has both colors, one cache lookup and a save if it doesn't.
+     */
+    private Game backfillColorsIfMissing(Game game) {
+        if (game.getDominantColor1() != null && game.getDominantColor2() != null) {
+            return game;
+        }
+        String[] colors = gameColorCacheService.getColors(game.getExternalId(), game.getBannerImageUrl());
+        if (colors != null) {
+            game.setDominantColor1(colors[0]);
+            game.setDominantColor2(colors[1]);
+            game = gameRepository.save(game);
+        }
+        return game;
     }
 
     /**
