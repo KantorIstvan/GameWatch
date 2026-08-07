@@ -82,17 +82,24 @@ public class AdminPlaythroughService {
                 playthrough.setSessionStartTime(now);
             }
         }
-        if (request.getIsActive() != null) {
-            playthrough.setIsActive(request.getIsActive());
-        }
-        if (request.getIsPaused() != null) {
-            playthrough.setIsPaused(request.getIsPaused());
-        }
+        // No isActive/isPaused here by design (see AdminUpdatePlaythroughRequest) - moving
+        // a playthrough to a terminal state still has to leave it not-live, though, so
+        // isActive/isPaused are force-cleared alongside either terminal flag rather than
+        // left for the admin to forget and end up with a playthrough that is both
+        // "completed" and "currently running".
         if (request.getIsCompleted() != null) {
             playthrough.setIsCompleted(request.getIsCompleted());
+            if (Boolean.TRUE.equals(request.getIsCompleted())) {
+                playthrough.setIsActive(false);
+                playthrough.setIsPaused(false);
+            }
         }
         if (request.getIsDropped() != null) {
             playthrough.setIsDropped(request.getIsDropped());
+            if (Boolean.TRUE.equals(request.getIsDropped())) {
+                playthrough.setIsActive(false);
+                playthrough.setIsPaused(false);
+            }
         }
         if (request.getStartDate() != null) {
             playthrough.setStartDate(request.getStartDate());

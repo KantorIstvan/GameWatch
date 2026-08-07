@@ -704,6 +704,7 @@ public class PlaythroughService {
             .gameId(playthrough.getGame().getId())
             .gameName(playthrough.getGame().getName())
             .gameBannerImageUrl(playthrough.getGame().getBannerImageUrl())
+            .gamePlatforms(playthrough.getGame().getPlatforms())
             .playthroughType(playthrough.getPlaythroughType())
             .title(playthrough.getTitle())
             .platform(playthrough.getPlatform())

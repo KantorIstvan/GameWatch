@@ -35,7 +35,7 @@ public class AdminModerationService {
         target.setBlocked(true);
         target.setBlockedAt(Instant.now());
         userRepository.save(target);
-        adminAuditService.record(admin, target, AdminAction.BLOCK, "Blocked " + target.getEmail());
+        adminAuditService.record(admin, target, AdminAction.BLOCK, "Blocked " + AdminAuditService.identify(target));
     }
 
     public void unblockUser(User admin, Long targetId) {
@@ -44,17 +44,23 @@ public class AdminModerationService {
         target.setBlocked(false);
         target.setBlockedAt(null);
         userRepository.save(target);
-        adminAuditService.record(admin, target, AdminAction.UNBLOCK, "Unblocked " + target.getEmail());
+        adminAuditService.record(admin, target, AdminAction.UNBLOCK, "Unblocked " + AdminAuditService.identify(target));
     }
 
     /**
      * Checks hasPasswordIdentity first because Auth0's change-password endpoint returns
      * 200 whether or not the email actually exists in that connection (its own
      * anti-enumeration design) - without this check, a social-login-only account would
-     * silently no-op instead of surfacing a real error.
+     * silently no-op instead of surfacing a real error. The email-null check is separate:
+     * some Auth0 social connections never put an email claim on the access token
+     * UserService.getOrCreateUser reads, so an account can have a real password identity
+     * and still have no address on file to send the reset link to.
      */
     public void sendPasswordResetEmail(User admin, Long targetId) {
         User target = getTarget(targetId);
+        if (target.getEmail() == null || target.getEmail().isBlank()) {
+            throw new IllegalArgumentException("This account has no email on file to send a reset link to");
+        }
         if (!auth0ManagementApiService.hasPasswordIdentity(target.getAuth0UserId())) {
             throw new IllegalArgumentException(
                 "This account signs in via a social login and has no password to reset");
@@ -78,15 +84,14 @@ public class AdminModerationService {
      */
     public void deleteUser(User admin, Long targetId) {
         User target = getTarget(targetId);
-        String email = target.getEmail();
-        String handle = target.getHandle();
+        String identity = AdminAuditService.identify(target);
         String auth0UserId = target.getAuth0UserId();
 
         auth0ManagementApiService.deleteUser(auth0UserId);
 
         userService.deleteAccount(target);
         adminAuditService.record(admin, null, AdminAction.DELETE_ACCOUNT,
-            "Deleted account " + email + (handle != null ? " (@" + handle + ")" : "") + ", auth0UserId=" + auth0UserId);
+            "Deleted account " + identity + ", auth0UserId=" + auth0UserId);
     }
 
     private User getTarget(Long targetId) {

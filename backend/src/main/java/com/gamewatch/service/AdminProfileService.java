@@ -27,7 +27,7 @@ public class AdminProfileService {
         User target = getTarget(targetId);
         ProfileSettingsDto result = userService.updateProfileSettings(target, request);
         adminAuditService.record(admin, target, AdminAction.PROFILE_EDIT,
-            "Edited profile settings for " + target.getEmail());
+            "Edited profile settings for " + AdminAuditService.identify(target));
         return result;
     }
 
@@ -36,7 +36,7 @@ public class AdminProfileService {
         User target = getTarget(targetId);
         User updated = userService.updateAge(target, age);
         adminAuditService.record(admin, target, AdminAction.PROFILE_EDIT,
-            "Set age to " + age + " for " + target.getEmail());
+            "Set age to " + age + " for " + AdminAuditService.identify(target));
         return updated;
     }
 
@@ -45,7 +45,7 @@ public class AdminProfileService {
         User target = getTarget(targetId);
         User updated = userService.updateTimezone(target, timezone);
         adminAuditService.record(admin, target, AdminAction.PROFILE_EDIT,
-            "Set timezone to " + timezone + " for " + target.getEmail());
+            "Set timezone to " + timezone + " for " + AdminAuditService.identify(target));
         return updated;
     }
 
@@ -54,7 +54,7 @@ public class AdminProfileService {
         User target = getTarget(targetId);
         User updated = userService.updateFirstDayOfWeek(target, firstDayOfWeek);
         adminAuditService.record(admin, target, AdminAction.PROFILE_EDIT,
-            "Set first day of week to " + firstDayOfWeek + " for " + target.getEmail());
+            "Set first day of week to " + firstDayOfWeek + " for " + AdminAuditService.identify(target));
         return updated;
     }
 

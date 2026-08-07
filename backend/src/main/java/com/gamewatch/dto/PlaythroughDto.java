@@ -14,6 +14,8 @@ public class PlaythroughDto {
     private Long gameId;
     private String gameName;
     private String gameBannerImageUrl;
+    /** The game's comma-separated release platforms, e.g. "PC,PlayStation 5" - not this playthrough's own {@link #platform}. */
+    private String gamePlatforms;
     private String playthroughType;
     private String title;
     private String platform;
