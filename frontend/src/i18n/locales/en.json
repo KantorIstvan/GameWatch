@@ -1180,6 +1180,35 @@
   "admin": {
     "title": "Admin",
     "subtitle": "You have admin access to this account.",
-    "permissionsLabel": "Your permissions"
+    "permissionsLabel": "Your permissions",
+    "users": {
+      "title": "Users",
+      "subtitle": "Search or browse every account in the app.",
+      "searchPlaceholder": "Search by email, handle, name, or user id",
+      "noResults": "No users found.",
+      "noHandle": "No handle",
+      "columnUser": "User",
+      "columnEmail": "Email",
+      "columnHandle": "Handle",
+      "columnCreatedAt": "Created",
+      "pageOf": "Page {{page}} of {{totalPages}}",
+      "backToDirectory": "Back to Users",
+      "notFound": "That user could not be found.",
+      "detail": {
+        "id": "User ID",
+        "auth0UserId": "Auth0 user ID",
+        "username": "Username",
+        "bio": "Bio",
+        "age": "Age",
+        "timezone": "Timezone",
+        "createdAt": "Created",
+        "updatedAt": "Last updated",
+        "empty": "Not set",
+        "visibility": "Visibility",
+        "profile": "Profile",
+        "library": "Library",
+        "wishlist": "Wishlist"
+      }
+    }
   }
 }

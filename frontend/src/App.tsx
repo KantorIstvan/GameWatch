@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Toaster } from '@/components/ui/sonner'
 import Layout from './components/Layout'
@@ -21,6 +21,7 @@ import People from './pages/People'
 import Feed from './pages/Feed'
 import Help from './pages/Help'
 import AdminUsers from './pages/AdminUsers'
+import AdminUserDetail from './pages/AdminUserDetail'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
@@ -100,7 +101,10 @@ function AppContent() {
           <Route path="u/:handle" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
-          <Route path="admin" element={isAdmin ? <AdminUsers /> : <Navigate to="/" replace />} />
+          <Route path="admin" element={isAdmin ? <Outlet /> : <Navigate to="/" replace />}>
+            <Route index element={<AdminUsers />} />
+            <Route path="users/:id" element={<AdminUserDetail />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster
