@@ -57,10 +57,6 @@ function LogManualSessionDialog({ open, onClose, onSubmit, playthroughStartDate,
       return
     }
 
-    // Completed and dropped playthroughs accept manual sessions: forgotten time is
-    // usually remembered after finishing, and a duration edit can only revise downwards,
-    // so refusing here left those hours with nowhere to go.
-
     if (playthroughStartDate) {
       const playthroughStart = dayjs.tz(playthroughStartDate, timezone).startOf('day')
       const sessionStart = start.startOf('day')
