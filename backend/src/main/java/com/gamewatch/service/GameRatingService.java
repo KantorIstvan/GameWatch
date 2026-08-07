@@ -92,7 +92,7 @@ public class GameRatingService {
 
         game.setRatingCount((int) count);
         game.setRatingSum(sum);
-        game.setBayesianScore(count == 0 ? null : bayesianScore(count, sum));
+        game.setBayesianScore(count == 0 ? null : bayesianScore(game.getId(), count, sum));
         gameRepository.save(game);
     }
 
@@ -105,9 +105,9 @@ public class GameRatingService {
      * Without this a single 10 outranks a game with two hundred ratings averaging 9.4,
      * which is the failure mode of every raw-average leaderboard.
      */
-    private double bayesianScore(long ratingCount, long ratingSum) {
+    private double bayesianScore(long gameId, long ratingCount, long ratingSum) {
         double ownMean = (double) ratingSum / ratingCount;
-        Double globalMean = gameRatingRepository.findGlobalMeanScore();
+        Double globalMean = gameRatingRepository.findGlobalMeanScore(gameId);
         double prior = globalMean != null ? globalMean : NEUTRAL_MEAN;
 
         return (ratingCount / (ratingCount + PRIOR_WEIGHT)) * ownMean
