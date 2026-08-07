@@ -52,6 +52,14 @@ public interface GameReviewRepository extends JpaRepository<GameReview, Long> {
     List<GameReview> findByUserId(@Param("userId") Long userId);
 
     /**
+     * One user's own reviews, newest first, with the game eagerly fetched - what the
+     * activity feed needs to render "X reviewed <game>" for every review, not just the
+     * handful {@link #findMostRecentByUser} caps the profile's "Recent Reviews" tile to.
+     */
+    @Query("SELECT r FROM GameReview r JOIN FETCH r.game WHERE r.user.id = :userId ORDER BY r.createdAt DESC")
+    List<GameReview> findByUserIdWithGameOrderByCreatedAtDesc(@Param("userId") Long userId);
+
+    /**
      * How many reviews this user has written since a cutoff. A person writing thirty
      * reviews in a minute is not reviewing, and this is the cheapest place to notice.
      */

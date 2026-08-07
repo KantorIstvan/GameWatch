@@ -175,11 +175,14 @@ export interface ActivityEvent {
   actorHandle: string | null
   actorDisplayName: string | null
   actorPictureUrl: string | null
-  type: 'FINISHED' | 'DROPPED' | 'PICKED_UP' | 'STARTED'
+  type: 'FINISHED' | 'DROPPED' | 'PICKED_UP' | 'STARTED' | 'REVIEWED' | 'RATED' | 'WISHLISTED'
   gameId: number
   gameName: string
   bannerImageUrl: string | null
+  /** Only meaningful for the playthrough-derived types (FINISHED/DROPPED/PICKED_UP/STARTED). */
   playtimeSeconds: number
+  /** Only set for RATED - the 1-10 score given. */
+  score: number | null
   occurredAt: string
 }
 

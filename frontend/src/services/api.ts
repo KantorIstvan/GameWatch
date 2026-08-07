@@ -167,8 +167,22 @@ export const profilesApi = {
 }
 
 export const feedApi = {
-  getFeed: (limit?: number, scope?: 'following' | 'self') =>
-    apiClient.get('/feed', { params: { limit, scope } }),
+  // `before` is the occurredAt of the oldest event already on screen, for paging to the
+  // next batch - a raw offset would not do, since events are merged from several sources
+  // and re-sorted on every call rather than read off one indexed table. `actorHandles` is
+  // joined into one comma-separated param rather than left as an array: axios's default
+  // array serialization (`actorHandles[]=a&actorHandles[]=b`) does not match what Spring's
+  // `List<String>` binding expects on the other end, while a single comma-separated value
+  // does.
+  getFeed: (limit?: number, scope?: 'following' | 'self', before?: string, actorHandles?: string[]) =>
+    apiClient.get('/feed', {
+      params: {
+        limit,
+        scope,
+        before,
+        actorHandles: actorHandles && actorHandles.length > 0 ? actorHandles.join(',') : undefined,
+      },
+    }),
 }
 
 export const notificationsApi = {
