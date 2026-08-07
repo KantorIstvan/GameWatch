@@ -554,10 +554,10 @@ public class PlaythroughService {
             throw new RuntimeException("Cannot log manual session while a session is open. Please end the current session first.");
         }
 
-        // Completed and dropped playthroughs deliberately still accept manual sessions.
-        // Remembering forgotten time is exactly what this feature is for, and it is usually
-        // remembered *after* finishing - refusing it left those hours with nowhere to go at
-        // all, since duration edits can only ever revise time downwards.
+        if (playthrough.getIsCompleted() || playthrough.getIsDropped()) {
+            throw new RuntimeException("Cannot log a manual session for a completed or dropped playthrough.");
+        }
+
         ZoneId zone = TimezoneUtils.resolveZone(user);
 
         if (playthrough.getStartDate() != null) {

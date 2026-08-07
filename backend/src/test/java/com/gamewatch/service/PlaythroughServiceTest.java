@@ -556,9 +556,7 @@ class PlaythroughServiceTest {
     }
 
     @Test
-    void logManualSession_OnCompletedPlaythrough_IsAllowed() {
-        // Forgotten time is usually remembered after finishing, and updateDuration can only
-        // revise downwards, so refusing here left those hours unrecordable by any route.
+    void logManualSession_OnCompletedPlaythrough_ThrowsException() {
         testPlaythrough.setIsCompleted(true);
         testPlaythrough.setEndDate(LocalDate.now().minusDays(3));
         testUser.setTimezone("UTC");
@@ -568,17 +566,31 @@ class PlaythroughServiceTest {
         request.setEndedAt(Instant.now().minus(1, ChronoUnit.HOURS));
 
         when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
-        when(sessionHistoryRepository.findByPlaythroughIdOrderBySessionNumberAsc(1L)).thenReturn(List.of());
-        when(playthroughRepository.save(any(Playthrough.class))).thenAnswer(i -> i.getArgument(0));
 
-        playthroughService.logManualSession(testUser, 1L, request);
+        assertThatThrownBy(() -> playthroughService.logManualSession(testUser, 1L, request))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Cannot log a manual session for a completed or dropped playthrough");
 
-        verify(sessionHistoryRepository).saveAndFlush(any(SessionHistory.class));
-        assertThat(testPlaythrough.getDurationSeconds()).isEqualTo(3600L);
-        assertThat(testPlaythrough.getIsCompleted()).isTrue();
-        // The backfilled session lands after the recorded end, so the end moves out to
-        // cover it rather than leaving the session outside its own playthrough.
-        assertThat(testPlaythrough.getEndDate()).isEqualTo(LocalDate.now(java.time.ZoneOffset.UTC));
+        verify(sessionHistoryRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void logManualSession_OnDroppedPlaythrough_ThrowsException() {
+        testPlaythrough.setIsDropped(true);
+        testPlaythrough.setEndDate(LocalDate.now().minusDays(3));
+        testUser.setTimezone("UTC");
+
+        LogManualSessionRequest request = new LogManualSessionRequest();
+        request.setStartedAt(Instant.now().minus(2, ChronoUnit.HOURS));
+        request.setEndedAt(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        when(playthroughRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(testPlaythrough));
+
+        assertThatThrownBy(() -> playthroughService.logManualSession(testUser, 1L, request))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Cannot log a manual session for a completed or dropped playthrough");
+
+        verify(sessionHistoryRepository, never()).saveAndFlush(any());
     }
 
     @Test
