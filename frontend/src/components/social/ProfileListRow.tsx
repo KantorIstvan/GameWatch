@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import FollowButton from './FollowButton'
 import type { FollowState, ProfileSummary } from '../../types'
 
@@ -49,7 +50,7 @@ function ProfileListRow({ person, onFollowChange, onSelect, onRemove, removeLabe
   const identity = (
     <>
       <Avatar className="size-11 shrink-0">
-        <AvatarImage src={person.profilePictureUrl ?? undefined} alt="" />
+        <AvatarImage src={resolveAssetUrl(person.profilePictureUrl)} alt="" />
         <AvatarFallback>
           {(person.handle ?? person.displayName ?? '?').charAt(0).toUpperCase()}
         </AvatarFallback>

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { reviewsApi } from '../../services/api'
 import type { GameReview, ReviewReply } from '../../types'
 
@@ -84,7 +85,7 @@ function ReviewReplies({ review, onReviewChange }: ReviewRepliesProps) {
               {replies.map((reply) => (
                 <li key={reply.id} className="flex items-start gap-3">
                   <Avatar className="size-7 shrink-0">
-                    <AvatarImage src={reply.authorPictureUrl ?? undefined} alt="" />
+                    <AvatarImage src={resolveAssetUrl(reply.authorPictureUrl)} alt="" />
                     <AvatarFallback>
                       {(reply.authorHandle ?? '?').charAt(0).toUpperCase()}
                     </AvatarFallback>
