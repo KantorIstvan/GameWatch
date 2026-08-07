@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import Loading from '../components/Loading'
@@ -76,14 +77,23 @@ function CatalogGameDetail() {
       `var(--color-bg) 100%)`
     : null
 
+  // Portaled rather than rendered inline: this page's own root below sits inside Layout's
+  // max-w-7xl routed-content wrapper, which the backdrop needs to bleed out of on both sides
+  // to reach the actual edges of the main content area. #page-backdrop-root (see Layout.tsx)
+  // is a sibling of that wrapper - a direct child of the full-width SidebarInset - so mounting
+  // the gradient there instead resolves its inset-x-0 against the right box. React unmounts
+  // the portaled node itself on navigation, so nothing lingers on other pages.
+  const backdropRoot = document.getElementById('page-backdrop-root')
+
   return (
-    <div className="relative z-0 mx-auto max-w-8xl">
-      {backdropGradient && (
+    <div className="mx-auto max-w-8xl">
+      {backdropGradient && backdropRoot && createPortal(
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96"
+          className="pointer-events-none h-96 w-full"
           style={{ background: backdropGradient }}
           aria-hidden="true"
-        />
+        />,
+        backdropRoot
       )}
 
       <div className="mb-6 flex flex-wrap items-center gap-4 md:mb-8">
