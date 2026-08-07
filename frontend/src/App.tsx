@@ -20,9 +20,11 @@ import MyProfile from './pages/MyProfile'
 import People from './pages/People'
 import Feed from './pages/Feed'
 import Help from './pages/Help'
+import AdminUsers from './pages/AdminUsers'
 import Loading from './components/Loading'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider, useAuthContext } from './contexts/AuthContext'
+import { AdminProvider, useAdminContext } from './contexts/AdminContext'
 import { OnboardingProvider, useOnboarding } from './contexts/OnboardingContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { TimeFormatProvider } from './contexts/TimeFormatContext'
@@ -35,6 +37,7 @@ function AppContent() {
   const { isAuthenticated } = useAuth0()
   const { isAuthReady } = useAuthContext()
   const { status: onboardingStatus, loading: onboardingLoading } = useOnboarding()
+  const { isAdmin, loading: adminLoading } = useAdminContext()
   const location = useLocation()
 
   // Monitor health goals globally
@@ -51,6 +54,13 @@ function AppContent() {
   // signed-in session that briefly rendered the full app before redirecting to onboarding
   // is exactly the flash this guard exists to prevent.
   if (isAuthenticated && (!isAuthReady || onboardingLoading)) {
+    return <Loading />
+  }
+
+  // Scoped to /admin rather than folded into the guard above: a non-admin page should
+  // never wait on a permissions fetch it doesn't need, while a real admin landing on
+  // /admin must not get bounced by the Navigate below before that fetch has resolved.
+  if (isAuthenticated && adminLoading && location.pathname.startsWith('/admin')) {
     return <Loading />
   }
 
@@ -90,6 +100,7 @@ function AppContent() {
           <Route path="u/:handle" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
+          <Route path="admin" element={isAdmin ? <AdminUsers /> : <Navigate to="/" replace />} />
         </Route>
       </Routes>
       <Toaster
@@ -113,15 +124,17 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <AuthProvider>
-            <SessionTimerProvider>
-              <TimeFormatProvider>
-                <WeekStartProvider>
-                  <OnboardingProvider>
-                    <AppContent />
-                  </OnboardingProvider>
-                </WeekStartProvider>
-              </TimeFormatProvider>
-            </SessionTimerProvider>
+            <AdminProvider>
+              <SessionTimerProvider>
+                <TimeFormatProvider>
+                  <WeekStartProvider>
+                    <OnboardingProvider>
+                      <AppContent />
+                    </OnboardingProvider>
+                  </WeekStartProvider>
+                </TimeFormatProvider>
+              </SessionTimerProvider>
+            </AdminProvider>
           </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>

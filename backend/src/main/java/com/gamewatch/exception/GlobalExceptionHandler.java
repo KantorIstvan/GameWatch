@@ -3,6 +3,7 @@ package com.gamewatch.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,24 @@ public class GlobalExceptionHandler {
             .message(ex.getMessage())
             .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Without this, a failed @PreAuthorize check would fall into the RuntimeException
+     * handler below (AccessDeniedException extends it) and come back as a misleading 500
+     * instead of a 403 - Spring resolves handlers by exception-type specificity, not
+     * declaration order, so this only needs to exist, not be placed before the other one.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("Access denied: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+            .timestamp(Instant.now())
+            .status(HttpStatus.FORBIDDEN.value())
+            .error("Forbidden")
+            .message(ex.getMessage())
+            .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     @ExceptionHandler(RuntimeException.class)

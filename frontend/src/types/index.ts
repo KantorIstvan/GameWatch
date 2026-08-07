@@ -719,6 +719,10 @@ export interface User {
   updatedAt: string
 }
 
+export interface AdminMe {
+  permissions: string[]
+}
+
 export function normalizePlatformName(platformName?: string): string {
   if (!platformName) return 'Unknown'
   
